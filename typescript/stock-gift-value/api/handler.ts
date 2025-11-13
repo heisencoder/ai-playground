@@ -81,7 +81,7 @@ export async function handleStockPriceRequest(
       }
     }
 
-    const json = await response.json()
+    const json = (await response.json()) as any
 
     // Validate response structure
     if (

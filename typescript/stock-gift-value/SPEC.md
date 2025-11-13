@@ -64,17 +64,23 @@ A single-page React web application to calculate the IRS-approved donated value 
 ## Technical Architecture
 
 ### Technology Stack
-- **Framework**: React 18+
+- **Frontend**: React 18+
+- **Backend**: Express (Node.js)
 - **Build Tool**: Vite
 - **Language**: TypeScript (strict mode)
-- **Testing**: Vitest + React Testing Library
+- **Testing**: Vitest + React Testing Library + MSW
 - **Code Quality**: ESLint + Prettier
-- **API**: Yahoo Finance API (via npm package or direct fetch)
-- **Styling**: CSS Modules or Tailwind CSS
+- **API**: Yahoo Finance API (proxied through Express backend)
+- **Styling**: CSS Modules
 
 ### Project Structure
 ```
 typescript/stock-gift-value/
+├── api/
+│   ├── handler.ts                     # Platform-agnostic API logic
+│   ├── server.ts                      # Express server
+│   └── __tests__/
+│       └── handler.test.ts
 ├── src/
 │   ├── components/
 │   │   ├── StockGiftCalculator.tsx    # Main container component
@@ -100,6 +106,7 @@ typescript/stock-gift-value/
 │       └── stock-gift-value-ci.yml
 ├── package.json
 ├── tsconfig.json
+├── tsconfig.server.json
 ├── vite.config.ts
 ├── .eslintrc.json
 ├── .prettierrc

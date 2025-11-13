@@ -24,13 +24,13 @@ This application helps users calculate the value of stock donations according to
 - **TypeScript** - Type safety and better developer experience
 - **Vite** - Fast build tool and dev server
 - **Vitest + MSW** - Unit testing with API mocking
-- **Vercel** - Serverless deployment platform
+- **Express** - Node.js web server for API and static file serving
 - **Yahoo Finance API** - Historical stock price data (proxied through backend)
 - **CSS Modules** - Component-scoped styling
 
 ## Architecture
 
-This is a full-stack application with a **dual-mode backend** that works both locally and in production:
+This is a full-stack application with an **Express backend** that serves both API endpoints and static files:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -43,12 +43,10 @@ This is a full-stack application with a **dual-mode backend** that works both lo
               │ HTTP Request
               ▼
 ┌─────────────────────────────────────────┐
-│          Backend API Layer              │
+│       Express Server (Node.js)          │
 │                                         │
-│  Production: Vercel Serverless Function│
-│  Local Dev:  Express Server             │
-│                                         │
-│  Both use shared handler.ts:            │
+│  - Serves static frontend files         │
+│  - API endpoints                        │
 │  - Proxies to Yahoo Finance            │
 │  - Handles CORS                         │
 │  - Ticker normalization (BRK.B→BRK-B)  │
@@ -65,16 +63,14 @@ This is a full-stack application with a **dual-mode backend** that works both lo
 
 **Why a backend?**
 - Yahoo Finance doesn't support CORS, so direct browser requests fail
-- The serverless function acts as a proxy, solving the CORS issue
+- The Express server acts as a proxy, solving the CORS issue
 - API keys stay server-side (secure)
 - Ticker symbol normalization (e.g., BRK.B → BRK-B for Yahoo Finance)
 
-**Dual-mode architecture:**
-- `api/handler.ts` - Shared business logic (platform-agnostic)
-- `api/stock-price.ts` - Vercel serverless function wrapper (production)
-- `api/dev-server.ts` - Express server wrapper (local development)
-- Both adapters use the same handler logic, ensuring 100% code parity
-- No Vercel dependency needed for local development or testing
+**Clean architecture:**
+- `api/handler.ts` - Core business logic (platform-agnostic, fully testable)
+- `api/server.ts` - Express server that uses the handler and serves static files
+- Handler logic is separated from server concerns for easy testing
 
 ## Getting Started
 
@@ -137,31 +133,28 @@ npm install
 
 ### Development
 
-This project supports **full-stack local development** without any external dependencies.
+This project supports **full-stack local development** with hot reload for both frontend and backend.
 
-#### Option 1: Full-Stack Development (Recommended)
+#### Running in Development Mode
 
-Run both the frontend and API server locally:
+You'll need two terminal windows:
 
-**Terminal 1 - Frontend:**
+**Terminal 1 - Frontend (Vite dev server):**
 ```bash
 npm run dev
 ```
-- Vite dev server runs on http://localhost:5173
-- Frontend with hot module replacement
+- Runs on http://localhost:5173
+- Hot module replacement for instant updates
+- Proxies API requests to the backend server
 
-**Terminal 2 - API Server:**
+**Terminal 2 - Backend API Server:**
 ```bash
 npm run dev:api
 ```
 - Express server runs on http://localhost:3001
 - API endpoint: http://localhost:3001/api/stock-price
-- Uses the same handler logic as production
-
-**Configure the frontend to use local API:**
-- In development, the frontend calls `/api/stock-price` (relative path)
-- For local testing with the Express server, update the API URL to `http://localhost:3001/api/stock-price`
-- Or use a proxy in `vite.config.ts` to forward `/api/*` requests to port 3001
+- Health check: http://localhost:3001/health
+- Automatically reloads on code changes
 
 **Test the API directly:**
 ```bash
@@ -172,39 +165,47 @@ curl http://localhost:3001/health
 curl "http://localhost:3001/api/stock-price?ticker=AAPL&date=2024-01-01"
 ```
 
-#### Option 2: Frontend-Only Development
+The frontend development server (Vite) is configured to proxy `/api/*` requests to the Express server on port 3001, so you can develop both frontend and backend simultaneously.
 
-For UI-only work without needing real API responses:
+### Production Build
 
-```bash
-npm run dev
-```
-- Runs Vite dev server on http://localhost:5173
-- Use MSW mocks for API responses (already configured in tests)
-- Best for UI development and component testing
-
-#### Option 3: Full-Stack with Vercel CLI (Optional)
-
-If you prefer to test with Vercel's exact production environment:
+Build both the frontend and server:
 
 ```bash
-# One-time setup: login to Vercel
-vercel login
-
-# Run Vercel development server
-vercel dev
+npm run build:all
 ```
-- Runs both frontend and serverless functions locally
-- Mimics production environment exactly
-- Requires Vercel account (free tier available)
 
-### Build
+This runs:
+1. `npm run build` - Compiles the React frontend to `dist/`
+2. `npm run build:server` - Compiles the Express server to `dist-server/`
+
+Or build them separately:
+```bash
+npm run build         # Build frontend only
+npm run build:server  # Build server only
+```
+
+### Running in Production
+
+After building, start the production server:
 
 ```bash
-npm run build
+npm start
 ```
 
-The build output will be in the `dist` directory.
+This runs the Express server in production mode, which:
+- Serves the built frontend from `dist/`
+- Provides API endpoints
+- Handles client-side routing (SPA fallback)
+- Runs on port 3001 by default (configurable via `PORT` environment variable)
+
+**Environment Variables:**
+
+Create a `.env` file for production configuration:
+```bash
+PORT=3001
+NODE_ENV=production
+```
 
 ### Testing
 
@@ -232,144 +233,101 @@ npm run format
 npm run format:check
 ```
 
-## Deployment to Vercel
+## Deployment
 
-This application is designed to be deployed on Vercel's serverless platform. Vercel provides:
-- Free hosting for the frontend
-- Serverless functions for the backend API
-- Automatic HTTPS
-- CDN distribution
-- Zero configuration deployment
+This application is a standard Node.js Express app that can be deployed to any platform that supports Node.js.
 
-### Prerequisites for Deployment
+### Deployment Options
 
-1. A [Vercel account](https://vercel.com/signup) (free tier available)
-2. Git repository hosted on GitHub, GitLab, or Bitbucket
+**Cloud Platforms:**
+- **Google Cloud Platform** (App Engine, Cloud Run, Compute Engine)
+- **AWS** (Elastic Beanstalk, EC2, ECS)
+- **Azure** (App Service, Container Instances)
+- **DigitalOcean** (App Platform, Droplets)
+- **Heroku** (Dynos)
+- **Railway** (https://railway.app)
+- **Render** (https://render.com)
+- **Fly.io** (https://fly.io)
 
-### Option 1: Deploy via Vercel Dashboard (Recommended for First-Time Setup)
+### General Deployment Steps
 
-1. **Connect your repository to Vercel:**
-   - Go to [vercel.com](https://vercel.com) and sign in
-   - Click "Add New Project"
-   - Import your Git repository
-   - Select the repository containing this project
-
-2. **Configure the project:**
-   - **Framework Preset**: Vercel should auto-detect "Vite"
-   - **Root Directory**: Set to `typescript/stock-gift-value` (if deploying from monorepo)
-   - **Build Command**: `npm run build` (auto-detected)
-   - **Output Directory**: `dist` (auto-detected)
-   - **Install Command**: `npm install` (auto-detected)
-
-3. **Deploy:**
-   - Click "Deploy"
-   - Vercel will build and deploy your application
-   - You'll receive a production URL (e.g., `your-project.vercel.app`)
-
-4. **Automatic deployments:**
-   - Every push to your main branch will trigger a production deployment
-   - Pull requests will get preview deployments automatically
-
-### Option 2: Deploy via Vercel CLI
-
-1. **Install Vercel CLI:**
+1. **Build the application:**
    ```bash
-   npm install -g vercel
+   npm run build:all
    ```
 
-2. **Login to Vercel:**
+2. **Set environment variables:**
    ```bash
-   vercel login
+   NODE_ENV=production
+   PORT=3001  # or whatever port your platform uses
    ```
 
-3. **Deploy from project directory:**
+3. **Start the server:**
    ```bash
-   cd typescript/stock-gift-value
-   vercel
+   npm start
    ```
 
-4. **Follow the prompts:**
-   - Set up and deploy: Yes
-   - Which scope: Select your account/team
-   - Link to existing project: No (first time) or Yes (subsequent deploys)
-   - Project name: Accept default or customize
-   - Directory: `./` (current directory)
-   - Override settings: No (unless needed)
+### Example: Deploying to Railway
 
-5. **Deploy to production:**
-   ```bash
-   vercel --prod
+1. Install Railway CLI: `npm install -g @railway/cli`
+2. Login: `railway login`
+3. Initialize: `railway init`
+4. Deploy: `railway up`
+
+Railway will automatically:
+- Detect Node.js
+- Run `npm install`
+- Run `npm run build:all`
+- Start the server with `npm start`
+
+### Example: Deploying to Render
+
+1. Create a `render.yaml` file:
+   ```yaml
+   services:
+     - type: web
+       name: stock-gift-value
+       env: node
+       buildCommand: npm install && npm run build:all
+       startCommand: npm start
    ```
 
-### Option 3: Automatic Deployment via GitHub Actions
+2. Connect your repository to Render
+3. Render will automatically deploy on push
 
-This project includes a GitHub Actions workflow that automatically deploys to Vercel when all tests pass.
+### Example: Docker Deployment
 
-1. **Get your Vercel credentials:**
-   - Go to [Vercel Tokens](https://vercel.com/account/tokens)
-   - Create a new token and copy it
-   - In your project settings on Vercel, find your Project ID and Org ID
+Create a `Dockerfile`:
 
-2. **Add secrets to GitHub:**
-   - Go to your GitHub repository → Settings → Secrets and variables → Actions
-   - Add the following secrets:
-     - `VERCEL_TOKEN`: Your Vercel token
-     - `VERCEL_ORG_ID`: Your Vercel organization ID
-     - `VERCEL_PROJECT_ID`: Your Vercel project ID
+```dockerfile
+FROM node:22-alpine
 
-3. **Push to your repository:**
-   - GitHub Actions will automatically run tests
-   - If tests pass, it will deploy to Vercel
-   - You'll see the deployment URL in the Actions log
+WORKDIR /app
 
-### Configuration Files
+# Copy package files
+COPY package*.json ./
 
-The project includes Vercel-specific configuration:
+# Install dependencies
+RUN npm ci --production
 
-- **`vercel.json`**: Configures build settings and API routes
-- **`.vercelignore`**: Excludes test files and development artifacts from deployment
+# Copy source files
+COPY . .
 
-### Environment Variables (if needed)
+# Build the application
+RUN npm run build:all
 
-If you need to add environment variables:
+# Expose port
+EXPOSE 3001
 
-1. **Via Vercel Dashboard:**
-   - Go to your project → Settings → Environment Variables
-   - Add variables for Production, Preview, and Development environments
+# Start the server
+CMD ["npm", "start"]
+```
 
-2. **Via Vercel CLI:**
-   ```bash
-   vercel env add VARIABLE_NAME
-   ```
-
-### Testing Your Deployment
-
-After deployment:
-
-1. Visit your Vercel URL (e.g., `your-project.vercel.app`)
-2. Test the calculator with a sample stock:
-   - Date: Any past date
-   - Ticker: AAPL or BRK.B
-   - Shares: Any number
-3. Verify the value is calculated correctly
-4. Check browser console for any errors
-
-### Troubleshooting Deployment
-
-**Build fails:**
-- Check that all dependencies are in `package.json`
-- Verify `npm run build` works locally
-- Check Vercel build logs for specific errors
-
-**API endpoints return 404:**
-- Ensure `vercel.json` is in the project root
-- Verify `/api` directory exists with serverless functions
-- Check that rewrites are configured correctly in `vercel.json`
-
-**CORS errors:**
-- The serverless function should handle CORS automatically
-- Check that the frontend is calling `/api/stock-price` (relative path)
-- Verify CORS headers are set in `/api/stock-price.ts`
+Build and run:
+```bash
+docker build -t stock-gift-value .
+docker run -p 3001:3001 stock-gift-value
+```
 
 ## Usage
 
@@ -397,8 +355,7 @@ The calculation: `(500.16 + 493.35) / 2 × 34 = 496.755 × 34 = $16,889.67`
 typescript/stock-gift-value/
 ├── api/                     # Backend API
 │   ├── handler.ts           # Shared business logic (platform-agnostic)
-│   ├── stock-price.ts       # Vercel serverless function wrapper
-│   ├── dev-server.ts        # Express development server
+│   ├── server.ts            # Express server
 │   └── __tests__/           # API handler tests
 │       └── handler.test.ts
 ├── src/
@@ -421,10 +378,11 @@ typescript/stock-gift-value/
 │   └── main.tsx
 ├── public/
 ├── .github/workflows/       # CI/CD
-├── vercel.json              # Vercel configuration
-├── .vercelignore            # Vercel ignore patterns
+├── dist/                    # Built frontend (after npm run build)
+├── dist-server/             # Built server (after npm run build:server)
 ├── package.json
-├── tsconfig.json
+├── tsconfig.json            # Frontend TypeScript config
+├── tsconfig.server.json     # Server TypeScript config
 ├── vite.config.ts
 ├── SPEC.md                  # Design specification
 └── README.md
@@ -432,9 +390,8 @@ typescript/stock-gift-value/
 
 **Key architectural files:**
 - `api/handler.ts` - Core API logic, fully testable without any platform dependencies
-- `api/stock-price.ts` - Thin Vercel adapter (used in production)
-- `api/dev-server.ts` - Thin Express adapter (used in local development)
-- Both adapters call the same `handleStockPriceRequest()` function
+- `api/server.ts` - Express server for both development and production
+- Handler logic is separated from server concerns for easy testing and portability
 
 ## CI/CD
 
@@ -443,10 +400,27 @@ The project includes a GitHub Actions workflow that automatically:
 1. Runs ESLint to check code quality
 2. Checks Prettier formatting
 3. Runs all unit tests
-4. Builds the project
-5. Deploys to Vercel (when all tests pass)
+4. Builds the frontend
+5. Builds the server
 
-The workflow is triggered on pushes that affect the `typescript/stock-gift-value` directory. Successful builds are automatically deployed to Vercel's production environment.
+The workflow is triggered on pushes that affect the `typescript/stock-gift-value` directory.
+
+## Scripts Reference
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start Vite dev server (frontend) |
+| `npm run dev:api` | Start Express dev server (backend) |
+| `npm run build` | Build frontend to `dist/` |
+| `npm run build:server` | Build server to `dist-server/` |
+| `npm run build:all` | Build both frontend and server |
+| `npm start` | Run production server |
+| `npm test` | Run tests once |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage |
+| `npm run lint` | Run ESLint |
+| `npm run format` | Format code with Prettier |
+| `npm run format:check` | Check code formatting |
 
 ## IRS Guidelines
 
@@ -461,4 +435,4 @@ This project is part of the ai-playground repository.
 1. Ensure all tests pass: `npm test`
 2. Ensure code is formatted: `npm run format`
 3. Ensure linting passes: `npm run lint`
-4. Build successfully: `npm run build`
+4. Build successfully: `npm run build:all`
