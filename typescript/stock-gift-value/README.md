@@ -125,11 +125,33 @@ npm install
 
 ### Development
 
+**Important: API Limitations in Local Development**
+
+The `/api/stock-price` endpoint is a Vercel serverless function that only runs in production or with Vercel's development server. When using `npm run dev`, you have two options:
+
+**Option 1: Frontend Development Only (Recommended for UI work)**
 ```bash
 npm run dev
 ```
+- Runs Vite dev server on http://localhost:5173
+- Frontend works perfectly
+- **API calls will fail** (expected - use mock data or deploy to test API)
+- Best for UI development and testing with MSW mocks
 
-Open [http://localhost:5173](http://localhost:5173) to view the app in your browser.
+**Option 2: Full-Stack Development with Vercel CLI**
+```bash
+# One-time setup: login to Vercel
+vercel login
+
+# Run Vercel development server
+vercel dev
+```
+- Runs both frontend and serverless functions locally
+- API endpoint `/api/stock-price` works correctly
+- Mimics production environment
+- Requires Vercel account (free tier available)
+
+**For API Testing:** Either deploy to Vercel or use `vercel dev` for local testing.
 
 ### Build
 
