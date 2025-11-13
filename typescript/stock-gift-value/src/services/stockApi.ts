@@ -33,87 +33,27 @@ export async function fetchStockPrice(
 }
 
 /**
- * Fetch stock price from Yahoo Finance API
+ * Fetch stock price from backend API
+ * The backend proxies requests to Yahoo Finance to avoid CORS issues
  */
 async function fetchFromYahooFinance(
   ticker: string,
   date: string
 ): Promise<StockPriceData> {
-  // Convert date to Unix timestamp
-  const targetDate = new Date(date)
-  const startTimestamp = Math.floor(targetDate.getTime() / 1000)
-  // Add one day to get end of day
-  const endTimestamp = startTimestamp + 86400
-
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?period1=${startTimestamp}&period2=${endTimestamp}&interval=1d`
+  // Call our backend API endpoint
+  const url = `/api/stock-price?ticker=${encodeURIComponent(ticker)}&date=${encodeURIComponent(date)}`
 
   const response = await fetch(url)
 
   if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`Ticker symbol '${ticker}' not found`)
-    }
-    throw new Error(`API request failed with status ${response.status}`)
-  }
-
-  const json = await response.json()
-
-  // Validate response structure
-  if (
-    !json.chart ||
-    !json.chart.result ||
-    json.chart.result.length === 0 ||
-    json.chart.error
-  ) {
+    const errorData = await response
+      .json()
+      .catch(() => ({ error: 'Unknown error' }))
     throw new Error(
-      json.chart?.error?.description || 'Invalid response from API'
+      errorData.error || `API request failed with status ${response.status}`
     )
   }
 
-  const result = json.chart.result[0]
-  const quote = result.indicators?.quote?.[0]
-
-  if (!quote || !quote.high || !quote.low) {
-    throw new Error('No price data available for the specified date')
-  }
-
-  // Get the first data point (should be the only one for a single day)
-  const high = quote.high[0]
-  const low = quote.low[0]
-
-  if (high == null || low == null) {
-    throw new Error(
-      'No trading data available for this date (market may have been closed)'
-    )
-  }
-
-  return {
-    date,
-    high,
-    low,
-    ticker,
-  }
-}
-
-/**
- * Mock function for testing - simulates API responses
- * This can be used in tests to avoid making real API calls
- */
-export function mockFetchStockPrice(
-  ticker: string,
-  date: string,
-  high: number,
-  low: number
-): StockPriceData {
-  const data: StockPriceData = {
-    date,
-    high,
-    low,
-    ticker: ticker.toUpperCase(),
-  }
-
-  // Store in cache so subsequent calls return the same data
-  stockPriceCache.set(ticker, date, data)
-
+  const data: StockPriceData = await response.json()
   return data
 }

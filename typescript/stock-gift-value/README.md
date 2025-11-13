@@ -23,9 +23,46 @@ This application helps users calculate the value of stock donations according to
 - **React 18** - UI framework
 - **TypeScript** - Type safety and better developer experience
 - **Vite** - Fast build tool and dev server
-- **Vitest** - Unit testing framework
-- **Yahoo Finance API** - Historical stock price data
+- **Vitest + MSW** - Unit testing with API mocking
+- **Vercel** - Serverless deployment platform
+- **Yahoo Finance API** - Historical stock price data (proxied through backend)
 - **CSS Modules** - Component-scoped styling
+
+## Architecture
+
+This is a full-stack application deployed on Vercel:
+
+```
+┌─────────────────────────────────────────┐
+│         Frontend (React + Vite)         │
+│  - User interface                       │
+│  - Form validation                      │
+│  - Client-side caching                  │
+└─────────────┬───────────────────────────┘
+              │
+              │ HTTP Request
+              ▼
+┌─────────────────────────────────────────┐
+│   Vercel Serverless Function (/api)    │
+│  - Proxies to Yahoo Finance            │
+│  - Handles CORS                         │
+│  - Ticker normalization (BRK.B→BRK-B)  │
+└─────────────┬───────────────────────────┘
+              │
+              │ External API Call
+              ▼
+┌─────────────────────────────────────────┐
+│      Yahoo Finance API                  │
+│  - Historical stock prices              │
+│  - High/Low data for specific dates     │
+└─────────────────────────────────────────┘
+```
+
+**Why a backend?**
+- Yahoo Finance doesn't support CORS, so direct browser requests fail
+- The serverless function acts as a proxy, solving the CORS issue
+- API keys stay server-side (secure)
+- Ticker symbol normalization (e.g., BRK.B → BRK-B for Yahoo Finance)
 
 ## Getting Started
 
@@ -83,6 +120,145 @@ npm run format
 npm run format:check
 ```
 
+## Deployment to Vercel
+
+This application is designed to be deployed on Vercel's serverless platform. Vercel provides:
+- Free hosting for the frontend
+- Serverless functions for the backend API
+- Automatic HTTPS
+- CDN distribution
+- Zero configuration deployment
+
+### Prerequisites for Deployment
+
+1. A [Vercel account](https://vercel.com/signup) (free tier available)
+2. Git repository hosted on GitHub, GitLab, or Bitbucket
+
+### Option 1: Deploy via Vercel Dashboard (Recommended for First-Time Setup)
+
+1. **Connect your repository to Vercel:**
+   - Go to [vercel.com](https://vercel.com) and sign in
+   - Click "Add New Project"
+   - Import your Git repository
+   - Select the repository containing this project
+
+2. **Configure the project:**
+   - **Framework Preset**: Vercel should auto-detect "Vite"
+   - **Root Directory**: Set to `typescript/stock-gift-value` (if deploying from monorepo)
+   - **Build Command**: `npm run build` (auto-detected)
+   - **Output Directory**: `dist` (auto-detected)
+   - **Install Command**: `npm install` (auto-detected)
+
+3. **Deploy:**
+   - Click "Deploy"
+   - Vercel will build and deploy your application
+   - You'll receive a production URL (e.g., `your-project.vercel.app`)
+
+4. **Automatic deployments:**
+   - Every push to your main branch will trigger a production deployment
+   - Pull requests will get preview deployments automatically
+
+### Option 2: Deploy via Vercel CLI
+
+1. **Install Vercel CLI:**
+   ```bash
+   npm install -g vercel
+   ```
+
+2. **Login to Vercel:**
+   ```bash
+   vercel login
+   ```
+
+3. **Deploy from project directory:**
+   ```bash
+   cd typescript/stock-gift-value
+   vercel
+   ```
+
+4. **Follow the prompts:**
+   - Set up and deploy: Yes
+   - Which scope: Select your account/team
+   - Link to existing project: No (first time) or Yes (subsequent deploys)
+   - Project name: Accept default or customize
+   - Directory: `./` (current directory)
+   - Override settings: No (unless needed)
+
+5. **Deploy to production:**
+   ```bash
+   vercel --prod
+   ```
+
+### Option 3: Automatic Deployment via GitHub Actions
+
+This project includes a GitHub Actions workflow that automatically deploys to Vercel when all tests pass.
+
+1. **Get your Vercel credentials:**
+   - Go to [Vercel Tokens](https://vercel.com/account/tokens)
+   - Create a new token and copy it
+   - In your project settings on Vercel, find your Project ID and Org ID
+
+2. **Add secrets to GitHub:**
+   - Go to your GitHub repository → Settings → Secrets and variables → Actions
+   - Add the following secrets:
+     - `VERCEL_TOKEN`: Your Vercel token
+     - `VERCEL_ORG_ID`: Your Vercel organization ID
+     - `VERCEL_PROJECT_ID`: Your Vercel project ID
+
+3. **Push to your repository:**
+   - GitHub Actions will automatically run tests
+   - If tests pass, it will deploy to Vercel
+   - You'll see the deployment URL in the Actions log
+
+### Configuration Files
+
+The project includes Vercel-specific configuration:
+
+- **`vercel.json`**: Configures build settings and API routes
+- **`.vercelignore`**: Excludes test files and development artifacts from deployment
+
+### Environment Variables (if needed)
+
+If you need to add environment variables:
+
+1. **Via Vercel Dashboard:**
+   - Go to your project → Settings → Environment Variables
+   - Add variables for Production, Preview, and Development environments
+
+2. **Via Vercel CLI:**
+   ```bash
+   vercel env add VARIABLE_NAME
+   ```
+
+### Testing Your Deployment
+
+After deployment:
+
+1. Visit your Vercel URL (e.g., `your-project.vercel.app`)
+2. Test the calculator with a sample stock:
+   - Date: Any past date
+   - Ticker: AAPL or BRK.B
+   - Shares: Any number
+3. Verify the value is calculated correctly
+4. Check browser console for any errors
+
+### Troubleshooting Deployment
+
+**Build fails:**
+- Check that all dependencies are in `package.json`
+- Verify `npm run build` works locally
+- Check Vercel build logs for specific errors
+
+**API endpoints return 404:**
+- Ensure `vercel.json` is in the project root
+- Verify `/api` directory exists with serverless functions
+- Check that rewrites are configured correctly in `vercel.json`
+
+**CORS errors:**
+- The serverless function should handle CORS automatically
+- Check that the frontend is calling `/api/stock-price` (relative path)
+- Verify CORS headers are set in `/api/stock-price.ts`
+
 ## Usage
 
 1. Enter the **date of the stock donation** (must be a past date)
@@ -107,6 +283,8 @@ The calculation: `(500.16 + 493.35) / 2 × 34 = 496.755 × 34 = $16,889.67`
 
 ```
 typescript/stock-gift-value/
+├── api/                     # Vercel serverless functions
+│   └── stock-price.ts       # Yahoo Finance API proxy
 ├── src/
 │   ├── components/          # React components
 │   │   ├── StockGiftCalculator.tsx
@@ -116,6 +294,9 @@ typescript/stock-gift-value/
 │   │   ├── stockApi.ts
 │   │   ├── cache.ts
 │   │   └── __tests__/
+│   ├── test/                # Test configuration
+│   │   ├── setup.ts
+│   │   └── mocks/           # MSW API mocks
 │   ├── utils/               # Helper functions
 │   │   ├── calculations.ts
 │   │   └── __tests__/
@@ -124,6 +305,8 @@ typescript/stock-gift-value/
 │   └── main.tsx
 ├── public/
 ├── .github/workflows/       # CI/CD
+├── vercel.json              # Vercel configuration
+├── .vercelignore            # Vercel ignore patterns
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
@@ -139,8 +322,9 @@ The project includes a GitHub Actions workflow that automatically:
 2. Checks Prettier formatting
 3. Runs all unit tests
 4. Builds the project
+5. Deploys to Vercel (when all tests pass)
 
-The workflow is triggered on pushes and pull requests that affect the `typescript/stock-gift-value` directory.
+The workflow is triggered on pushes that affect the `typescript/stock-gift-value` directory. Successful builds are automatically deployed to Vercel's production environment.
 
 ## IRS Guidelines
 

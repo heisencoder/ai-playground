@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StockGiftCalculator } from '../StockGiftCalculator'
-import { mockFetchStockPrice } from '../../services/stockApi'
 import { stockPriceCache } from '../../services/cache'
 
 describe('StockGiftCalculator', () => {
@@ -80,9 +79,6 @@ describe('StockGiftCalculator', () => {
   it('should calculate value when all fields are filled', async () => {
     const user = userEvent.setup()
 
-    // Mock the stock price data
-    mockFetchStockPrice('AAPL', '2024-01-01', 150, 140)
-
     render(<StockGiftCalculator />)
 
     const dateInput = screen.getByLabelText(/date/i)
@@ -107,11 +103,9 @@ describe('StockGiftCalculator', () => {
   it('should handle BRK.B test case', async () => {
     const user = userEvent.setup()
 
-    // Mock the BRK.B stock price data for 11/7/2025
-    // Actual values: High=$500.16, Low=$493.35, Average=$496.755
+    // BRK.B stock price data for 11/7/2025
+    // High=$500.16, Low=$493.35, Average=$496.755
     // Expected value with 34 shares: $16,889.67
-    mockFetchStockPrice('BRK.B', '2025-11-07', 500.16, 493.35)
-
     render(<StockGiftCalculator />)
 
     const dateInput = screen.getByLabelText(/date/i)

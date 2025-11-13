@@ -1,122 +1,84 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { fetchStockPrice, mockFetchStockPrice } from '../stockApi'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { http, HttpResponse } from 'msw'
+import { fetchStockPrice } from '../stockApi'
 import { stockPriceCache } from '../cache'
+import { server } from '../../test/mocks/server'
 
 describe('stockApi', () => {
   beforeEach(() => {
     // Clear cache before each test
     stockPriceCache.clear()
-    // Clear all fetch mocks
-    vi.restoreAllMocks()
-  })
-
-  describe('mockFetchStockPrice', () => {
-    it('should return mock data', () => {
-      const result = mockFetchStockPrice('AAPL', '2024-01-01', 150, 145)
-      expect(result).toEqual({
-        date: '2024-01-01',
-        high: 150,
-        low: 145,
-        ticker: 'AAPL',
-      })
-    })
-
-    it('should store data in cache', () => {
-      mockFetchStockPrice('AAPL', '2024-01-01', 150, 145)
-      const cached = stockPriceCache.get('AAPL', '2024-01-01')
-      expect(cached).toBeTruthy()
-      expect(cached?.high).toBe(150)
-      expect(cached?.low).toBe(145)
-    })
-
-    it('should normalize ticker to uppercase', () => {
-      const result = mockFetchStockPrice('aapl', '2024-01-01', 150, 145)
-      expect(result.ticker).toBe('AAPL')
-    })
   })
 
   describe('fetchStockPrice', () => {
     it('should return cached data if available', async () => {
-      // First, mock some data
-      mockFetchStockPrice('AAPL', '2024-01-01', 150, 145)
-
-      // Now fetch should return cached data without hitting API
-      const result = await fetchStockPrice('AAPL', '2024-01-01')
-      expect(result).toEqual({
+      // First call will fetch from API and cache
+      const result1 = await fetchStockPrice('AAPL', '2024-01-01')
+      expect(result1).toEqual({
         date: '2024-01-01',
         high: 150,
-        low: 145,
+        low: 140,
+        ticker: 'AAPL',
+      })
+
+      // Second call should return cached data
+      const result2 = await fetchStockPrice('AAPL', '2024-01-01')
+      expect(result2).toEqual({
+        date: '2024-01-01',
+        high: 150,
+        low: 140,
         ticker: 'AAPL',
       })
     })
 
     it('should normalize ticker to uppercase', async () => {
-      mockFetchStockPrice('aapl', '2024-01-01', 150, 145)
       const result = await fetchStockPrice('aapl', '2024-01-01')
       expect(result.ticker).toBe('AAPL')
     })
 
     it('should fetch from API if not cached', async () => {
-      // Mock the global fetch
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          chart: {
-            result: [
-              {
-                indicators: {
-                  quote: [
-                    {
-                      high: [150],
-                      low: [145],
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        }),
-      })
-
       const result = await fetchStockPrice('AAPL', '2024-01-01')
       expect(result.high).toBe(150)
-      expect(result.low).toBe(145)
+      expect(result.low).toBe(140)
       expect(result.ticker).toBe('AAPL')
     })
 
     it('should handle API errors gracefully', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-      })
-
-      await expect(fetchStockPrice('INVALID', '2024-01-01')).rejects.toThrow()
+      await expect(fetchStockPrice('INVALID123', '2024-01-01')).rejects.toThrow(
+        /Invalid ticker/
+      )
     })
 
-    it('should handle missing data', async () => {
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          chart: {
-            result: [
-              {
-                indicators: {
-                  quote: [
-                    {
-                      high: [null],
-                      low: [null],
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        }),
+    it('should handle BRK.B ticker correctly', async () => {
+      const result = await fetchStockPrice('BRK.B', '2025-11-07')
+      expect(result).toEqual({
+        date: '2025-11-07',
+        high: 500.16,
+        low: 493.35,
+        ticker: 'BRK.B',
       })
+    })
 
-      await expect(fetchStockPrice('AAPL', '2024-01-01')).rejects.toThrow(
-        /No trading data available/
+    it('should cache results after fetching', async () => {
+      // Fetch from API
+      await fetchStockPrice('AAPL', '2024-01-01')
+
+      // Check that it's in cache
+      const cached = stockPriceCache.get('AAPL', '2024-01-01')
+      expect(cached).toBeTruthy()
+      expect(cached?.high).toBe(150)
+      expect(cached?.low).toBe(140)
+    })
+
+    it('should handle network errors', async () => {
+      // Override the handler to simulate network error
+      server.use(
+        http.get('*/api/stock-price', () => {
+          return HttpResponse.json({ error: 'Network error' }, { status: 500 })
+        })
       )
+
+      await expect(fetchStockPrice('AAPL', '2024-01-01')).rejects.toThrow()
     })
   })
 })

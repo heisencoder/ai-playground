@@ -31,27 +31,53 @@ export function StockGiftCalculator() {
       for (const gift of gifts) {
         // Skip if any required field is missing
         if (!gift.date || !gift.ticker || !gift.shares) {
+          // Clear value if fields are incomplete
+          if (gift.value !== undefined || gift.error) {
+            updateGift(gift.id, { value: undefined, error: undefined })
+          }
           continue
         }
 
-        // Skip if already loading or has a value
+        // Skip if already loading
         if (gift.loading) {
+          continue
+        }
+
+        // Create a cache key from inputs to check if we need to refetch
+        const cacheKey = `${gift.ticker}-${gift.date}-${gift.shares}`
+        if (
+          gift.cacheKey === cacheKey &&
+          (gift.value !== undefined || gift.error)
+        ) {
+          // Already calculated for these exact inputs
           continue
         }
 
         // Validate inputs
         if (!isValidDate(gift.date)) {
-          updateGift(gift.id, { error: 'Invalid date', value: undefined })
+          if (gift.error !== 'Invalid date' || gift.cacheKey !== cacheKey) {
+            updateGift(gift.id, {
+              error: 'Invalid date',
+              value: undefined,
+              cacheKey,
+            })
+          }
           continue
         }
 
         if (!isValidTicker(gift.ticker)) {
-          updateGift(gift.id, { error: 'Invalid ticker', value: undefined })
+          if (gift.error !== 'Invalid ticker' || gift.cacheKey !== cacheKey) {
+            updateGift(gift.id, {
+              error: 'Invalid ticker',
+              value: undefined,
+              cacheKey,
+            })
+          }
           continue
         }
 
         // Start loading
-        updateGift(gift.id, { loading: true, error: undefined })
+        updateGift(gift.id, { loading: true, error: undefined, cacheKey })
 
         try {
           const priceData = await fetchStockPrice(gift.ticker, gift.date)
@@ -61,13 +87,19 @@ export function StockGiftCalculator() {
             gift.shares
           )
 
-          updateGift(gift.id, { value, loading: false, error: undefined })
+          updateGift(gift.id, {
+            value,
+            loading: false,
+            error: undefined,
+            cacheKey,
+          })
         } catch (error) {
           updateGift(gift.id, {
             error:
               error instanceof Error ? error.message : 'Failed to fetch price',
             loading: false,
             value: undefined,
+            cacheKey,
           })
         }
       }

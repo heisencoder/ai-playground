@@ -6,6 +6,7 @@ export interface StockGift {
   value?: number // Calculated value
   loading?: boolean
   error?: string
+  cacheKey?: string // Cache key to track when to recalculate
 }
 
 export interface StockPriceData {
