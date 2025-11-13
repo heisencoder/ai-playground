@@ -4,9 +4,6 @@ on:
   push:
     paths:
       - 'typescript/stock-gift-value/**'
-  pull_request:
-    paths:
-      - 'typescript/stock-gift-value/**'
 
 defaults:
   run:
