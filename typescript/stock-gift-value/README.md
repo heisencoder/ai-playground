@@ -68,8 +68,53 @@ This is a full-stack application deployed on Vercel:
 
 ### Prerequisites
 
-- Node.js 20 or higher
-- npm
+- **Node.js 22 or higher** (required for Vite 7+)
+  - **Why Node.js 22?** Vite 7 requires Node.js 20.19+ or 22.12+ due to newer crypto APIs
+  - Check your version: `node --version`
+  - **Install Node.js 22** (see instructions below)
+- npm 10 or higher
+
+#### Installing Node.js 22
+
+**Option 1: Using nvm (Recommended - works on macOS/Linux/WSL)**
+
+nvm (Node Version Manager) allows you to install and switch between multiple Node.js versions easily.
+
+```bash
+# Install nvm (macOS/Linux/WSL)
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
+
+# Restart your terminal, then install Node.js 22
+nvm install 22
+nvm use 22
+
+# Verify installation
+node --version  # Should show v22.x.x
+```
+
+**Option 2: Using nvm-windows (Windows)**
+
+```powershell
+# Download and run the installer from:
+# https://github.com/coreybutler/nvm-windows/releases
+
+# After installation, restart terminal and run:
+nvm install 22
+nvm use 22
+node --version  # Should show v22.x.x
+```
+
+**Option 3: Direct installation (all platforms)**
+
+Download Node.js 22 LTS from [nodejs.org](https://nodejs.org/) and install it directly.
+
+**Using this project's .nvmrc file:**
+
+If you already have nvm installed, the project includes an `.nvmrc` file. Simply run:
+```bash
+nvm install  # Reads version from .nvmrc
+nvm use      # Switches to the correct version
+```
 
 ### Installation
 
