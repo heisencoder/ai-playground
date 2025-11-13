@@ -1,0 +1,44 @@
+name: Stock Gift Value CI
+
+on:
+  push:
+    paths:
+      - 'typescript/stock-gift-value/**'
+  pull_request:
+    paths:
+      - 'typescript/stock-gift-value/**'
+
+defaults:
+  run:
+    working-directory: ./typescript/stock-gift-value
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: typescript/stock-gift-value/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Check code formatting
+        run: npm run format:check
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build project
+        run: npm run build

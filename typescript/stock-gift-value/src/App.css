@@ -1,0 +1,11 @@
+.app {
+  min-height: 100vh;
+  background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+  padding: 2rem 0;
+}
+
+@media (max-width: 768px) {
+  .app {
+    padding: 1rem 0;
+  }
+}
