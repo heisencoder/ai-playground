@@ -20,22 +20,22 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/react": "^14.1.2",
-    "@testing-library/user-event": "^14.5.1",
-    "@types/react": "^18.3.1",
-    "@types/react-dom": "^18.3.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.4",
+    "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "@vercel/node": "^3.0.21",
-    "@vitejs/plugin-react": "^4.2.1",
+    "@vercel/node": "^5.5.6",
+    "@vitejs/plugin-react": "^5.1.1",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "jsdom": "^23.0.1",
+    "jsdom": "^27.2.0",
     "msw": "^2.0.11",
-    "prettier": "^3.1.1",
-    "typescript": "^5.3.3",
-    "vite": "^5.0.11",
-    "vitest": "^1.1.1"
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2",
+    "vitest": "^4.0.8"
   }
 }
