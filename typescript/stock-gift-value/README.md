@@ -30,7 +30,7 @@ This application helps users calculate the value of stock donations according to
 
 ## Architecture
 
-This is a full-stack application deployed on Vercel:
+This is a full-stack application with a **dual-mode backend** that works both locally and in production:
 
 ```
 ┌─────────────────────────────────────────┐
@@ -43,7 +43,12 @@ This is a full-stack application deployed on Vercel:
               │ HTTP Request
               ▼
 ┌─────────────────────────────────────────┐
-│   Vercel Serverless Function (/api)    │
+│          Backend API Layer              │
+│                                         │
+│  Production: Vercel Serverless Function│
+│  Local Dev:  Express Server             │
+│                                         │
+│  Both use shared handler.ts:            │
 │  - Proxies to Yahoo Finance            │
 │  - Handles CORS                         │
 │  - Ticker normalization (BRK.B→BRK-B)  │
@@ -63,6 +68,13 @@ This is a full-stack application deployed on Vercel:
 - The serverless function acts as a proxy, solving the CORS issue
 - API keys stay server-side (secure)
 - Ticker symbol normalization (e.g., BRK.B → BRK-B for Yahoo Finance)
+
+**Dual-mode architecture:**
+- `api/handler.ts` - Shared business logic (platform-agnostic)
+- `api/stock-price.ts` - Vercel serverless function wrapper (production)
+- `api/dev-server.ts` - Express server wrapper (local development)
+- Both adapters use the same handler logic, ensuring 100% code parity
+- No Vercel dependency needed for local development or testing
 
 ## Getting Started
 
@@ -125,20 +137,56 @@ npm install
 
 ### Development
 
-**Important: API Limitations in Local Development**
+This project supports **full-stack local development** without any external dependencies.
 
-The `/api/stock-price` endpoint is a Vercel serverless function that only runs in production or with Vercel's development server. When using `npm run dev`, you have two options:
+#### Option 1: Full-Stack Development (Recommended)
 
-**Option 1: Frontend Development Only (Recommended for UI work)**
+Run both the frontend and API server locally:
+
+**Terminal 1 - Frontend:**
+```bash
+npm run dev
+```
+- Vite dev server runs on http://localhost:5173
+- Frontend with hot module replacement
+
+**Terminal 2 - API Server:**
+```bash
+npm run dev:api
+```
+- Express server runs on http://localhost:3001
+- API endpoint: http://localhost:3001/api/stock-price
+- Uses the same handler logic as production
+
+**Configure the frontend to use local API:**
+- In development, the frontend calls `/api/stock-price` (relative path)
+- For local testing with the Express server, update the API URL to `http://localhost:3001/api/stock-price`
+- Or use a proxy in `vite.config.ts` to forward `/api/*` requests to port 3001
+
+**Test the API directly:**
+```bash
+# Health check
+curl http://localhost:3001/health
+
+# Stock price example
+curl "http://localhost:3001/api/stock-price?ticker=AAPL&date=2024-01-01"
+```
+
+#### Option 2: Frontend-Only Development
+
+For UI-only work without needing real API responses:
+
 ```bash
 npm run dev
 ```
 - Runs Vite dev server on http://localhost:5173
-- Frontend works perfectly
-- **API calls will fail** (expected - use mock data or deploy to test API)
-- Best for UI development and testing with MSW mocks
+- Use MSW mocks for API responses (already configured in tests)
+- Best for UI development and component testing
 
-**Option 2: Full-Stack Development with Vercel CLI**
+#### Option 3: Full-Stack with Vercel CLI (Optional)
+
+If you prefer to test with Vercel's exact production environment:
+
 ```bash
 # One-time setup: login to Vercel
 vercel login
@@ -147,11 +195,8 @@ vercel login
 vercel dev
 ```
 - Runs both frontend and serverless functions locally
-- API endpoint `/api/stock-price` works correctly
-- Mimics production environment
+- Mimics production environment exactly
 - Requires Vercel account (free tier available)
-
-**For API Testing:** Either deploy to Vercel or use `vercel dev` for local testing.
 
 ### Build
 
@@ -350,8 +395,12 @@ The calculation: `(500.16 + 493.35) / 2 × 34 = 496.755 × 34 = $16,889.67`
 
 ```
 typescript/stock-gift-value/
-├── api/                     # Vercel serverless functions
-│   └── stock-price.ts       # Yahoo Finance API proxy
+├── api/                     # Backend API
+│   ├── handler.ts           # Shared business logic (platform-agnostic)
+│   ├── stock-price.ts       # Vercel serverless function wrapper
+│   ├── dev-server.ts        # Express development server
+│   └── __tests__/           # API handler tests
+│       └── handler.test.ts
 ├── src/
 │   ├── components/          # React components
 │   │   ├── StockGiftCalculator.tsx
@@ -380,6 +429,12 @@ typescript/stock-gift-value/
 ├── SPEC.md                  # Design specification
 └── README.md
 ```
+
+**Key architectural files:**
+- `api/handler.ts` - Core API logic, fully testable without any platform dependencies
+- `api/stock-price.ts` - Thin Vercel adapter (used in production)
+- `api/dev-server.ts` - Thin Express adapter (used in local development)
+- Both adapters call the same `handleStockPriceRequest()` function
 
 ## CI/CD
 
