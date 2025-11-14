@@ -100,6 +100,12 @@
         "@typescript-eslint/no-unsafe-member-access": "off",
         "@typescript-eslint/no-unsafe-assignment": "off"
       }
+    },
+    {
+      "files": ["**/__tests__/**/*.ts", "**/__tests__/**/*.tsx", "**/*.test.ts", "**/*.test.tsx"],
+      "rules": {
+        "max-lines-per-function": ["error", { "max": 200, "skipBlankLines": true, "skipComments": true }]
+      }
     }
   ]
 }

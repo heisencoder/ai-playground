@@ -33,11 +33,13 @@ describe('useClipboard', () => {
   }
 
   const getWriteTextMock = (): ReturnType<typeof vi.fn> => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     return vi.mocked(navigator.clipboard.writeText)
   }
 
   const getFirstCallArg = (): string => {
     const mock = getWriteTextMock()
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const arg = mock.mock.calls[0]?.[0]
     if (typeof arg !== 'string') {
       throw new Error('Expected string argument')
