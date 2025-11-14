@@ -115,7 +115,9 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
 
       const table = screen.getByRole('table')
-      const dateHeader = within(table).getByRole('columnheader', { name: /date/i })
+      const dateHeader = within(table).getByRole('columnheader', {
+        name: /date/i,
+      })
 
       // Should show unsorted indicator initially
       expect(dateHeader).toHaveTextContent('↕')
@@ -470,9 +472,12 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.tab() // Blur to trigger check
 
       // Should not create a 51st row
-      await waitFor(() => {
-        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
-      }, { timeout: 1000 })
+      await waitFor(
+        () => {
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
+        },
+        { timeout: 1000 }
+      )
     })
 
     it.skip('should add new empty row when at limit and a row is cleared', async () => {
@@ -484,12 +489,18 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create 50 rows
       for (let i = 0; i < 49; i++) {
         const dateInputs = screen.getAllByLabelText(/^date$/i)
-        await user.type(dateInputs[dateInputs.length - 1], `2024-01-${String(i + 1).padStart(2, '0')}`)
+        await user.type(
+          dateInputs[dateInputs.length - 1],
+          `2024-01-${String(i + 1).padStart(2, '0')}`
+        )
         await user.tab() // Blur to trigger row addition
 
-        await waitFor(() => {
-          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(i + 2)
-        }, { timeout: 3000 })
+        await waitFor(
+          () => {
+            expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(i + 2)
+          },
+          { timeout: 3000 }
+        )
       }
 
       let dateInputs = screen.getAllByLabelText(/^date$/i)
@@ -506,9 +517,12 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.tab() // Blur to trigger row removal and addition
 
       // Should now have 50 rows again (49 + 1 new empty)
-      await waitFor(() => {
-        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
-      }, { timeout: 3000 })
+      await waitFor(
+        () => {
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
+        },
+        { timeout: 3000 }
+      )
     })
   })
 
@@ -733,16 +747,20 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.tab() // Blur to ensure all values are committed
 
       // Wait for value to calculate
-      await waitFor(() => {
-        expect(screen.getByText(/\$1,450\.00/)).toBeInTheDocument()
-      }, { timeout: 3000 })
+      await waitFor(
+        () => {
+          expect(screen.getByText(/\$1,450\.00/)).toBeInTheDocument()
+        },
+        { timeout: 3000 }
+      )
 
       const copyButton = screen.getByRole('button', {
         name: /copy all data to clipboard/i,
       })
       await user.click(copyButton)
 
-      const expectedText = 'Date\tTicker\tShares\tValue\n2024-01-15\tAAPL\t100\t$1,450.00'
+      const expectedText =
+        'Date\tTicker\tShares\tValue\n2024-01-15\tAAPL\t100\t$1,450.00'
 
       expect(clipboardWriteTextSpy).toHaveBeenCalledWith(expectedText)
     })
@@ -851,9 +869,12 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.type(sharesInputs[1], '50')
 
       // Wait for calculations
-      await waitFor(() => {
-        expect(screen.getByText(/\$1,450\.00/)).toBeInTheDocument()
-      }, { timeout: 3000 })
+      await waitFor(
+        () => {
+          expect(screen.getByText(/\$1,450\.00/)).toBeInTheDocument()
+        },
+        { timeout: 3000 }
+      )
 
       const copyButton = screen.getByRole('button', {
         name: /copy all data to clipboard/i,

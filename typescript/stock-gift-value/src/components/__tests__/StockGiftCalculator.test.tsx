@@ -56,7 +56,9 @@ describe('StockGiftCalculator', () => {
 
     // Now remove button should appear for the row with data
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument()
+      expect(
+        screen.getByRole('button', { name: /remove/i })
+      ).toBeInTheDocument()
     })
   })
 

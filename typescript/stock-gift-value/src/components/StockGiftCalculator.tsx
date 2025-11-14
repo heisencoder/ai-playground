@@ -151,7 +151,8 @@ export function StockGiftCalculator() {
         gift.id === id
           ? {
               ...gift,
-              [field]: field === 'ticker' ? (value as string).toUpperCase() : value,
+              [field]:
+                field === 'ticker' ? (value as string).toUpperCase() : value,
             }
           : gift
       )
@@ -259,10 +260,10 @@ export function StockGiftCalculator() {
       const valueText = gift.loading
         ? 'Loading...'
         : gift.error
-        ? 'Error'
-        : gift.value !== undefined
-        ? formatCurrency(gift.value)
-        : ''
+          ? 'Error'
+          : gift.value !== undefined
+            ? formatCurrency(gift.value)
+            : ''
 
       return `${gift.date}\t${gift.ticker}\t${gift.shares}\t${valueText}`
     })
@@ -312,7 +313,8 @@ export function StockGiftCalculator() {
         // Only navigate if cursor is at the start of input
         const input = e.target as HTMLInputElement
         // Date inputs don't support selectionStart, so always allow navigation
-        const shouldNavigate = input.type === 'date' || input.selectionStart === 0
+        const shouldNavigate =
+          input.type === 'date' || input.selectionStart === 0
         if (shouldNavigate) {
           e.preventDefault()
           targetRowId = rowId
@@ -326,7 +328,8 @@ export function StockGiftCalculator() {
         // Only navigate if cursor is at the end of input
         const input = e.target as HTMLInputElement
         // Date inputs don't support selectionStart, so always allow navigation
-        const shouldNavigate = input.type === 'date' || input.selectionStart === input.value.length
+        const shouldNavigate =
+          input.type === 'date' || input.selectionStart === input.value.length
         if (shouldNavigate) {
           e.preventDefault()
           targetRowId = rowId
@@ -430,7 +433,11 @@ export function StockGiftCalculator() {
                   📋
                 </button>
                 {copyMessage && (
-                  <span className="copy-message" role="status" aria-live="polite">
+                  <span
+                    className="copy-message"
+                    role="status"
+                    aria-live="polite"
+                  >
                     {copyMessage}
                   </span>
                 )}
