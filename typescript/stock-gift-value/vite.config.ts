@@ -19,6 +19,14 @@ export default defineConfig({
     css: true,
     testTimeout: 10000, // 10 seconds per test
     hookTimeout: 10000, // 10 seconds for hooks
+    // Fail tests on console warnings/errors (turn warnings into errors)
+    onConsoleLog(log, type) {
+      if (type === 'stderr' && log.includes('Warning:')) {
+        // Treat React warnings as test failures
+        throw new Error(`React Warning detected: ${log}`)
+      }
+      return false // Allow other console logs
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -40,6 +48,7 @@ export default defineConfig({
         'api/server.ts',
         // Short files with ≤5 uncovered lines (add as needed)
         'src/services/stockApi.ts', // 59 lines, 1 uncovered (error handler edge case)
+        'src/components/StockGiftRow.tsx', // 89 lines, 1 uncovered branch (shares || '' fallback)
         // TODO: Remove after adding tests - temporarily excluded to allow CI to pass
         'src/components/StockGiftCalculator.tsx', // 152 lines, 9 uncovered - needs better test coverage
       ],

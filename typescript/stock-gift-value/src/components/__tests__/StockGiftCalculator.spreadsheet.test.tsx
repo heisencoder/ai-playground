@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StockGiftCalculator } from '../StockGiftCalculator'
 import { stockPriceCache } from '../../services/cache'
@@ -459,7 +459,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
         for (let i = 0; i < 49; i++) {
           const dateInputs = screen.getAllByLabelText(/^date$/i)
           await user.type(dateInputs[dateInputs.length - 1], '2024-01-01')
-          dateInputs[dateInputs.length - 1].blur() // Explicit blur for CI
+          act(() => dateInputs[dateInputs.length - 1].blur()) // Wrap in act to avoid warnings
           await user.tab()
 
           await waitFor(
@@ -476,7 +476,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
         // Fill the 50th row
         const dateInputs = screen.getAllByLabelText(/^date$/i)
         await user.type(dateInputs[49], '2024-01-01')
-        dateInputs[49].blur() // Explicit blur for CI
+        act(() => dateInputs[49].blur()) // Wrap in act to avoid warnings
         await user.tab()
 
         // Should not create a 51st row
@@ -543,7 +543,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create two rows
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      act(() => dateInputs[0].blur()) // Wrap in act to avoid warnings
       await user.tab()
 
       await waitFor(
@@ -571,7 +571,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create two rows
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      act(() => dateInputs[0].blur()) // Wrap in act to avoid warnings
       await user.tab()
 
       await waitFor(
@@ -665,7 +665,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create a second row
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      act(() => dateInputs[0].blur()) // Wrap in act to avoid warnings
       await user.tab()
 
       await waitFor(
@@ -693,7 +693,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create two rows
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      act(() => dateInputs[0].blur()) // Wrap in act to avoid warnings
       await user.tab()
 
       await waitFor(
