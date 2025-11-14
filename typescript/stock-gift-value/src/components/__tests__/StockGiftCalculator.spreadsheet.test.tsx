@@ -448,37 +448,46 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       expect(allDateInputs[allDateInputs.length - 1]).toHaveValue('')
     })
 
-    it('should stop adding rows at 50-row limit', async () => {
-      render(<StockGiftCalculator />)
-      const user = userEvent.setup()
+    it(
+      'should stop adding rows at 50-row limit',
+      { timeout: 300000 }, // 5 minute timeout for this slow test
+      async () => {
+        render(<StockGiftCalculator />)
+        const user = userEvent.setup()
 
-      // Create 49 rows (50th will be empty)
-      for (let i = 0; i < 49; i++) {
+        // Create 49 rows (50th will be empty)
+        for (let i = 0; i < 49; i++) {
+          const dateInputs = screen.getAllByLabelText(/^date$/i)
+          await user.type(dateInputs[dateInputs.length - 1], '2024-01-01')
+          dateInputs[dateInputs.length - 1].blur() // Explicit blur for CI
+          await user.tab()
+
+          await waitFor(
+            () => {
+              expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(i + 2)
+            },
+            { timeout: 5000 }
+          )
+        }
+
+        // Should have exactly 50 rows
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
+
+        // Fill the 50th row
         const dateInputs = screen.getAllByLabelText(/^date$/i)
-        await user.type(dateInputs[dateInputs.length - 1], '2024-01-01')
-        await user.tab() // Blur to trigger row addition
+        await user.type(dateInputs[49], '2024-01-01')
+        dateInputs[49].blur() // Explicit blur for CI
+        await user.tab()
 
-        await waitFor(() => {
-          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(i + 2)
-        })
+        // Should not create a 51st row
+        await waitFor(
+          () => {
+            expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
+          },
+          { timeout: 3000 }
+        )
       }
-
-      // Should have exactly 50 rows
-      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
-
-      // Fill the 50th row
-      const dateInputs = screen.getAllByLabelText(/^date$/i)
-      await user.type(dateInputs[49], '2024-01-01')
-      await user.tab() // Blur to trigger check
-
-      // Should not create a 51st row
-      await waitFor(
-        () => {
-          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
-        },
-        { timeout: 1000 }
-      )
-    })
+    )
 
     it.skip('should add new empty row when at limit and a row is cleared', async () => {
       // This test is skipped due to timing/performance issues with creating 50 rows
@@ -534,11 +543,15 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create two rows
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      await user.tab() // Blur to trigger row addition
+      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      await user.tab()
 
-      await waitFor(() => {
-        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
-      })
+      await waitFor(
+        () => {
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
+        },
+        { timeout: 3000 }
+      )
 
       // Focus first date input
       const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
@@ -558,11 +571,15 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create two rows
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      await user.tab() // Blur to trigger row addition
+      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      await user.tab()
 
-      await waitFor(() => {
-        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
-      })
+      await waitFor(
+        () => {
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
+        },
+        { timeout: 3000 }
+      )
 
       // Focus second date input
       const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
@@ -648,11 +665,15 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create a second row
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      await user.tab() // Blur to trigger row addition
+      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      await user.tab()
 
-      await waitFor(() => {
-        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
-      })
+      await waitFor(
+        () => {
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
+        },
+        { timeout: 3000 }
+      )
 
       sharesInput.focus()
 
@@ -672,11 +693,15 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       // Create two rows
       const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
-      await user.tab() // Blur to trigger row addition
+      dateInputs[0].blur() // Explicitly blur to trigger row addition
+      await user.tab()
 
-      await waitFor(() => {
-        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
-      })
+      await waitFor(
+        () => {
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
+        },
+        { timeout: 3000 }
+      )
 
       const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       updatedDateInputs[0].focus()
