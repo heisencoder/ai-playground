@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { StockGift } from '../types'
 import { fetchStockPrice } from '../services/stockApi'
 import {
@@ -28,11 +28,6 @@ type SortDirection = 'asc' | 'desc'
 interface SortConfig {
   column: SortColumn
   direction: SortDirection
-}
-
-interface CellPosition {
-  rowId: string
-  field: 'date' | 'ticker' | 'shares'
 }
 
 const MAX_ROWS = 50
@@ -197,29 +192,33 @@ export function StockGiftCalculator() {
     const emptyGifts = giftsToSort.filter((gift) => isRowEmpty(gift))
 
     const sorted = [...nonEmptyGifts].sort((a, b) => {
-      let aValue: any
-      let bValue: any
+      let aValue: string | number
+      let bValue: string | number
 
       switch (sortConfig.column) {
-        case 'date':
+        case 'date': {
           aValue = a.date || ''
           bValue = b.date || ''
           break
-        case 'ticker':
+        }
+        case 'ticker': {
           aValue = a.ticker || ''
           bValue = b.ticker || ''
           break
-        case 'shares':
+        }
+        case 'shares': {
           aValue = a.shares || 0
           bValue = b.shares || 0
           break
-        case 'value':
+        }
+        case 'value': {
           // Sort by value, putting loading/error states at the end
           if (a.loading || a.error) aValue = -Infinity
           else aValue = a.value || -Infinity
           if (b.loading || b.error) bValue = -Infinity
           else bValue = b.value || -Infinity
           break
+        }
       }
 
       if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
@@ -321,7 +320,7 @@ export function StockGiftCalculator() {
         }
         break
 
-      case 'ArrowRight':
+      case 'ArrowRight': {
         // Only navigate if cursor is at the end of input
         const input = e.target as HTMLInputElement
         if (input.selectionStart === input.value.length) {
@@ -331,6 +330,7 @@ export function StockGiftCalculator() {
           else if (field === 'ticker') targetField = 'shares'
         }
         break
+      }
 
       case 'Tab':
         // Let default tab behavior work, but we could customize if needed

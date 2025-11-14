@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { StockGiftCalculator } from '../StockGiftCalculator'
 import { stockPriceCache } from '../../services/cache'
@@ -695,7 +695,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.click(copyButton)
 
       // Should only copy the row with data, not the empty row
-      const copiedText = (navigator.clipboard.writeText as any).mock.calls[0][0]
+      const copiedText = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0]
       const lines = copiedText.split('\n')
 
       expect(lines).toHaveLength(2) // Header + 1 data row
@@ -735,7 +735,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       })
       await user.click(copyButton)
 
-      const copiedText = (navigator.clipboard.writeText as any).mock.calls[0][0]
+      const copiedText = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0]
 
       // Should show "Loading..." for value
       expect(copiedText).toContain('Loading...')
@@ -775,7 +775,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       })
       await user.click(copyButton)
 
-      const copiedText = (navigator.clipboard.writeText as any).mock.calls[0][0]
+      const copiedText = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0]
       const lines = copiedText.split('\n')
 
       expect(lines).toHaveLength(3) // Header + 2 data rows
