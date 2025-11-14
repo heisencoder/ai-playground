@@ -3,6 +3,8 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { handleStockPriceRequest } from './handler.js'
+import { DEFAULT_PORT, HTTP_STATUS } from './constants.js'
+import { logger } from './logger.js'
 
 /**
  * Standalone Express server for Stock Gift Value Calculator
@@ -14,8 +16,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const app = express()
-const PORT = process.env.PORT || 3001
-const NODE_ENV = process.env.NODE_ENV || 'development'
+const PORT = process.env.PORT ?? DEFAULT_PORT
+const NODE_ENV = process.env.NODE_ENV ?? 'development'
 
 // Enable CORS
 // In production, you may want to restrict this to specific origins
@@ -27,7 +29,7 @@ app.use(express.json())
 // Add basic request logging
 app.use((req, _res, next) => {
   const timestamp = new Date().toISOString()
-  console.log(`[${timestamp}] ${req.method} ${req.url}`)
+  logger.info(`[${timestamp}] ${req.method} ${req.url}`)
   next()
 })
 
@@ -56,18 +58,18 @@ app.get('/api/stock-price', async (req, res) => {
     // Send response
     if (result.data) {
       return res.status(result.status).json(result.data)
-    } else {
-      const errorResponse: Record<string, string> = {
-        error: result.error || 'Unknown error',
-      }
-      if (result.details) {
-        errorResponse.details = result.details
-      }
-      return res.status(result.status).json(errorResponse)
     }
+
+    const errorResponse: Record<string, string> = {
+      error: result.error ?? 'Unknown error',
+    }
+    if (result.details) {
+      errorResponse.details = result.details
+    }
+    return res.status(result.status).json(errorResponse)
   } catch (error) {
-    console.error('Unexpected error in API handler:', error)
-    return res.status(500).json({
+    logger.error('Unexpected error in API handler:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error',
     })
@@ -92,20 +94,24 @@ if (NODE_ENV === 'production') {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`\n=================================`)
-  console.log(`Stock Gift Value Calculator API`)
-  console.log(`=================================`)
-  console.log(`Environment: ${NODE_ENV}`)
-  console.log(`Server URL: http://localhost:${PORT}`)
-  console.log(`\nAPI Endpoints:`)
-  console.log(`  - Health: http://localhost:${PORT}/health`)
-  console.log(`  - Stock Price: http://localhost:${PORT}/api/stock-price?ticker=AAPL&date=2024-01-01`)
+  logger.info(`\n=================================`)
+  logger.info(`Stock Gift Value Calculator API`)
+  logger.info(`=================================`)
+  logger.info(`Environment: ${NODE_ENV}`)
+  logger.info(`Server URL: http://localhost:${PORT}`)
+  logger.info(`\nAPI Endpoints:`)
+  logger.info(`  - Health: http://localhost:${PORT}/health`)
+  logger.info(
+    `  - Stock Price: http://localhost:${PORT}/api/stock-price?ticker=AAPL&date=2024-01-01`
+  )
   if (NODE_ENV === 'production') {
-    console.log(`\nServing static files from: dist/`)
+    logger.info(`\nServing static files from: dist/`)
   } else {
-    console.log(`\nDevelopment mode: Run Vite dev server separately with 'npm run dev'`)
+    logger.info(
+      `\nDevelopment mode: Run Vite dev server separately with 'npm run dev'`
+    )
   }
-  console.log(`=================================\n`)
+  logger.info(`=================================\n`)
 })
 
 export default app

@@ -9,11 +9,12 @@ const originalFetch = globalThis.fetch
 beforeAll(() => {
   // Replace fetch with a version that handles relative URLs
   globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
-    if (typeof input === 'string' && input.startsWith('/')) {
+    let url = input
+    if (typeof url === 'string' && url.startsWith('/')) {
       // Convert relative URLs to absolute for Node.js fetch
-      input = `http://localhost${input}`
+      url = `http://localhost${url}`
     }
-    return originalFetch(input, init)
+    return originalFetch(url, init)
   }) as typeof fetch
 
   // Start MSW server

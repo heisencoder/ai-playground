@@ -45,10 +45,14 @@ export function formatCurrency(value: number): string {
  * @returns true if valid, false otherwise
  */
 export function isValidDate(dateString: string): boolean {
-  if (!dateString) return false
+  if (!dateString) {
+    return false
+  }
 
   const date = new Date(dateString)
-  if (isNaN(date.getTime())) return false
+  if (isNaN(date.getTime())) {
+    return false
+  }
 
   // Check if date is not in the future
   const today = new Date()
@@ -64,7 +68,9 @@ export function isValidDate(dateString: string): boolean {
  * @returns true if valid format, false otherwise
  */
 export function isValidTicker(ticker: string): boolean {
-  if (!ticker) return false
+  if (!ticker) {
+    return false
+  }
 
   // Basic validation: 1-5 uppercase letters, may contain dots
   const tickerRegex = /^[A-Z]{1,5}(\.[A-Z]{1,2})?$/

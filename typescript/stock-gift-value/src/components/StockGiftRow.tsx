@@ -1,3 +1,4 @@
+import type React from 'react'
 import { StockGift } from '../types'
 import { formatCurrency } from '../utils/calculations'
 import './StockGiftRow.css'
@@ -14,21 +15,21 @@ export function StockGiftRow({
   onUpdate,
   onRemove,
   showRemove,
-}: StockGiftRowProps) {
-  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+}: StockGiftRowProps): React.JSX.Element {
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onUpdate(gift.id, { date: e.target.value })
   }
 
-  const handleTickerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTickerChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     onUpdate(gift.id, { ticker: e.target.value.toUpperCase() })
   }
 
-  const handleSharesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSharesChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const shares = parseFloat(e.target.value)
     onUpdate(gift.id, { shares: isNaN(shares) ? 0 : shares })
   }
 
-  const handleRemove = () => {
+  const handleRemove = (): void => {
     onRemove(gift.id)
   }
 
