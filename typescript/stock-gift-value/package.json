@@ -9,8 +9,11 @@
   },
   "scripts": {
     "dev": "vite",
-    "dev:api": "tsx api/dev-server.ts",
+    "dev:api": "tsx api/server.ts",
     "build": "tsc && vite build",
+    "build:server": "tsc --project tsconfig.server.json",
+    "build:all": "npm run build && npm run build:server",
+    "start": "NODE_ENV=production node dist-server/api/server.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
@@ -20,6 +23,8 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -33,14 +38,11 @@
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
-    "@vercel/node": "^5.5.6",
     "@vitejs/plugin-react": "^5.1.1",
     "@vitest/coverage-v8": "^4.0.8",
-    "cors": "^2.8.5",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "express": "^5.1.0",
     "jsdom": "^27.2.0",
     "msw": "^2.0.11",
     "prettier": "^3.6.2",

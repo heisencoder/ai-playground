@@ -23,6 +23,25 @@ export interface StockPriceResponse {
 }
 
 /**
+ * Yahoo Finance API response structure
+ */
+interface YahooFinanceResponse {
+  chart?: {
+    result?: Array<{
+      indicators?: {
+        quote?: Array<{
+          high?: number[]
+          low?: number[]
+        }>
+      }
+    }>
+    error?: {
+      description?: string
+    }
+  }
+}
+
+/**
  * Normalize ticker symbol for Yahoo Finance API
  * Yahoo Finance uses hyphens instead of periods (e.g., BRK-B instead of BRK.B)
  */
@@ -81,7 +100,7 @@ export async function handleStockPriceRequest(
       }
     }
 
-    const json = await response.json()
+    const json = (await response.json()) as YahooFinanceResponse
 
     // Validate response structure
     if (

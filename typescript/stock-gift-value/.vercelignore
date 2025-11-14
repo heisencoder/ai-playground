@@ -1,9 +1,0 @@
-node_modules
-.git
-*.test.ts
-*.test.tsx
-__tests__
-src/test
-coverage
-.env.local
-.env.*.local

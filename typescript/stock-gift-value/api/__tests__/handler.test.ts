@@ -22,17 +22,21 @@ describe('normalizeTickerForYahoo', () => {
 })
 
 describe('handleStockPriceRequest', () => {
-  // Store original fetch
+  // Store original fetch and console.error
   const originalFetch = global.fetch
+  const originalConsoleError = console.error
 
   beforeEach(() => {
     // Mock fetch for each test
     global.fetch = vi.fn()
+    // Suppress console.error during tests to avoid confusing error output
+    console.error = vi.fn()
   })
 
   afterEach(() => {
-    // Restore original fetch
+    // Restore original fetch and console.error
     global.fetch = originalFetch
+    console.error = originalConsoleError
     vi.restoreAllMocks()
   })
 
