@@ -163,9 +163,15 @@ export function StockGiftCalculator() {
     // Check if we need to add or remove rows after user leaves the cell
     setGifts((prevGifts) => {
       const giftIndex = prevGifts.findIndex((g) => g.id === id)
-      if (giftIndex === -1) return prevGifts
+      if (giftIndex === -1) {
+        return prevGifts
+      }
 
       const gift = prevGifts[giftIndex]
+      if (!gift) {
+        return prevGifts
+      }
+
       const isEmpty = isRowEmpty(gift)
       const isLastRow = giftIndex === prevGifts.length - 1
 
@@ -295,8 +301,11 @@ export function StockGiftCalculator() {
       case 'ArrowUp':
         e.preventDefault()
         if (currentRowIndex > 0) {
-          targetRowId = sortedGifts[currentRowIndex - 1].id
-          targetField = field
+          const previousGift = sortedGifts[currentRowIndex - 1]
+          if (previousGift) {
+            targetRowId = previousGift.id
+            targetField = field
+          }
         }
         break
 
@@ -304,8 +313,11 @@ export function StockGiftCalculator() {
       case 'Enter':
         e.preventDefault()
         if (currentRowIndex < sortedGifts.length - 1) {
-          targetRowId = sortedGifts[currentRowIndex + 1].id
-          targetField = field
+          const nextGift = sortedGifts[currentRowIndex + 1]
+          if (nextGift) {
+            targetRowId = nextGift.id
+            targetField = field
+          }
         }
         break
 

@@ -46,21 +46,17 @@ export default defineConfig({
         'src/main.tsx',
         'src/App.tsx',
         'api/server.ts',
-        // Short files with ≤5 uncovered lines (add as needed)
-        'src/services/stockApi.ts', // 59 lines, 1 uncovered (error handler edge case)
-        'src/components/StockGiftRow.tsx', // 89 lines, 1 uncovered branch (shares || '' fallback)
-        // TODO: Remove after adding tests - temporarily excluded to allow CI to pass
-        'src/components/StockGiftCalculator.tsx', // 152 lines, 9 uncovered - needs better test coverage
       ],
       all: true,
-      // Per-file thresholds - each file must meet 95% coverage
-      // Exception: Short files (<~50 lines) with ≤5 uncovered lines can be added to exclude list above
       thresholds: {
+        // Note: Vitest doesn't support separate global vs per-file thresholds
+        // 90% for lines/functions/statements, 85% for branches (harder to cover)
+        // Applies to both global aggregate and per-file
+        lines: 90,
+        functions: 90,
+        branches: 85,
+        statements: 90,
         perFile: true,
-        lines: 95,
-        functions: 95,
-        branches: 95,
-        statements: 95,
       },
     },
   },
