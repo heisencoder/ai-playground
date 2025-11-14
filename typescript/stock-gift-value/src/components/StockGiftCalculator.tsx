@@ -146,42 +146,40 @@ export function StockGiftCalculator() {
     field: 'date' | 'ticker' | 'shares',
     value: string | number
   ) => {
+    setGifts((prevGifts) =>
+      prevGifts.map((gift) =>
+        gift.id === id
+          ? {
+              ...gift,
+              [field]: field === 'ticker' ? (value as string).toUpperCase() : value,
+            }
+          : gift
+      )
+    )
+  }
+
+  const handleBlur = (id: string) => {
+    // Check if we need to add or remove rows after user leaves the cell
     setGifts((prevGifts) => {
       const giftIndex = prevGifts.findIndex((g) => g.id === id)
       if (giftIndex === -1) return prevGifts
 
       const gift = prevGifts[giftIndex]
-      const wasEmpty = isRowEmpty(gift)
+      const isEmpty = isRowEmpty(gift)
       const isLastRow = giftIndex === prevGifts.length - 1
 
-      // Update the gift
-      const updatedGifts = prevGifts.map((g, i) =>
-        i === giftIndex
-          ? {
-              ...g,
-              [field]: field === 'ticker' ? (value as string).toUpperCase() : value,
-            }
-          : g
-      )
-
-      // If this was the last empty row and we're typing something, add a new row
-      if (wasEmpty && isLastRow && prevGifts.length < MAX_ROWS) {
-        return [...updatedGifts, createEmptyGift()]
+      // Add a new empty row if this was the last row and now has data
+      if (!isEmpty && isLastRow && prevGifts.length < MAX_ROWS) {
+        return [...prevGifts, createEmptyGift()]
       }
 
-      // Check if a row became empty and should be removed
-      const updatedGift = updatedGifts[giftIndex]
-      const isNowEmpty = isRowEmpty(updatedGift)
-      const hasOtherEmptyRows = updatedGifts.some(
-        (g, i) => i !== giftIndex && isRowEmpty(g)
-      )
-
-      // Remove this row if it's now empty and there's another empty row
-      if (isNowEmpty && hasOtherEmptyRows && updatedGifts.length > 1) {
-        return updatedGifts.filter((_, i) => i !== giftIndex)
+      // Remove this row if it's empty and there's another empty row
+      const emptyCount = prevGifts.filter(isRowEmpty).length
+      if (isEmpty && emptyCount > 1 && prevGifts.length > 1) {
+        return prevGifts.filter((_, i) => i !== giftIndex)
       }
 
-      return updatedGifts
+      return prevGifts
     })
   }
 
@@ -445,6 +443,7 @@ export function StockGiftCalculator() {
                     onChange={(e) =>
                       handleInputChange(gift.id, 'date', e.target.value)
                     }
+                    onBlur={() => handleBlur(gift.id)}
                     onKeyDown={(e) => handleKeyDown(e, gift.id, 'date')}
                     className="date-input"
                     max={new Date().toISOString().split('T')[0]}
@@ -460,6 +459,7 @@ export function StockGiftCalculator() {
                     onChange={(e) =>
                       handleInputChange(gift.id, 'ticker', e.target.value)
                     }
+                    onBlur={() => handleBlur(gift.id)}
                     onKeyDown={(e) => handleKeyDown(e, gift.id, 'ticker')}
                     className="ticker-input"
                     placeholder="AAPL"
@@ -480,6 +480,7 @@ export function StockGiftCalculator() {
                         parseFloat(e.target.value) || 0
                       )
                     }
+                    onBlur={() => handleBlur(gift.id)}
                     onKeyDown={(e) => handleKeyDown(e, gift.id, 'shares')}
                     className="shares-input"
                     placeholder="0"
