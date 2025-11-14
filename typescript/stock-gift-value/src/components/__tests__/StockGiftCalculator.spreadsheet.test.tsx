@@ -5,12 +5,15 @@ import { StockGiftCalculator } from '../StockGiftCalculator'
 import { stockPriceCache } from '../../services/cache'
 
 describe('StockGiftCalculator - Spreadsheet Interface', () => {
+  let clipboardWriteTextSpy: ReturnType<typeof vi.fn>
+
   beforeEach(() => {
     stockPriceCache.clear()
     // Mock clipboard API
+    clipboardWriteTextSpy = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'clipboard', {
       value: {
-        writeText: vi.fn().mockResolvedValue(undefined),
+        writeText: clipboardWriteTextSpy,
       },
       writable: true,
       configurable: true,
@@ -46,9 +49,9 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       expect(rows).toHaveLength(2)
 
       // Check that inputs are empty
-      const dateInputs = screen.getAllByLabelText(/date/i)
-      const tickerInputs = screen.getAllByLabelText(/ticker/i)
-      const sharesInputs = screen.getAllByLabelText(/shares/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
+      const tickerInputs = screen.getAllByLabelText(/^ticker$/i)
+      const sharesInputs = screen.getAllByLabelText(/^shares$/i)
 
       expect(dateInputs).toHaveLength(1)
       expect(tickerInputs).toHaveLength(1)
@@ -56,7 +59,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
 
       expect(dateInputs[0]).toHaveValue('')
       expect(tickerInputs[0]).toHaveValue('')
-      expect(sharesInputs[0]).toHaveValue('')
+      expect(sharesInputs[0]).toHaveValue(null) // Number input with value 0
     })
 
     it('should not show "Add Another Stock Gift" button', () => {
@@ -72,8 +75,11 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Fill first row to trigger new row creation
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
+
+      // Blur to trigger row addition
+      await user.tab()
 
       // Wait for new row to appear
       await waitFor(() => {
@@ -112,18 +118,20 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create multiple rows with different dates
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-03-15')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
-      const updatedDateInputs = screen.getAllByLabelText(/date/i)
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(updatedDateInputs[1], '2024-01-10')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(3)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(3)
       })
 
       // Click date header to sort - find button within the header
@@ -133,7 +141,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.click(dateButton)
 
       // Check that dates are sorted ascending (synchronous after click)
-      const sortedDateInputs = screen.getAllByLabelText(/date/i)
+      const sortedDateInputs = screen.getAllByLabelText(/^date$/i)
       expect(sortedDateInputs[0]).toHaveValue('2024-01-10')
       expect(sortedDateInputs[1]).toHaveValue('2024-03-15')
       expect(sortedDateInputs[2]).toHaveValue('') // Empty row at bottom
@@ -147,15 +155,17 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create rows with dates
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-03-15')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
-      const updatedDateInputs = screen.getAllByLabelText(/date/i)
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(updatedDateInputs[1], '2024-01-10')
+      await user.tab() // Blur to trigger row addition
 
       const dateHeader = screen.getByRole('columnheader', { name: /date/i })
 
@@ -166,12 +176,12 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.click(dateHeader)
 
       await waitFor(() => {
-        const sortedDateInputs = screen.getAllByLabelText(/date/i)
+        const sortedDateInputs = screen.getAllByLabelText(/^date$/i)
         expect(sortedDateInputs[0]).toHaveValue('2024-03-15')
         expect(sortedDateInputs[1]).toHaveValue('2024-01-10')
       })
 
-      expect(dateHeader).toHaveTextContent('↓')
+      expect(dateHeader).toHaveTextContent('Date ↓')
     })
 
     it('should sort by ticker alphabetically', async () => {
@@ -179,22 +189,28 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create rows with tickers
-      const tickerInputs = screen.getAllByLabelText(/ticker/i)
+      const tickerInputs = screen.getAllByLabelText(/^ticker$/i)
       await user.type(tickerInputs[0], 'TSLA')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/ticker/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(2)
       })
 
-      const updatedTickerInputs = screen.getAllByLabelText(/ticker/i)
+      const updatedTickerInputs = screen.getAllByLabelText(/^ticker$/i)
       await user.type(updatedTickerInputs[1], 'AAPL')
+      await user.tab() // Blur to trigger row addition
+
+      await waitFor(() => {
+        expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(3)
+      })
 
       // Click ticker header to sort
       const tickerHeader = screen.getByRole('columnheader', { name: /ticker/i })
       await user.click(tickerHeader)
 
       await waitFor(() => {
-        const sortedTickerInputs = screen.getAllByLabelText(/ticker/i)
+        const sortedTickerInputs = screen.getAllByLabelText(/^ticker$/i)
         expect(sortedTickerInputs[0]).toHaveValue('AAPL')
         expect(sortedTickerInputs[1]).toHaveValue('TSLA')
       })
@@ -205,22 +221,28 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create rows with shares
-      const sharesInputs = screen.getAllByLabelText(/shares/i)
+      const sharesInputs = screen.getAllByLabelText(/^shares$/i)
       await user.type(sharesInputs[0], '100')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/shares/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(2)
       })
 
-      const updatedSharesInputs = screen.getAllByLabelText(/shares/i)
+      const updatedSharesInputs = screen.getAllByLabelText(/^shares$/i)
       await user.type(updatedSharesInputs[1], '10')
+      await user.tab() // Blur to trigger row addition
+
+      await waitFor(() => {
+        expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(3)
+      })
 
       // Click shares header to sort
       const sharesHeader = screen.getByRole('columnheader', { name: /shares/i })
       await user.click(sharesHeader)
 
       await waitFor(() => {
-        const sortedSharesInputs = screen.getAllByLabelText(/shares/i)
+        const sortedSharesInputs = screen.getAllByLabelText(/^shares$/i)
         expect(sortedSharesInputs[0]).toHaveValue('10')
         expect(sortedSharesInputs[1]).toHaveValue('100')
       })
@@ -231,11 +253,12 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create rows with data
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-03-15')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
       // Sort by date
@@ -244,7 +267,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
 
       // Last row should still be empty
       await waitFor(() => {
-        const allDateInputs = screen.getAllByLabelText(/date/i)
+        const allDateInputs = screen.getAllByLabelText(/^date$/i)
         const lastInput = allDateInputs[allDateInputs.length - 1]
         expect(lastInput).toHaveValue('')
       })
@@ -257,19 +280,22 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Initially one row
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(1)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(1)
 
       // Type in the date field
-      const dateInput = screen.getByLabelText(/date/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
       await user.type(dateInput, '2024-01-01')
 
-      // Should create a new empty row
+      // Blur to trigger row addition
+      await user.tab()
+
+      // Should create a new empty row after blur
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
       // New row should be empty
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       expect(dateInputs[1]).toHaveValue('')
     })
 
@@ -277,11 +303,14 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const tickerInput = screen.getByLabelText(/ticker/i)
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
       await user.type(tickerInput, 'A')
 
+      // Blur to trigger row addition
+      await user.tab()
+
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/ticker/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(2)
       })
     })
 
@@ -289,11 +318,14 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const sharesInput = screen.getByLabelText(/shares/i)
+      const sharesInput = screen.getByLabelText(/^shares$/i)
       await user.type(sharesInput, '10')
 
+      // Blur to trigger row addition
+      await user.tab()
+
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/shares/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(2)
       })
     })
 
@@ -301,19 +333,20 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const dateInput = screen.getByLabelText(/date/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
       await user.type(dateInput, '2024-01-01')
 
-      await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
-      })
-
       // Continue typing in the same row
-      const tickerInputs = screen.getAllByLabelText(/ticker/i)
+      const tickerInputs = screen.getAllByLabelText(/^ticker$/i)
       await user.type(tickerInputs[0], 'AAPL')
 
-      // Should still be only 2 rows
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+      // Blur to trigger row check
+      await user.tab()
+
+      await waitFor(() => {
+        // Should be only 2 rows (original with data + 1 new empty)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
+      })
     })
 
     it('should remove row when all fields are cleared', async () => {
@@ -321,17 +354,19 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create a row with data
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
 
+      await user.tab() // Trigger blur to add new row
+
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
-      const tickerInputs = screen.getAllByLabelText(/ticker/i)
+      const tickerInputs = screen.getAllByLabelText(/^ticker$/i)
       await user.type(tickerInputs[0], 'AAPL')
 
-      const sharesInputs = screen.getAllByLabelText(/shares/i)
+      const sharesInputs = screen.getAllByLabelText(/^shares$/i)
       await user.type(sharesInputs[0], '10')
 
       // Clear all fields
@@ -339,9 +374,12 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.clear(tickerInputs[0])
       await user.clear(sharesInputs[0])
 
+      // Blur to trigger row removal check
+      await user.tab()
+
       // Row should be removed, leaving only the empty row
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(1)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(1)
       })
     })
 
@@ -350,13 +388,16 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Type and then clear in the only row
-      const dateInput = screen.getByLabelText(/date/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
       await user.type(dateInput, '2024-01-01')
       await user.clear(dateInput)
 
+      // Blur to trigger check
+      await user.tab()
+
       // Should still have one row
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(1)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(1)
       })
     })
 
@@ -365,22 +406,24 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create multiple rows
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
-      const updatedDateInputs = screen.getAllByLabelText(/date/i)
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(updatedDateInputs[1], '2024-02-01')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(3)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(3)
       })
 
       // Last row should always be empty
-      const allDateInputs = screen.getAllByLabelText(/date/i)
+      const allDateInputs = screen.getAllByLabelText(/^date$/i)
       expect(allDateInputs[allDateInputs.length - 1]).toHaveValue('')
     })
 
@@ -390,24 +433,26 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
 
       // Create 49 rows (50th will be empty)
       for (let i = 0; i < 49; i++) {
-        const dateInputs = screen.getAllByLabelText(/date/i)
+        const dateInputs = screen.getAllByLabelText(/^date$/i)
         await user.type(dateInputs[dateInputs.length - 1], '2024-01-01')
+        await user.tab() // Blur to trigger row addition
 
         await waitFor(() => {
-          expect(screen.getAllByLabelText(/date/i)).toHaveLength(i + 2)
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(i + 2)
         })
       }
 
       // Should have exactly 50 rows
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(50)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
 
       // Fill the 50th row
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[49], '2024-01-01')
+      await user.tab() // Blur to trigger check
 
       // Should not create a 51st row
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(50)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
       }, { timeout: 1000 })
     })
 
@@ -417,25 +462,28 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
 
       // Create 50 rows
       for (let i = 0; i < 49; i++) {
-        const dateInputs = screen.getAllByLabelText(/date/i)
+        const dateInputs = screen.getAllByLabelText(/^date$/i)
         await user.type(dateInputs[dateInputs.length - 1], `2024-01-${String(i + 1).padStart(2, '0')}`)
+        await user.tab() // Blur to trigger row addition
 
         await waitFor(() => {
-          expect(screen.getAllByLabelText(/date/i)).toHaveLength(i + 2)
+          expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(i + 2)
         })
       }
 
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[49], '2024-02-01')
+      await user.tab() // Blur to trigger check
 
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(50)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
 
       // Clear a row in the middle
       await user.clear(dateInputs[25])
+      await user.tab() // Blur to trigger row removal and addition
 
       // Should now have 50 rows again (49 + 1 new empty)
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(50)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(50)
       })
     })
   })
@@ -446,15 +494,16 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create two rows
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
       // Focus first date input
-      const updatedDateInputs = screen.getAllByLabelText(/date/i)
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       updatedDateInputs[0].focus()
 
       // Press arrow down
@@ -469,15 +518,16 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create two rows
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
       // Focus second date input
-      const updatedDateInputs = screen.getAllByLabelText(/date/i)
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       updatedDateInputs[1].focus()
 
       // Press arrow up
@@ -491,8 +541,8 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const dateInput = screen.getByLabelText(/date/i)
-      const tickerInput = screen.getByLabelText(/ticker/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
 
       dateInput.focus()
 
@@ -507,8 +557,8 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const dateInput = screen.getByLabelText(/date/i)
-      const tickerInput = screen.getByLabelText(/ticker/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
 
       tickerInput.focus()
 
@@ -523,8 +573,8 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const dateInput = screen.getByLabelText(/date/i)
-      const tickerInput = screen.getByLabelText(/ticker/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
 
       dateInput.focus()
 
@@ -539,31 +589,31 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const dateInput = screen.getByLabelText(/date/i)
-      const sharesInput = screen.getByLabelText(/shares/i)
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
+      const sharesInput = screen.getByLabelText(/^shares$/i)
 
       sharesInput.focus()
 
       // Press Shift+Tab
       await user.keyboard('{Shift>}{Tab}{/Shift}')
 
-      // Focus should move back through ticker to date
-      // (depends on implementation)
-      expect(dateInput).toHaveFocus()
+      // Focus should move back to ticker
+      expect(tickerInput).toHaveFocus()
     })
 
     it('should skip value column when navigating with arrows', async () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const sharesInput = screen.getByLabelText(/shares/i)
+      const sharesInput = screen.getByLabelText(/^shares$/i)
 
       // Create a second row
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
       sharesInput.focus()
@@ -582,14 +632,15 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create two rows
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-01')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
-      const updatedDateInputs = screen.getAllByLabelText(/date/i)
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       updatedDateInputs[0].focus()
 
       // Press Enter
@@ -603,7 +654,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
 
-      const dateInput = screen.getByLabelText(/date/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
 
       dateInput.focus()
 
@@ -640,7 +691,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       })
       await user.click(copyButton)
 
-      expect(navigator.clipboard.writeText).toHaveBeenCalled()
+      expect(clipboardWriteTextSpy).toHaveBeenCalled()
     })
 
     it('should copy data in TSV format with headers', async () => {
@@ -648,13 +699,14 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create a row with data
-      const dateInput = screen.getByLabelText(/date/i)
-      const tickerInput = screen.getByLabelText(/ticker/i)
-      const sharesInput = screen.getByLabelText(/shares/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
+      const sharesInput = screen.getByLabelText(/^shares$/i)
 
       await user.type(dateInput, '2024-01-15')
       await user.type(tickerInput, 'AAPL')
       await user.type(sharesInput, '100')
+      await user.tab() // Blur to ensure all values are committed
 
       // Wait for value to calculate
       await waitFor(() => {
@@ -668,7 +720,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
 
       const expectedText = 'Date\tTicker\tShares\tValue\n2024-01-15\tAAPL\t100\t$1,450.00'
 
-      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(expectedText)
+      expect(clipboardWriteTextSpy).toHaveBeenCalledWith(expectedText)
     })
 
     it('should exclude empty rows from copy', async () => {
@@ -676,17 +728,20 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create one row with data, leaving second row empty
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-15')
 
-      const tickerInputs = screen.getAllByLabelText(/ticker/i)
+      const tickerInputs = screen.getAllByLabelText(/^ticker$/i)
       await user.type(tickerInputs[0], 'AAPL')
 
-      const sharesInputs = screen.getAllByLabelText(/shares/i)
+      const sharesInputs = screen.getAllByLabelText(/^shares$/i)
       await user.type(sharesInputs[0], '100')
 
+      // Blur to trigger row addition
+      await user.tab()
+
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
       const copyButton = screen.getByRole('button', {
@@ -695,7 +750,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       await user.click(copyButton)
 
       // Should only copy the row with data, not the empty row
-      const copiedText = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0]
+      const copiedText = (clipboardWriteTextSpy as jest.Mock).mock.calls[0][0]
       const lines = copiedText.split('\n')
 
       expect(lines).toHaveLength(2) // Header + 1 data row
@@ -721,9 +776,9 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Start entering data but don't wait for calculation
-      const dateInput = screen.getByLabelText(/date/i)
-      const tickerInput = screen.getByLabelText(/ticker/i)
-      const sharesInput = screen.getByLabelText(/shares/i)
+      const dateInput = screen.getByLabelText(/^date$/i)
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
+      const sharesInput = screen.getByLabelText(/^shares$/i)
 
       await user.type(dateInput, '2024-01-15')
       await user.type(tickerInput, 'AAPL')
@@ -735,7 +790,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       })
       await user.click(copyButton)
 
-      const copiedText = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0]
+      const copiedText = (clipboardWriteTextSpy as jest.Mock).mock.calls[0][0]
 
       // Should show "Loading..." for value
       expect(copiedText).toContain('Loading...')
@@ -746,22 +801,24 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const user = userEvent.setup()
 
       // Create first row
-      const dateInputs = screen.getAllByLabelText(/date/i)
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(dateInputs[0], '2024-01-15')
+      await user.tab() // Blur to trigger row addition
 
       await waitFor(() => {
-        expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       })
 
       // Create second row
-      const updatedDateInputs = screen.getAllByLabelText(/date/i)
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
       await user.type(updatedDateInputs[1], '2024-02-20')
+      await user.tab() // Blur to trigger row addition
 
-      const tickerInputs = screen.getAllByLabelText(/ticker/i)
+      const tickerInputs = screen.getAllByLabelText(/^ticker$/i)
       await user.type(tickerInputs[0], 'AAPL')
       await user.type(tickerInputs[1], 'GOOGL')
 
-      const sharesInputs = screen.getAllByLabelText(/shares/i)
+      const sharesInputs = screen.getAllByLabelText(/^shares$/i)
       await user.type(sharesInputs[0], '100')
       await user.type(sharesInputs[1], '50')
 
@@ -775,7 +832,7 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       })
       await user.click(copyButton)
 
-      const copiedText = (navigator.clipboard.writeText as jest.Mock).mock.calls[0][0]
+      const copiedText = (clipboardWriteTextSpy as jest.Mock).mock.calls[0][0]
       const lines = copiedText.split('\n')
 
       expect(lines).toHaveLength(3) // Header + 2 data rows

@@ -25,9 +25,9 @@ describe('StockGiftRow', () => {
       />
     )
 
-    expect(screen.getByLabelText(/date/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/ticker/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/shares/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^date$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^ticker$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^shares$/i)).toBeInTheDocument()
     expect(screen.getByText(/value/i)).toBeInTheDocument()
   })
 
@@ -44,9 +44,9 @@ describe('StockGiftRow', () => {
       />
     )
 
-    const dateInput = screen.getByLabelText(/date/i) as HTMLInputElement
-    const tickerInput = screen.getByLabelText(/ticker/i) as HTMLInputElement
-    const sharesInput = screen.getByLabelText(/shares/i) as HTMLInputElement
+    const dateInput = screen.getByLabelText(/^date$/i) as HTMLInputElement
+    const tickerInput = screen.getByLabelText(/^ticker$/i) as HTMLInputElement
+    const sharesInput = screen.getByLabelText(/^shares$/i) as HTMLInputElement
 
     expect(dateInput.value).toBe('2024-01-01')
     expect(tickerInput.value).toBe('AAPL')
@@ -67,7 +67,7 @@ describe('StockGiftRow', () => {
       />
     )
 
-    const dateInput = screen.getByLabelText(/date/i)
+    const dateInput = screen.getByLabelText(/^date$/i)
     await user.clear(dateInput)
 
     // After clearing, onUpdate should have been called with empty date
@@ -88,7 +88,7 @@ describe('StockGiftRow', () => {
       />
     )
 
-    const tickerInput = screen.getByLabelText(/ticker/i)
+    const tickerInput = screen.getByLabelText(/^ticker$/i)
     await user.clear(tickerInput)
     await user.type(tickerInput, 'MSFT')
 
@@ -109,7 +109,7 @@ describe('StockGiftRow', () => {
       />
     )
 
-    const sharesInput = screen.getByLabelText(/shares/i)
+    const sharesInput = screen.getByLabelText(/^shares$/i)
     await user.clear(sharesInput)
     await user.type(sharesInput, '20')
 

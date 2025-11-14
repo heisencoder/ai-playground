@@ -308,20 +308,26 @@ export function StockGiftCalculator() {
         }
         break
 
-      case 'ArrowLeft':
+      case 'ArrowLeft': {
         // Only navigate if cursor is at the start of input
-        if ((e.target as HTMLInputElement).selectionStart === 0) {
+        const input = e.target as HTMLInputElement
+        // Date inputs don't support selectionStart, so always allow navigation
+        const shouldNavigate = input.type === 'date' || input.selectionStart === 0
+        if (shouldNavigate) {
           e.preventDefault()
           targetRowId = rowId
           if (field === 'shares') targetField = 'ticker'
           else if (field === 'ticker') targetField = 'date'
         }
         break
+      }
 
       case 'ArrowRight': {
         // Only navigate if cursor is at the end of input
         const input = e.target as HTMLInputElement
-        if (input.selectionStart === input.value.length) {
+        // Date inputs don't support selectionStart, so always allow navigation
+        const shouldNavigate = input.type === 'date' || input.selectionStart === input.value.length
+        if (shouldNavigate) {
           e.preventDefault()
           targetRowId = rowId
           if (field === 'date') targetField = 'ticker'

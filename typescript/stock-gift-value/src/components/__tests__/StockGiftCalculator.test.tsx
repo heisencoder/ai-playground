@@ -13,9 +13,9 @@ describe('StockGiftCalculator', () => {
     render(<StockGiftCalculator />)
 
     expect(screen.getByText(/stock gift value calculator/i)).toBeInTheDocument()
-    expect(screen.getAllByLabelText(/date/i)).toHaveLength(1)
-    expect(screen.getAllByLabelText(/ticker/i)).toHaveLength(1)
-    expect(screen.getAllByLabelText(/shares/i)).toHaveLength(1)
+    expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(1)
+    expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(1)
+    expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(1)
   })
 
   it('should add a new row when user types in empty row', async () => {
@@ -23,15 +23,18 @@ describe('StockGiftCalculator', () => {
     render(<StockGiftCalculator />)
 
     // Initially one row
-    expect(screen.getAllByLabelText(/date/i)).toHaveLength(1)
+    expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(1)
 
     // Type in the first row
-    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    const dateInput = screen.getAllByLabelText(/^date$/i)[0]
     await user.type(dateInput, '2024-01-01')
+
+    // Blur to trigger row addition
+    await user.tab()
 
     // Should automatically create a new empty row
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
     })
   })
 
@@ -45,8 +48,11 @@ describe('StockGiftCalculator', () => {
     ).not.toBeInTheDocument()
 
     // Type in the first row
-    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    const dateInput = screen.getAllByLabelText(/^date$/i)[0]
     await user.type(dateInput, '2024-01-01')
+
+    // Blur to ensure state updates
+    await user.tab()
 
     // Now remove button should appear for the row with data
     await waitFor(() => {
@@ -59,25 +65,27 @@ describe('StockGiftCalculator', () => {
     render(<StockGiftCalculator />)
 
     // Add data to first row to create second row
-    const dateInputs = screen.getAllByLabelText(/date/i)
+    const dateInputs = screen.getAllByLabelText(/^date$/i)
     await user.type(dateInputs[0], '2024-01-01')
+    await user.tab() // Blur to trigger row addition
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
     })
 
     // Add data to second row to make it removable
-    const updatedDateInputs = screen.getAllByLabelText(/date/i)
+    const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
     await user.type(updatedDateInputs[1], '2024-02-01')
+    await user.tab() // Blur to trigger row addition
 
     // Remove first row
     const removeButtons = screen.getAllByRole('button', { name: /remove/i })
     await user.click(removeButtons[0])
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
       // Second row should now have the date we typed
-      expect(screen.getAllByLabelText(/date/i)[0]).toHaveValue('2024-02-01')
+      expect(screen.getAllByLabelText(/^date$/i)[0]).toHaveValue('2024-02-01')
     })
   })
 
@@ -86,14 +94,14 @@ describe('StockGiftCalculator', () => {
 
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getAllByLabelText(/date/i)[0]
-    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
-    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
+    const dateInput = screen.getAllByLabelText(/^date$/i)[0]
+    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[0]
+    const sharesInput = screen.getAllByLabelText(/^shares$/i)[0]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'AAPL')
-    await user.clear(sharesInput)
-    await user.type(sharesInput, '10')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
 
     // Wait for the value to be calculated
     // (150 + 140) / 2 * 10 = 1450
@@ -113,14 +121,14 @@ describe('StockGiftCalculator', () => {
     // Expected value with 34 shares: $16,889.67
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getAllByLabelText(/date/i)[0]
-    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
-    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
+    const dateInput = screen.getAllByLabelText(/^date$/i)[0]
+    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[0]
+    const sharesInput = screen.getAllByLabelText(/^shares$/i)[0]
 
     await user.type(dateInput, '2025-11-07')
     await user.type(tickerInput, 'BRK.B')
-    await user.clear(sharesInput)
-    await user.type(sharesInput, '34')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}34')
 
     // Wait for the value to be calculated
     // Expected: $16,889.67
@@ -137,14 +145,14 @@ describe('StockGiftCalculator', () => {
 
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getAllByLabelText(/date/i)[0]
-    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
-    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
+    const dateInput = screen.getAllByLabelText(/^date$/i)[0]
+    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[0]
+    const sharesInput = screen.getAllByLabelText(/^shares$/i)[0]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'INVALID123')
-    await user.clear(sharesInput)
-    await user.type(sharesInput, '10')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
 
     // Wait for error message
     await waitFor(
@@ -161,14 +169,14 @@ describe('StockGiftCalculator', () => {
     // Don't mock - let it try to fetch (will be slow)
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getAllByLabelText(/date/i)[0]
-    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
-    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
+    const dateInput = screen.getAllByLabelText(/^date$/i)[0]
+    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[0]
+    const sharesInput = screen.getAllByLabelText(/^shares$/i)[0]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'AAPL')
-    await user.clear(sharesInput)
-    await user.type(sharesInput, '10')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
 
     // Should show loading (briefly)
     // This test may be flaky if the API is too fast
