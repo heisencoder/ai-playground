@@ -8,10 +8,12 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
   beforeEach(() => {
     stockPriceCache.clear()
     // Mock clipboard API
-    Object.assign(navigator, {
-      clipboard: {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: {
         writeText: vi.fn().mockResolvedValue(undefined),
       },
+      writable: true,
+      configurable: true,
     })
   })
 
@@ -44,9 +46,17 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       expect(rows).toHaveLength(2)
 
       // Check that inputs are empty
-      expect(screen.getByLabelText(/date/i)).toHaveValue('')
-      expect(screen.getByLabelText(/ticker/i)).toHaveValue('')
-      expect(screen.getByLabelText(/shares/i)).toHaveValue('')
+      const dateInputs = screen.getAllByLabelText(/date/i)
+      const tickerInputs = screen.getAllByLabelText(/ticker/i)
+      const sharesInputs = screen.getAllByLabelText(/shares/i)
+
+      expect(dateInputs).toHaveLength(1)
+      expect(tickerInputs).toHaveLength(1)
+      expect(sharesInputs).toHaveLength(1)
+
+      expect(dateInputs[0]).toHaveValue('')
+      expect(tickerInputs[0]).toHaveValue('')
+      expect(sharesInputs[0]).toHaveValue('')
     })
 
     it('should not show "Add Another Stock Gift" button', () => {
@@ -80,11 +90,11 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const table = screen.getByRole('table')
       const headers = within(table).getAllByRole('columnheader')
 
-      // Date, Ticker, Shares, Value should be clickable
-      expect(headers[0]).toHaveAttribute('type', 'button')
-      expect(headers[1]).toHaveAttribute('type', 'button')
-      expect(headers[2]).toHaveAttribute('type', 'button')
-      expect(headers[3]).toHaveAttribute('type', 'button')
+      // Date, Ticker, Shares, Value headers should contain clickable buttons
+      expect(within(headers[0]).getByRole('button')).toBeInTheDocument()
+      expect(within(headers[1]).getByRole('button')).toBeInTheDocument()
+      expect(within(headers[2]).getByRole('button')).toBeInTheDocument()
+      expect(within(headers[3]).getByRole('button')).toBeInTheDocument()
     })
 
     it('should display sort indicators on headers', () => {
@@ -112,19 +122,24 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       const updatedDateInputs = screen.getAllByLabelText(/date/i)
       await user.type(updatedDateInputs[1], '2024-01-10')
 
-      // Click date header to sort
-      const dateHeader = screen.getByRole('columnheader', { name: /date/i })
-      await user.click(dateHeader)
-
-      // Check that dates are sorted ascending
       await waitFor(() => {
-        const sortedDateInputs = screen.getAllByLabelText(/date/i)
-        expect(sortedDateInputs[0]).toHaveValue('2024-01-10')
-        expect(sortedDateInputs[1]).toHaveValue('2024-03-15')
+        expect(screen.getAllByLabelText(/date/i)).toHaveLength(3)
       })
 
+      // Click date header to sort - find button within the header
+      const table = screen.getByRole('table')
+      const headers = within(table).getAllByRole('columnheader')
+      const dateButton = within(headers[0]).getByRole('button')
+      await user.click(dateButton)
+
+      // Check that dates are sorted ascending (synchronous after click)
+      const sortedDateInputs = screen.getAllByLabelText(/date/i)
+      expect(sortedDateInputs[0]).toHaveValue('2024-01-10')
+      expect(sortedDateInputs[1]).toHaveValue('2024-03-15')
+      expect(sortedDateInputs[2]).toHaveValue('') // Empty row at bottom
+
       // Should show ascending indicator
-      expect(dateHeader).toHaveTextContent('↑')
+      expect(dateButton).toHaveTextContent('↑')
     })
 
     it('should sort by date descending on second click', async () => {

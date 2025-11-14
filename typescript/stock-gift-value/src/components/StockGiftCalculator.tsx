@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { StockGift } from '../types'
-import { StockGiftRow } from './StockGiftRow'
 import { fetchStockPrice } from '../services/stockApi'
 import {
   calculateStockGiftValue,
   isValidDate,
   isValidTicker,
+  formatCurrency,
 } from '../utils/calculations'
 import './StockGiftCalculator.css'
 
@@ -22,8 +22,28 @@ function createEmptyGift(): StockGift {
   }
 }
 
+type SortColumn = 'date' | 'ticker' | 'shares' | 'value'
+type SortDirection = 'asc' | 'desc'
+
+interface SortConfig {
+  column: SortColumn
+  direction: SortDirection
+}
+
+interface CellPosition {
+  rowId: string
+  field: 'date' | 'ticker' | 'shares'
+}
+
+const MAX_ROWS = 50
+
 export function StockGiftCalculator() {
   const [gifts, setGifts] = useState<StockGift[]>([createEmptyGift()])
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null)
+  const [copyMessage, setCopyMessage] = useState<string>('')
+
+  // Refs for keyboard navigation
+  const inputRefs = useRef<Map<string, HTMLInputElement>>(new Map())
 
   // Effect to calculate value when inputs change
   useEffect(() => {
@@ -114,13 +134,232 @@ export function StockGiftCalculator() {
     )
   }
 
-  const addGift = () => {
-    setGifts((prevGifts) => [...prevGifts, createEmptyGift()])
+  const removeGift = (id: string) => {
+    setGifts((prevGifts) => {
+      const filtered = prevGifts.filter((gift) => gift.id !== id)
+      // Always maintain at least one row
+      return filtered.length === 0 ? [createEmptyGift()] : filtered
+    })
   }
 
-  const removeGift = (id: string) => {
-    setGifts((prevGifts) => prevGifts.filter((gift) => gift.id !== id))
+  const isRowEmpty = (gift: StockGift): boolean => {
+    return !gift.date && !gift.ticker && !gift.shares
   }
+
+  const handleInputChange = (
+    id: string,
+    field: 'date' | 'ticker' | 'shares',
+    value: string | number
+  ) => {
+    setGifts((prevGifts) => {
+      const giftIndex = prevGifts.findIndex((g) => g.id === id)
+      if (giftIndex === -1) return prevGifts
+
+      const gift = prevGifts[giftIndex]
+      const wasEmpty = isRowEmpty(gift)
+      const isLastRow = giftIndex === prevGifts.length - 1
+
+      // Update the gift
+      const updatedGifts = prevGifts.map((g, i) =>
+        i === giftIndex
+          ? {
+              ...g,
+              [field]: field === 'ticker' ? (value as string).toUpperCase() : value,
+            }
+          : g
+      )
+
+      // If this was the last empty row and we're typing something, add a new row
+      if (wasEmpty && isLastRow && prevGifts.length < MAX_ROWS) {
+        return [...updatedGifts, createEmptyGift()]
+      }
+
+      // Check if a row became empty and should be removed
+      const updatedGift = updatedGifts[giftIndex]
+      const isNowEmpty = isRowEmpty(updatedGift)
+      const hasOtherEmptyRows = updatedGifts.some(
+        (g, i) => i !== giftIndex && isRowEmpty(g)
+      )
+
+      // Remove this row if it's now empty and there's another empty row
+      if (isNowEmpty && hasOtherEmptyRows && updatedGifts.length > 1) {
+        return updatedGifts.filter((_, i) => i !== giftIndex)
+      }
+
+      return updatedGifts
+    })
+  }
+
+  const sortGifts = (giftsToSort: StockGift[]): StockGift[] => {
+    if (!sortConfig) return giftsToSort
+
+    const nonEmptyGifts = giftsToSort.filter((gift) => !isRowEmpty(gift))
+    const emptyGifts = giftsToSort.filter((gift) => isRowEmpty(gift))
+
+    const sorted = [...nonEmptyGifts].sort((a, b) => {
+      let aValue: any
+      let bValue: any
+
+      switch (sortConfig.column) {
+        case 'date':
+          aValue = a.date || ''
+          bValue = b.date || ''
+          break
+        case 'ticker':
+          aValue = a.ticker || ''
+          bValue = b.ticker || ''
+          break
+        case 'shares':
+          aValue = a.shares || 0
+          bValue = b.shares || 0
+          break
+        case 'value':
+          // Sort by value, putting loading/error states at the end
+          if (a.loading || a.error) aValue = -Infinity
+          else aValue = a.value || -Infinity
+          if (b.loading || b.error) bValue = -Infinity
+          else bValue = b.value || -Infinity
+          break
+      }
+
+      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
+      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
+      return 0
+    })
+
+    // Keep empty rows at the bottom
+    return [...sorted, ...emptyGifts]
+  }
+
+  const handleSort = (column: SortColumn) => {
+    setSortConfig((prevConfig) => {
+      if (!prevConfig || prevConfig.column !== column) {
+        // First click: sort ascending
+        return { column, direction: 'asc' }
+      } else if (prevConfig.direction === 'asc') {
+        // Second click: sort descending
+        return { column, direction: 'desc' }
+      } else {
+        // Third click: remove sort
+        return null
+      }
+    })
+  }
+
+  const getSortIndicator = (column: SortColumn): string => {
+    if (!sortConfig || sortConfig.column !== column) {
+      return '↕'
+    }
+    return sortConfig.direction === 'asc' ? '↑' : '↓'
+  }
+
+  const handleCopy = async () => {
+    const nonEmptyGifts = gifts.filter((gift) => !isRowEmpty(gift))
+
+    // Create TSV format
+    const header = 'Date\tTicker\tShares\tValue'
+    const rows = nonEmptyGifts.map((gift) => {
+      const valueText = gift.loading
+        ? 'Loading...'
+        : gift.error
+        ? 'Error'
+        : gift.value !== undefined
+        ? formatCurrency(gift.value)
+        : ''
+
+      return `${gift.date}\t${gift.ticker}\t${gift.shares}\t${valueText}`
+    })
+
+    const tsvText = [header, ...rows].join('\n')
+
+    try {
+      await navigator.clipboard.writeText(tsvText)
+      setCopyMessage('Copied to clipboard!')
+      setTimeout(() => setCopyMessage(''), 2000)
+    } catch (error) {
+      setCopyMessage('Failed to copy')
+      setTimeout(() => setCopyMessage(''), 2000)
+    }
+  }
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    rowId: string,
+    field: 'date' | 'ticker' | 'shares'
+  ) => {
+    const sortedGifts = sortGifts(gifts)
+    const currentRowIndex = sortedGifts.findIndex((g) => g.id === rowId)
+
+    let targetRowId: string | null = null
+    let targetField: 'date' | 'ticker' | 'shares' | null = null
+
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault()
+        if (currentRowIndex > 0) {
+          targetRowId = sortedGifts[currentRowIndex - 1].id
+          targetField = field
+        }
+        break
+
+      case 'ArrowDown':
+      case 'Enter':
+        e.preventDefault()
+        if (currentRowIndex < sortedGifts.length - 1) {
+          targetRowId = sortedGifts[currentRowIndex + 1].id
+          targetField = field
+        }
+        break
+
+      case 'ArrowLeft':
+        // Only navigate if cursor is at the start of input
+        if ((e.target as HTMLInputElement).selectionStart === 0) {
+          e.preventDefault()
+          targetRowId = rowId
+          if (field === 'shares') targetField = 'ticker'
+          else if (field === 'ticker') targetField = 'date'
+        }
+        break
+
+      case 'ArrowRight':
+        // Only navigate if cursor is at the end of input
+        const input = e.target as HTMLInputElement
+        if (input.selectionStart === input.value.length) {
+          e.preventDefault()
+          targetRowId = rowId
+          if (field === 'date') targetField = 'ticker'
+          else if (field === 'ticker') targetField = 'shares'
+        }
+        break
+
+      case 'Tab':
+        // Let default tab behavior work, but we could customize if needed
+        break
+    }
+
+    if (targetRowId && targetField) {
+      const key = `${targetRowId}-${targetField}`
+      const targetInput = inputRefs.current.get(key)
+      if (targetInput) {
+        targetInput.focus()
+      }
+    }
+  }
+
+  const setInputRef = (
+    rowId: string,
+    field: 'date' | 'ticker' | 'shares',
+    element: HTMLInputElement | null
+  ) => {
+    const key = `${rowId}-${field}`
+    if (element) {
+      inputRefs.current.set(key, element)
+    } else {
+      inputRefs.current.delete(key)
+    }
+  }
+
+  const sortedGifts = sortGifts(gifts)
 
   return (
     <div className="calculator-container">
@@ -132,21 +371,150 @@ export function StockGiftCalculator() {
         </p>
       </header>
 
-      <div className="gifts-list">
-        {gifts.map((gift) => (
-          <StockGiftRow
-            key={gift.id}
-            gift={gift}
-            onUpdate={updateGift}
-            onRemove={removeGift}
-            showRemove={gifts.length > 1}
-          />
-        ))}
+      <div className="table-container">
+        <table className="stock-gift-table" role="table">
+          <thead>
+            <tr>
+              <th>
+                <button
+                  type="button"
+                  onClick={() => handleSort('date')}
+                  className="sort-button"
+                  aria-label={`Sort by date ${getSortIndicator('date')}`}
+                >
+                  Date {getSortIndicator('date')}
+                </button>
+              </th>
+              <th>
+                <button
+                  type="button"
+                  onClick={() => handleSort('ticker')}
+                  className="sort-button"
+                  aria-label={`Sort by ticker ${getSortIndicator('ticker')}`}
+                >
+                  Ticker {getSortIndicator('ticker')}
+                </button>
+              </th>
+              <th>
+                <button
+                  type="button"
+                  onClick={() => handleSort('shares')}
+                  className="sort-button"
+                  aria-label={`Sort by shares ${getSortIndicator('shares')}`}
+                >
+                  Shares {getSortIndicator('shares')}
+                </button>
+              </th>
+              <th>
+                <button
+                  type="button"
+                  onClick={() => handleSort('value')}
+                  className="sort-button"
+                  aria-label={`Sort by value ${getSortIndicator('value')}`}
+                >
+                  Value {getSortIndicator('value')}
+                </button>
+              </th>
+              <th className="actions-header">
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="copy-button"
+                  aria-label="Copy all data to clipboard"
+                  title="Copy to clipboard"
+                >
+                  📋
+                </button>
+                {copyMessage && (
+                  <span className="copy-message" role="status" aria-live="polite">
+                    {copyMessage}
+                  </span>
+                )}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {sortedGifts.map((gift) => (
+              <tr key={gift.id} className="stock-gift-row">
+                <td>
+                  <input
+                    ref={(el) => setInputRef(gift.id, 'date', el)}
+                    id={`date-${gift.id}`}
+                    type="date"
+                    value={gift.date}
+                    onChange={(e) =>
+                      handleInputChange(gift.id, 'date', e.target.value)
+                    }
+                    onKeyDown={(e) => handleKeyDown(e, gift.id, 'date')}
+                    className="date-input"
+                    max={new Date().toISOString().split('T')[0]}
+                    aria-label="Date"
+                  />
+                </td>
+                <td>
+                  <input
+                    ref={(el) => setInputRef(gift.id, 'ticker', el)}
+                    id={`ticker-${gift.id}`}
+                    type="text"
+                    value={gift.ticker}
+                    onChange={(e) =>
+                      handleInputChange(gift.id, 'ticker', e.target.value)
+                    }
+                    onKeyDown={(e) => handleKeyDown(e, gift.id, 'ticker')}
+                    className="ticker-input"
+                    placeholder="AAPL"
+                    maxLength={10}
+                    aria-label="Ticker"
+                  />
+                </td>
+                <td>
+                  <input
+                    ref={(el) => setInputRef(gift.id, 'shares', el)}
+                    id={`shares-${gift.id}`}
+                    type="number"
+                    value={gift.shares || ''}
+                    onChange={(e) =>
+                      handleInputChange(
+                        gift.id,
+                        'shares',
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
+                    onKeyDown={(e) => handleKeyDown(e, gift.id, 'shares')}
+                    className="shares-input"
+                    placeholder="0"
+                    min="0"
+                    step="any"
+                    aria-label="Shares"
+                  />
+                </td>
+                <td className="value-cell">
+                  {gift.loading && <span className="loading">Loading...</span>}
+                  {gift.error && <span className="error">{gift.error}</span>}
+                  {!gift.loading && !gift.error && gift.value !== undefined && (
+                    <span className="value">{formatCurrency(gift.value)}</span>
+                  )}
+                  {!gift.loading && !gift.error && gift.value === undefined && (
+                    <span className="placeholder">—</span>
+                  )}
+                </td>
+                <td className="actions-cell">
+                  {!isRowEmpty(gift) && (
+                    <button
+                      type="button"
+                      onClick={() => removeGift(gift.id)}
+                      className="remove-button"
+                      aria-label="Remove row"
+                    >
+                      ×
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-
-      <button type="button" onClick={addGift} className="add-button">
-        + Add Another Stock Gift
-      </button>
     </div>
   )
 }

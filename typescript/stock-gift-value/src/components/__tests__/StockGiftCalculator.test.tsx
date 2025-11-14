@@ -18,38 +18,39 @@ describe('StockGiftCalculator', () => {
     expect(screen.getAllByLabelText(/shares/i)).toHaveLength(1)
   })
 
-  it('should add a new row when add button is clicked', async () => {
+  it('should add a new row when user types in empty row', async () => {
     const user = userEvent.setup()
     render(<StockGiftCalculator />)
 
-    const addButton = screen.getByRole('button', {
-      name: /add another stock gift/i,
-    })
-    await user.click(addButton)
+    // Initially one row
+    expect(screen.getAllByLabelText(/date/i)).toHaveLength(1)
 
+    // Type in the first row
+    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    await user.type(dateInput, '2024-01-01')
+
+    // Should automatically create a new empty row
     await waitFor(() => {
       expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
     })
   })
 
-  it('should show remove button when multiple rows exist', async () => {
+  it('should show remove button when row has data', async () => {
     const user = userEvent.setup()
     render(<StockGiftCalculator />)
 
-    // Initially no remove button
+    // Initially no remove button (empty row)
     expect(
       screen.queryByRole('button', { name: /remove/i })
     ).not.toBeInTheDocument()
 
-    // Add a row
-    const addButton = screen.getByRole('button', {
-      name: /add another stock gift/i,
-    })
-    await user.click(addButton)
+    // Type in the first row
+    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    await user.type(dateInput, '2024-01-01')
 
-    // Now remove buttons should appear
+    // Now remove button should appear for the row with data
     await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: /remove/i })).toHaveLength(2)
+      expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument()
     })
   })
 
@@ -57,22 +58,26 @@ describe('StockGiftCalculator', () => {
     const user = userEvent.setup()
     render(<StockGiftCalculator />)
 
-    // Add a row
-    const addButton = screen.getByRole('button', {
-      name: /add another stock gift/i,
-    })
-    await user.click(addButton)
+    // Add data to first row to create second row
+    const dateInputs = screen.getAllByLabelText(/date/i)
+    await user.type(dateInputs[0], '2024-01-01')
 
     await waitFor(() => {
       expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
     })
+
+    // Add data to second row to make it removable
+    const updatedDateInputs = screen.getAllByLabelText(/date/i)
+    await user.type(updatedDateInputs[1], '2024-02-01')
 
     // Remove first row
     const removeButtons = screen.getAllByRole('button', { name: /remove/i })
     await user.click(removeButtons[0])
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/date/i)).toHaveLength(1)
+      expect(screen.getAllByLabelText(/date/i)).toHaveLength(2)
+      // Second row should now have the date we typed
+      expect(screen.getAllByLabelText(/date/i)[0]).toHaveValue('2024-02-01')
     })
   })
 
@@ -81,9 +86,9 @@ describe('StockGiftCalculator', () => {
 
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getByLabelText(/date/i)
-    const tickerInput = screen.getByLabelText(/ticker/i)
-    const sharesInput = screen.getByLabelText(/shares/i)
+    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
+    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'AAPL')
@@ -108,9 +113,9 @@ describe('StockGiftCalculator', () => {
     // Expected value with 34 shares: $16,889.67
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getByLabelText(/date/i)
-    const tickerInput = screen.getByLabelText(/ticker/i)
-    const sharesInput = screen.getByLabelText(/shares/i)
+    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
+    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
 
     await user.type(dateInput, '2025-11-07')
     await user.type(tickerInput, 'BRK.B')
@@ -132,9 +137,9 @@ describe('StockGiftCalculator', () => {
 
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getByLabelText(/date/i)
-    const tickerInput = screen.getByLabelText(/ticker/i)
-    const sharesInput = screen.getByLabelText(/shares/i)
+    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
+    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'INVALID123')
@@ -156,9 +161,9 @@ describe('StockGiftCalculator', () => {
     // Don't mock - let it try to fetch (will be slow)
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getByLabelText(/date/i)
-    const tickerInput = screen.getByLabelText(/ticker/i)
-    const sharesInput = screen.getByLabelText(/shares/i)
+    const dateInput = screen.getAllByLabelText(/date/i)[0]
+    const tickerInput = screen.getAllByLabelText(/ticker/i)[0]
+    const sharesInput = screen.getAllByLabelText(/shares/i)[0]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'AAPL')
