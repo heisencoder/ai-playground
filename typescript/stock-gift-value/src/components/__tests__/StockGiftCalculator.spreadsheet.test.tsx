@@ -21,7 +21,11 @@ const EXPECTED_LINE_COUNT_WITH_HEADER = 2
 const EXPECTED_THREE_LINES = 3
 
 // Helper to get mock call argument
-function getMockCallArg<T>(mock: ReturnType<typeof vi.fn>, callIndex: number = FIRST_ELEMENT, argIndex: number = FIRST_ELEMENT): T {
+function getMockCallArg<T>(
+  mock: ReturnType<typeof vi.fn>,
+  callIndex: number = FIRST_ELEMENT,
+  argIndex: number = FIRST_ELEMENT
+): T {
   const calls = mock.mock.calls
   if (!calls[callIndex]) {
     throw new Error(`No call at index ${callIndex}`)
@@ -37,7 +41,11 @@ async function waitForRowCount(expectedCount: number): Promise<void> {
 }
 
 // Helper to create a row with data
-async function createRowWithDate(user: ReturnType<typeof userEvent.setup>, date: string, rowIndex: number = FIRST_ELEMENT): Promise<void> {
+async function createRowWithDate(
+  user: ReturnType<typeof userEvent.setup>,
+  date: string,
+  rowIndex: number = FIRST_ELEMENT
+): Promise<void> {
   const dateInputs = screen.getAllByLabelText(/^date$/i)
   await user.type(dateInputs[rowIndex], date)
   act(() => dateInputs[rowIndex].blur())
@@ -140,16 +148,26 @@ describe('StockGiftCalculator - Column Sorting', () => {
     const table = screen.getByRole('table')
     const headers = within(table).getAllByRole('columnheader')
 
-    expect(within(headers[FIRST_ELEMENT]).getByRole('button')).toBeInTheDocument()
-    expect(within(headers[SECOND_ELEMENT]).getByRole('button')).toBeInTheDocument()
-    expect(within(headers[THIRD_ELEMENT]).getByRole('button')).toBeInTheDocument()
-    expect(within(headers[THIRD_ELEMENT + 1]).getByRole('button')).toBeInTheDocument()
+    expect(
+      within(headers[FIRST_ELEMENT]).getByRole('button')
+    ).toBeInTheDocument()
+    expect(
+      within(headers[SECOND_ELEMENT]).getByRole('button')
+    ).toBeInTheDocument()
+    expect(
+      within(headers[THIRD_ELEMENT]).getByRole('button')
+    ).toBeInTheDocument()
+    expect(
+      within(headers[THIRD_ELEMENT + 1]).getByRole('button')
+    ).toBeInTheDocument()
   })
 
   it('should display sort indicators on headers', () => {
     render(<StockGiftCalculator />)
     const table = screen.getByRole('table')
-    const dateHeader = within(table).getByRole('columnheader', { name: /date/i })
+    const dateHeader = within(table).getByRole('columnheader', {
+      name: /date/i,
+    })
     expect(dateHeader).toHaveTextContent('↕')
   })
 
@@ -222,7 +240,9 @@ describe('StockGiftCalculator - Column Sorting', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(EXPECTED_TWO_ROWS)
+      expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(
+        EXPECTED_TWO_ROWS
+      )
     })
 
     const updatedTickerInputs = screen.getAllByLabelText(/^ticker$/i)
@@ -230,7 +250,9 @@ describe('StockGiftCalculator - Column Sorting', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(EXPECTED_THREE_ROWS)
+      expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(
+        EXPECTED_THREE_ROWS
+      )
     })
 
     const table = screen.getByRole('table')
@@ -254,7 +276,9 @@ describe('StockGiftCalculator - Column Sorting', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(EXPECTED_TWO_ROWS)
+      expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(
+        EXPECTED_TWO_ROWS
+      )
     })
 
     const updatedSharesInputs = screen.getAllByLabelText(/^shares$/i)
@@ -262,7 +286,9 @@ describe('StockGiftCalculator - Column Sorting', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(EXPECTED_THREE_ROWS)
+      expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(
+        EXPECTED_THREE_ROWS
+      )
     })
 
     const table = screen.getByRole('table')
@@ -316,8 +342,12 @@ describe('StockGiftCalculator - Column Sorting', () => {
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row')
-      expect(within(rows[SECOND_ELEMENT]).getByLabelText(/^ticker$/i)).toHaveValue('AAPL')
-      expect(within(rows[THIRD_ELEMENT]).getByLabelText(/^ticker$/i)).toHaveValue('GOOGL')
+      expect(
+        within(rows[SECOND_ELEMENT]).getByLabelText(/^ticker$/i)
+      ).toHaveValue('AAPL')
+      expect(
+        within(rows[THIRD_ELEMENT]).getByLabelText(/^ticker$/i)
+      ).toHaveValue('GOOGL')
     })
   })
 
@@ -373,7 +403,9 @@ describe('StockGiftCalculator - Dynamic Row Management', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(EXPECTED_TWO_ROWS)
+      expect(screen.getAllByLabelText(/^ticker$/i)).toHaveLength(
+        EXPECTED_TWO_ROWS
+      )
     })
   })
 
@@ -386,7 +418,9 @@ describe('StockGiftCalculator - Dynamic Row Management', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(EXPECTED_TWO_ROWS)
+      expect(screen.getAllByLabelText(/^shares$/i)).toHaveLength(
+        EXPECTED_TWO_ROWS
+      )
     })
   })
 
@@ -479,7 +513,9 @@ describe('StockGiftCalculator - Dynamic Row Management', () => {
 
         await waitFor(
           () => {
-            expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(i + EXPECTED_TWO_ROWS)
+            expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(
+              i + EXPECTED_TWO_ROWS
+            )
           },
           { timeout: WAITFOR_TIMEOUT_LONG }
         )
@@ -655,7 +691,9 @@ describe('StockGiftCalculator - Copy to Spreadsheet', () => {
 
   it('should have a copy button in the interface', () => {
     render(<StockGiftCalculator />)
-    const copyButton = screen.getByRole('button', { name: /copy all data to clipboard/i })
+    const copyButton = screen.getByRole('button', {
+      name: /copy all data to clipboard/i,
+    })
     expect(copyButton).toBeInTheDocument()
   })
 
@@ -663,7 +701,9 @@ describe('StockGiftCalculator - Copy to Spreadsheet', () => {
     render(<StockGiftCalculator />)
     const user = userEvent.setup()
 
-    const copyButton = screen.getByRole('button', { name: /copy all data to clipboard/i })
+    const copyButton = screen.getByRole('button', {
+      name: /copy all data to clipboard/i,
+    })
     await user.click(copyButton)
 
     expect(clipboardWriteTextSpy).toHaveBeenCalled()
@@ -689,10 +729,13 @@ describe('StockGiftCalculator - Copy to Spreadsheet', () => {
       { timeout: WAITFOR_TIMEOUT_DEFAULT }
     )
 
-    const copyButton = screen.getByRole('button', { name: /copy all data to clipboard/i })
+    const copyButton = screen.getByRole('button', {
+      name: /copy all data to clipboard/i,
+    })
     await user.click(copyButton)
 
-    const expectedText = 'Date\tTicker\tShares\tValue\n2024-01-15\tAAPL\t100\t$1,450.00'
+    const expectedText =
+      'Date\tTicker\tShares\tValue\n2024-01-15\tAAPL\t100\t$1,450.00'
     expect(clipboardWriteTextSpy).toHaveBeenCalledWith(expectedText)
   })
 
@@ -712,7 +755,9 @@ describe('StockGiftCalculator - Copy to Spreadsheet', () => {
 
     await waitForRowCount(EXPECTED_TWO_ROWS)
 
-    const copyButton = screen.getByRole('button', { name: /copy all data to clipboard/i })
+    const copyButton = screen.getByRole('button', {
+      name: /copy all data to clipboard/i,
+    })
     await user.click(copyButton)
 
     const copiedText = getMockCallArg<string>(clipboardWriteTextSpy)
@@ -725,7 +770,9 @@ describe('StockGiftCalculator - Copy to Spreadsheet', () => {
     render(<StockGiftCalculator />)
     const user = userEvent.setup()
 
-    const copyButton = screen.getByRole('button', { name: /copy all data to clipboard/i })
+    const copyButton = screen.getByRole('button', {
+      name: /copy all data to clipboard/i,
+    })
     await user.click(copyButton)
 
     await waitFor(() => {
@@ -744,7 +791,9 @@ describe('StockGiftCalculator - Copy to Spreadsheet', () => {
     await user.type(sharesInput, '100')
     await user.tab()
 
-    const copyButton = screen.getByRole('button', { name: /copy all data to clipboard/i })
+    const copyButton = screen.getByRole('button', {
+      name: /copy all data to clipboard/i,
+    })
     await user.click(copyButton)
 
     const copiedText = getMockCallArg<string>(clipboardWriteTextSpy)
@@ -784,7 +833,9 @@ describe('StockGiftCalculator - Copy to Spreadsheet', () => {
       { timeout: WAITFOR_TIMEOUT_DEFAULT }
     )
 
-    const copyButton = screen.getByRole('button', { name: /copy all data to clipboard/i })
+    const copyButton = screen.getByRole('button', {
+      name: /copy all data to clipboard/i,
+    })
     await user.click(copyButton)
 
     const copiedText = getMockCallArg<string>(clipboardWriteTextSpy)

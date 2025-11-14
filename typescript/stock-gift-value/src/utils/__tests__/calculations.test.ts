@@ -59,7 +59,11 @@ const YEARS_OFFSET_FUTURE = 1
 
 describe('calculateStockGiftValue', () => {
   it('should calculate basic stock gift value', () => {
-    const result = calculateStockGiftValue(PRICE_HIGH_100, PRICE_LOW_90, SHARES_10)
+    const result = calculateStockGiftValue(
+      PRICE_HIGH_100,
+      PRICE_LOW_90,
+      SHARES_10
+    )
     expect(result).toBe(EXPECTED_VALUE_950)
   })
 
@@ -69,30 +73,54 @@ describe('calculateStockGiftValue', () => {
   })
 
   it('should maintain fractional cents precision', () => {
-    const result = calculateStockGiftValue(PRICE_HIGH_123_456, PRICE_LOW_123_444, SHARES_100)
+    const result = calculateStockGiftValue(
+      PRICE_HIGH_123_456,
+      PRICE_LOW_123_444,
+      SHARES_100
+    )
     expect(result).toBe(EXPECTED_VALUE_12345)
   })
 
   it('should round to cents correctly', () => {
-    const result1 = calculateStockGiftValue(PRICE_HIGH_10_004, PRICE_LOW_10_002, SHARES_100)
+    const result1 = calculateStockGiftValue(
+      PRICE_HIGH_10_004,
+      PRICE_LOW_10_002,
+      SHARES_100
+    )
     expect(result1).toBe(EXPECTED_VALUE_1000_3)
 
-    const result2 = calculateStockGiftValue(PRICE_HIGH_10_006, PRICE_LOW_10_004, SHARES_100)
+    const result2 = calculateStockGiftValue(
+      PRICE_HIGH_10_006,
+      PRICE_LOW_10_004,
+      SHARES_100
+    )
     expect(result2).toBe(EXPECTED_VALUE_1000_5)
   })
 
   it('should handle single share correctly', () => {
-    const result = calculateStockGiftValue(PRICE_HIGH_150_5, PRICE_LOW_149_5, SHARES_1)
+    const result = calculateStockGiftValue(
+      PRICE_HIGH_150_5,
+      PRICE_LOW_149_5,
+      SHARES_1
+    )
     expect(result).toBe(EXPECTED_VALUE_150)
   })
 
   it('should handle large numbers', () => {
-    const result = calculateStockGiftValue(PRICE_HIGH_1000, PRICE_LOW_900, SHARES_10000)
+    const result = calculateStockGiftValue(
+      PRICE_HIGH_1000,
+      PRICE_LOW_900,
+      SHARES_10000
+    )
     expect(result).toBe(EXPECTED_VALUE_9500000)
   })
 
   it('should handle fractional shares', () => {
-    const result = calculateStockGiftValue(PRICE_HIGH_100, PRICE_LOW_90, SHARES_10_5)
+    const result = calculateStockGiftValue(
+      PRICE_HIGH_100,
+      PRICE_LOW_90,
+      SHARES_10_5
+    )
     expect(result).toBe(EXPECTED_VALUE_997_5)
   })
 })

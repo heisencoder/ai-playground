@@ -18,7 +18,10 @@ const BRK_B_LOW = 493.35
 const HTTP_STATUS_INTERNAL_ERROR = 500
 
 const networkErrorHandler = http.get('*/api/stock-price', () => {
-  return HttpResponse.json({ error: 'Network error' }, { status: HTTP_STATUS_INTERNAL_ERROR })
+  return HttpResponse.json(
+    { error: 'Network error' },
+    { status: HTTP_STATUS_INTERNAL_ERROR }
+  )
 })
 
 const malformedResponseHandler = http.get('*/api/stock-price', () => {
@@ -91,14 +94,16 @@ describe('stockApi', () => {
 
     it('should handle network errors', async () => {
       server.use(networkErrorHandler)
-      await expect(fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)).rejects.toThrow()
+      await expect(
+        fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)
+      ).rejects.toThrow()
     })
 
     it('should handle malformed JSON in error response', async () => {
       server.use(malformedResponseHandler)
-      await expect(fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)).rejects.toThrow(
-        /Unknown error/
-      )
+      await expect(
+        fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)
+      ).rejects.toThrow(/Unknown error/)
     })
   })
 })

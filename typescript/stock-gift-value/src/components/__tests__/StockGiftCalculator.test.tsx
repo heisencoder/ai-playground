@@ -40,7 +40,9 @@ describe('StockGiftCalculator - Row Management', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(EXPECTED_TWO_ROWS)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(
+        EXPECTED_TWO_ROWS
+      )
     })
   })
 
@@ -72,7 +74,9 @@ describe('StockGiftCalculator - Row Management', () => {
     await user.tab()
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(EXPECTED_TWO_ROWS)
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(
+        EXPECTED_TWO_ROWS
+      )
     })
 
     const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
@@ -83,8 +87,12 @@ describe('StockGiftCalculator - Row Management', () => {
     await user.click(removeButtons[FIRST_ELEMENT_INDEX])
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(EXPECTED_TWO_ROWS)
-      expect(screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]).toHaveValue('2024-02-01')
+      expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(
+        EXPECTED_TWO_ROWS
+      )
+      expect(
+        screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
+      ).toHaveValue('2024-02-01')
     })
   })
 })
@@ -99,8 +107,10 @@ describe('StockGiftCalculator - Value Calculation', () => {
     render(<StockGiftCalculator />)
 
     const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
-    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
-    const sharesInput = screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'AAPL')
@@ -120,8 +130,10 @@ describe('StockGiftCalculator - Value Calculation', () => {
     render(<StockGiftCalculator />)
 
     const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
-    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
-    const sharesInput = screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
 
     await user.type(dateInput, '2025-11-07')
     await user.type(tickerInput, 'BRK.B')
@@ -147,8 +159,10 @@ describe('StockGiftCalculator - Error Handling', () => {
     render(<StockGiftCalculator />)
 
     const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
-    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
-    const sharesInput = screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'INVALID123')
@@ -168,8 +182,10 @@ describe('StockGiftCalculator - Error Handling', () => {
     render(<StockGiftCalculator />)
 
     const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
-    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
-    const sharesInput = screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, '123')
@@ -189,8 +205,10 @@ describe('StockGiftCalculator - Error Handling', () => {
     render(<StockGiftCalculator />)
 
     const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
-    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
-    const sharesInput = screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
 
     await user.type(dateInput, '2024-01-01')
     await user.type(tickerInput, 'AAPL')
