@@ -67,13 +67,7 @@ graph TD
 - **Node.js 22+** (required for Vite 7+)
 - **npm 10+**
 
-**Quick install with nvm:**
-```bash
-nvm install 22
-nvm use 22
-```
-
-Or download from [nodejs.org](https://nodejs.org/)
+Install via [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating) (recommended) or download from [nodejs.org](https://nodejs.org/)
 
 ### Installation
 
