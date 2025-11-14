@@ -80,5 +80,21 @@ describe('stockApi', () => {
 
       await expect(fetchStockPrice('AAPL', '2024-01-01')).rejects.toThrow()
     })
+
+    it('should handle malformed JSON in error response', async () => {
+      // Override the handler to return non-JSON error response
+      server.use(
+        http.get('*/api/stock-price', () => {
+          return new Response('Internal Server Error', {
+            status: 500,
+            headers: { 'Content-Type': 'text/plain' },
+          })
+        })
+      )
+
+      await expect(fetchStockPrice('AAPL', '2024-01-01')).rejects.toThrow(
+        /Unknown error/
+      )
+    })
   })
 })

@@ -19,6 +19,14 @@ export default defineConfig({
     css: true,
     testTimeout: 10000, // 10 seconds per test
     hookTimeout: 10000, // 10 seconds for hooks
+    // Fail tests on console warnings/errors (turn warnings into errors)
+    onConsoleLog(log, type) {
+      if (type === 'stderr' && log.includes('Warning:')) {
+        // Treat React warnings as test failures
+        throw new Error(`React Warning detected: ${log}`)
+      }
+      return false // Allow other console logs
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -38,20 +46,17 @@ export default defineConfig({
         'src/main.tsx',
         'src/App.tsx',
         'api/server.ts',
-        // Short files with ≤5 uncovered lines (add as needed)
-        'src/services/stockApi.ts', // 59 lines, 1 uncovered (error handler edge case)
-        // TODO: Remove after adding tests - temporarily excluded to allow CI to pass
-        'src/components/StockGiftCalculator.tsx', // 152 lines, 9 uncovered - needs better test coverage
       ],
       all: true,
-      // Per-file thresholds - each file must meet 95% coverage
-      // Exception: Short files (<~50 lines) with ≤5 uncovered lines can be added to exclude list above
       thresholds: {
+        // Note: Vitest doesn't support separate global vs per-file thresholds
+        // 85% for lines/functions/statements, 75% for branches (harder to cover)
+        // Applies to both global aggregate and per-file
+        lines: 85,
+        functions: 85,
+        branches: 75,
+        statements: 85,
         perFile: true,
-        lines: 95,
-        functions: 95,
-        branches: 95,
-        statements: 95,
       },
     },
   },

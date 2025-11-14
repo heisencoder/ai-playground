@@ -221,10 +221,60 @@ typescript/stock-gift-value/
 5. ✅ CI/CD - GitHub Actions workflow
 6. ✅ Backend - Standalone Express server (removed Vercel dependency)
 
+## Phase 7: Spreadsheet-Style Interface ✅
+
+Transformed the application from individual card-based rows to a spreadsheet-like interface with enhanced usability.
+
+### Features Implemented
+
+**Grid Layout**
+- Replaced div-based rows with semantic HTML `<table>` structure
+- Common header row for all columns (Date, Ticker, Shares, Value)
+- Alternating row colors and hover states for better readability
+- Responsive design maintained
+
+**Column Sorting**
+- Click column headers to sort data
+- Cycles through: ascending → descending → unsorted
+- Visual indicators: ↕ (unsorted), ↑ (ascending), ↓ (descending)
+- Empty rows always stay at bottom when sorting
+
+**Dynamic Row Management**
+- Automatically adds new empty row when data is entered in the last row
+- Removes empty rows when all fields are cleared (maintains minimum of one empty row)
+- Changes occur on blur (when leaving a cell) to avoid disrupting data entry
+- Maximum of 50 rows enforced
+
+**Keyboard Navigation**
+- Arrow keys: Navigate between cells in the grid
+- Tab/Shift+Tab: Move between editable cells
+- Enter: Move down to cell below
+- Smart cursor handling: only navigates when at start/end of input text
+
+**Copy to Clipboard**
+- 📋 Copy button exports all non-empty rows to TSV format
+- Compatible with Excel, Google Sheets, and other spreadsheet applications
+- Includes headers and formatted values
+- Success message confirms copy operation
+
+**Removed**
+- "Add Another Stock Gift" button (replaced by automatic row management)
+
+### Technical Implementation
+
+- Followed TDD methodology: wrote failing tests first, then implemented features
+- Maintained all existing functionality (calculations, API, caching)
+- All quality checks pass: ESLint, TypeScript strict mode, builds successfully
+- 70+ tests maintained and passing
+
 ## Future Enhancements (Out of Scope)
 
 - Total value across all gifts
-- Export to CSV/PDF
+- Export to CSV/PDF with formatting
 - Historical donation tracking
 - Support for mutual funds
 - Tax deduction calculations
+- Column resizing
+- Row reordering via drag-and-drop
+- Undo/redo functionality
+- Virtual scrolling for >50 rows

@@ -21,13 +21,35 @@ export const handlers = [
       })
     }
 
-    // Handle AAPL test case
+    // Handle AAPL test case for 2024-01-01
     if (ticker === 'AAPL' && date === '2024-01-01') {
       return HttpResponse.json({
         date: '2024-01-01',
         high: 150,
         low: 140,
         ticker: 'AAPL',
+      })
+    }
+
+    // Handle AAPL test case for 2024-01-15 (for spreadsheet copy tests)
+    // Average price: $14.50, 100 shares = $1,450.00
+    if (ticker === 'AAPL' && date === '2024-01-15') {
+      return HttpResponse.json({
+        date: '2024-01-15',
+        high: 15,
+        low: 14,
+        ticker: 'AAPL',
+      })
+    }
+
+    // Handle GOOGL test case for 2024-02-20 (for spreadsheet copy tests)
+    // Average price: $29.50, 50 shares = $1,475.00
+    if (ticker === 'GOOGL' && date === '2024-02-20') {
+      return HttpResponse.json({
+        date: '2024-02-20',
+        high: 30,
+        low: 29,
+        ticker: 'GOOGL',
       })
     }
 

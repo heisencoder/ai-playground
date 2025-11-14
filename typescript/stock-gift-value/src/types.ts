@@ -3,10 +3,10 @@ export interface StockGift {
   date: string // ISO date format
   ticker: string
   shares: number
-  value?: number // Calculated value
-  loading?: boolean
-  error?: string
-  cacheKey?: string // Cache key to track when to recalculate
+  value?: number | undefined // Calculated value - explicitly allow undefined
+  loading?: boolean | undefined
+  error?: string | undefined
+  cacheKey?: string | undefined // Cache key to track when to recalculate
 }
 
 export interface StockPriceData {

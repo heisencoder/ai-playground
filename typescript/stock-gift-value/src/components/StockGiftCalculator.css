@@ -22,30 +22,197 @@
   margin: 0;
 }
 
-.gifts-list {
-  margin-bottom: 2rem;
+.table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
-.add-button {
-  padding: 0.75rem 1.5rem;
-  background: #3b82f6;
+.stock-gift-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.stock-gift-table thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.stock-gift-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.stock-gift-table th.actions-header {
+  text-align: center;
+  width: 80px;
+  position: relative;
+}
+
+.sort-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  transition: color 0.2s;
+}
+
+.sort-button:hover {
+  color: #3b82f6;
+}
+
+.sort-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.copy-button {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background: #e5e7eb;
+}
+
+.copy-button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.copy-message {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: #111827;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.stock-gift-table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.15s;
+}
+
+.stock-gift-table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.stock-gift-table tbody tr:hover {
+  background: #f3f4f6;
+}
+
+.stock-gift-table td {
+  padding: 0.75rem 1rem;
+}
+
+.stock-gift-table td.value-cell {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #059669;
+}
+
+.stock-gift-table td.actions-cell {
+  text-align: center;
+  width: 80px;
+}
+
+.stock-gift-table input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.stock-gift-table input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.stock-gift-table .date-input {
+  min-width: 150px;
+}
+
+.stock-gift-table .ticker-input {
+  min-width: 100px;
+  text-transform: uppercase;
+}
+
+.stock-gift-table .shares-input {
+  min-width: 100px;
+}
+
+.value-cell .loading {
+  color: #6b7280;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.value-cell .error {
+  color: #dc2626;
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.value-cell .placeholder {
+  color: #d1d5db;
+  font-weight: 400;
+}
+
+.remove-button {
+  background: #ef4444;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.25rem;
   cursor: pointer;
   transition: background-color 0.2s;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0 auto;
+  line-height: 1;
 }
 
-.add-button:hover {
-  background: #2563eb;
+.remove-button:hover {
+  background: #dc2626;
 }
 
-.add-button:active {
-  background: #1d4ed8;
+.remove-button:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
@@ -59,5 +226,23 @@
 
   .calculator-header .subtitle {
     font-size: 0.875rem;
+  }
+
+  .table-container {
+    border-radius: 6px;
+  }
+
+  .stock-gift-table th,
+  .stock-gift-table td {
+    padding: 0.5rem;
+  }
+
+  .stock-gift-table input {
+    padding: 0.375rem;
+    font-size: 0.75rem;
+  }
+
+  .copy-button {
+    font-size: 1rem;
   }
 }
