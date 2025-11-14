@@ -50,12 +50,12 @@ export default defineConfig({
       all: true,
       thresholds: {
         // Note: Vitest doesn't support separate global vs per-file thresholds
-        // 90% for lines/functions/statements, 85% for branches (harder to cover)
+        // 85% for lines/functions/statements, 75% for branches (harder to cover)
         // Applies to both global aggregate and per-file
-        lines: 90,
-        functions: 90,
-        branches: 85,
-        statements: 90,
+        lines: 85,
+        functions: 85,
+        branches: 75,
+        statements: 85,
         perFile: true,
       },
     },

@@ -165,6 +165,30 @@ describe('StockGiftCalculator', () => {
     )
   })
 
+  it('should show error for invalid ticker format', async () => {
+    const user = userEvent.setup()
+
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[0]
+    const tickerInput = screen.getAllByLabelText(/^ticker$/i)[0]
+    const sharesInput = screen.getAllByLabelText(/^shares$/i)[0]
+
+    await user.type(dateInput, '2024-01-01')
+    // Use a ticker that doesn't match the regex pattern (only numbers)
+    await user.type(tickerInput, '123')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
+
+    // Wait for error message from client-side validation
+    await waitFor(
+      () => {
+        expect(screen.getByText(/invalid ticker/i)).toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
+  })
+
   it('should show loading state while fetching', async () => {
     const user = userEvent.setup()
 

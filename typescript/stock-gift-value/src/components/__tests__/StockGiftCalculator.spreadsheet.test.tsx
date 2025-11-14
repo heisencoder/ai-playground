@@ -269,6 +269,60 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
       })
     })
 
+    it('should sort by value column', async () => {
+      render(<StockGiftCalculator />)
+      const user = userEvent.setup()
+
+      // Create two rows with complete data to get calculated values
+      // Row 1: AAPL, 100 shares on 2024-01-15 = $1,450.00
+      const dateInputs = screen.getAllByLabelText(/^date$/i)
+      const tickerInputs = screen.getAllByLabelText(/^ticker$/i)
+      const sharesInputs = screen.getAllByLabelText(/^shares$/i)
+
+      await user.type(dateInputs[0], '2024-01-15')
+      await user.type(tickerInputs[0], 'AAPL')
+      await user.type(sharesInputs[0], '100')
+      await user.tab() // Blur to trigger row addition
+
+      await waitFor(() => {
+        expect(screen.getAllByLabelText(/^date$/i)).toHaveLength(2)
+      })
+
+      // Row 2: GOOGL, 50 shares on 2024-02-20 = $1,475.00
+      const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
+      const updatedTickerInputs = screen.getAllByLabelText(/^ticker$/i)
+      const updatedSharesInputs = screen.getAllByLabelText(/^shares$/i)
+
+      await user.type(updatedDateInputs[1], '2024-02-20')
+      await user.type(updatedTickerInputs[1], 'GOOGL')
+      await user.type(updatedSharesInputs[1], '50')
+      await user.tab() // Blur
+
+      // Wait for both values to be calculated
+      await waitFor(
+        () => {
+          expect(screen.getByText('$1,450.00')).toBeInTheDocument()
+          expect(screen.getByText('$1,475.00')).toBeInTheDocument()
+        },
+        { timeout: 5000 }
+      )
+
+      // Click value header to sort (ascending)
+      const table = screen.getByRole('table')
+      const headers = within(table).getAllByRole('columnheader')
+      const valueButton = within(headers[3]).getByRole('button')
+      await user.click(valueButton)
+
+      await waitFor(() => {
+        const rows = screen.getAllByRole('row')
+        // Skip header row, check data rows
+        // First data row should have lower value ($1,450.00 = AAPL)
+        expect(within(rows[1]).getByLabelText(/^ticker$/i)).toHaveValue('AAPL')
+        // Second data row should have higher value ($1,475.00 = GOOGL)
+        expect(within(rows[2]).getByLabelText(/^ticker$/i)).toHaveValue('GOOGL')
+      })
+    })
+
     it('should keep empty row at bottom when sorting', async () => {
       render(<StockGiftCalculator />)
       const user = userEvent.setup()
@@ -622,6 +676,22 @@ describe('StockGiftCalculator - Spreadsheet Interface', () => {
 
       // Focus should move to date input
       expect(dateInput).toHaveFocus()
+    })
+
+    it('should move focus from ticker to shares with arrow right', async () => {
+      render(<StockGiftCalculator />)
+      const user = userEvent.setup()
+
+      const tickerInput = screen.getByLabelText(/^ticker$/i)
+      const sharesInput = screen.getByLabelText(/^shares$/i)
+
+      tickerInput.focus()
+
+      // Press arrow right
+      await user.keyboard('{ArrowRight}')
+
+      // Focus should move to shares input
+      expect(sharesInput).toHaveFocus()
     })
 
     it('should move focus to next cell with Tab key', async () => {
