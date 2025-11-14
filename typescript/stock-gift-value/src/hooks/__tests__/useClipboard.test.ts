@@ -3,19 +3,51 @@ import { renderHook, act } from '@testing-library/react'
 import { useClipboard } from '../useClipboard'
 import { StockGift } from '../../types'
 
+// Test constants
+const TEST_TIMEOUT_MS = 2000
+const TEST_SHARES = 10
+const TEST_VALUE = 1500
+const TEST_DATE = '2024-01-01'
+const TEST_TICKER = 'AAPL'
+const EXPECTED_LINE_COUNT_WITH_HEADER = 2
+
 describe('useClipboard', () => {
   const isRowEmpty = (gift: StockGift): boolean => {
     return !gift.date && !gift.ticker && !gift.shares
   }
 
-  beforeEach(() => {
-    vi.useFakeTimers()
-    // Mock navigator.clipboard
+  const setupClipboardMock = (): void => {
     Object.assign(navigator, {
       clipboard: {
         writeText: vi.fn(() => Promise.resolve()),
       },
     })
+  }
+
+  const setupClipboardFailureMock = (): void => {
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: vi.fn(() => Promise.reject(new Error('Failed'))),
+      },
+    })
+  }
+
+  const getWriteTextMock = (): ReturnType<typeof vi.fn> => {
+    return vi.mocked(navigator.clipboard.writeText)
+  }
+
+  const getFirstCallArg = (): string => {
+    const mock = getWriteTextMock()
+    const arg = mock.mock.calls[0]?.[0]
+    if (typeof arg !== 'string') {
+      throw new Error('Expected string argument')
+    }
+    return arg
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    setupClipboardMock()
   })
 
   afterEach(() => {
@@ -29,10 +61,10 @@ describe('useClipboard', () => {
     const gifts: StockGift[] = [
       {
         id: '1',
-        date: '2024-01-01',
-        ticker: 'AAPL',
-        shares: 10,
-        value: 1500,
+        date: TEST_DATE,
+        ticker: TEST_TICKER,
+        shares: TEST_SHARES,
+        value: TEST_VALUE,
       },
     ]
 
@@ -40,13 +72,11 @@ describe('useClipboard', () => {
       await result.current.handleCopy(gifts)
     })
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(navigator.clipboard.writeText).toHaveBeenCalled()
+    expect(getWriteTextMock()).toHaveBeenCalled()
     expect(result.current.copyMessage).toBe('Copied to clipboard!')
 
-    // Test that message clears after timeout
     act(() => {
-      vi.advanceTimersByTime(2000)
+      vi.advanceTimersByTime(TEST_TIMEOUT_MS)
     })
 
     expect(result.current.copyMessage).toBe('')
@@ -58,9 +88,9 @@ describe('useClipboard', () => {
     const gifts: StockGift[] = [
       {
         id: '1',
-        date: '2024-01-01',
-        ticker: 'AAPL',
-        shares: 10,
+        date: TEST_DATE,
+        ticker: TEST_TICKER,
+        shares: TEST_SHARES,
         loading: true,
       },
     ]
@@ -69,9 +99,7 @@ describe('useClipboard', () => {
       await result.current.handleCopy(gifts)
     })
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>
-    const callArg = writeText.mock.calls[0]?.[0] as string
+    const callArg = getFirstCallArg()
     expect(callArg).toContain('Loading...')
   })
 
@@ -81,9 +109,9 @@ describe('useClipboard', () => {
     const gifts: StockGift[] = [
       {
         id: '1',
-        date: '2024-01-01',
-        ticker: 'AAPL',
-        shares: 10,
+        date: TEST_DATE,
+        ticker: TEST_TICKER,
+        shares: TEST_SHARES,
         error: 'Invalid ticker',
       },
     ]
@@ -92,9 +120,7 @@ describe('useClipboard', () => {
       await result.current.handleCopy(gifts)
     })
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>
-    const callArg = writeText.mock.calls[0]?.[0] as string
+    const callArg = getFirstCallArg()
     expect(callArg).toContain('Error')
   })
 
@@ -104,10 +130,9 @@ describe('useClipboard', () => {
     const gifts: StockGift[] = [
       {
         id: '1',
-        date: '2024-01-01',
-        ticker: 'AAPL',
-        shares: 10,
-        // No value, loading, or error
+        date: TEST_DATE,
+        ticker: TEST_TICKER,
+        shares: TEST_SHARES,
       },
     ]
 
@@ -115,10 +140,7 @@ describe('useClipboard', () => {
       await result.current.handleCopy(gifts)
     })
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>
-    const callArg = writeText.mock.calls[0]?.[0] as string
-    // Should have empty value field (ends with tab or newline)
+    const callArg = getFirstCallArg()
     expect(callArg).toMatch(/AAPL\t10\t\s*$/)
   })
 
@@ -128,16 +150,16 @@ describe('useClipboard', () => {
     const gifts: StockGift[] = [
       {
         id: '1',
-        date: '2024-01-01',
-        ticker: 'AAPL',
-        shares: 10,
-        value: 1500,
+        date: TEST_DATE,
+        ticker: TEST_TICKER,
+        shares: TEST_SHARES,
+        value: TEST_VALUE,
       },
       {
         id: '2',
         date: '',
         ticker: '',
-        shares: 0, // Empty row
+        shares: 0,
       },
     ]
 
@@ -145,30 +167,21 @@ describe('useClipboard', () => {
       await result.current.handleCopy(gifts)
     })
 
-    // eslint-disable-next-line @typescript-eslint/unbound-method
-    const writeText = navigator.clipboard.writeText as ReturnType<typeof vi.fn>
-    const callArg = writeText.mock.calls[0]?.[0] as string
+    const callArg = getFirstCallArg()
     const lines = callArg.split('\n')
-    // Should only have header + 1 data row (empty row excluded)
-    expect(lines.length).toBe(2)
+    expect(lines.length).toBe(EXPECTED_LINE_COUNT_WITH_HEADER)
   })
 
   it('should handle copy failure', async () => {
-    // Mock clipboard failure
-    Object.assign(navigator, {
-      clipboard: {
-        writeText: vi.fn(() => Promise.reject(new Error('Failed'))),
-      },
-    })
-
+    setupClipboardFailureMock()
     const { result } = renderHook(() => useClipboard(isRowEmpty))
 
     const gifts: StockGift[] = [
       {
         id: '1',
-        date: '2024-01-01',
-        ticker: 'AAPL',
-        shares: 10,
+        date: TEST_DATE,
+        ticker: TEST_TICKER,
+        shares: TEST_SHARES,
       },
     ]
 
@@ -178,9 +191,8 @@ describe('useClipboard', () => {
 
     expect(result.current.copyMessage).toBe('Failed to copy')
 
-    // Test that error message clears after timeout
     act(() => {
-      vi.advanceTimersByTime(2000)
+      vi.advanceTimersByTime(TEST_TIMEOUT_MS)
     })
 
     expect(result.current.copyMessage).toBe('')

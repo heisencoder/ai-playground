@@ -4,95 +4,99 @@ import { fetchStockPrice } from '../stockApi'
 import { stockPriceCache } from '../cache'
 import { server } from '../../test/mocks/server'
 
+// Test constants
+const TEST_TICKER_AAPL = 'AAPL'
+const TEST_DATE = '2024-01-01'
+const PRICE_HIGH_150 = 150
+const PRICE_LOW_140 = 140
+
+const BRK_B_TICKER = 'BRK.B'
+const BRK_B_DATE = '2025-11-07'
+const BRK_B_HIGH = 500.16
+const BRK_B_LOW = 493.35
+
+const HTTP_STATUS_INTERNAL_ERROR = 500
+
+const networkErrorHandler = http.get('*/api/stock-price', () => {
+  return HttpResponse.json({ error: 'Network error' }, { status: HTTP_STATUS_INTERNAL_ERROR })
+})
+
+const malformedResponseHandler = http.get('*/api/stock-price', () => {
+  return new Response('Internal Server Error', {
+    status: HTTP_STATUS_INTERNAL_ERROR,
+    headers: { 'Content-Type': 'text/plain' },
+  })
+})
+
 describe('stockApi', () => {
   beforeEach(() => {
-    // Clear cache before each test
     stockPriceCache.clear()
   })
 
   describe('fetchStockPrice', () => {
     it('should return cached data if available', async () => {
-      // First call will fetch from API and cache
-      const result1 = await fetchStockPrice('AAPL', '2024-01-01')
+      const result1 = await fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)
       expect(result1).toEqual({
-        date: '2024-01-01',
-        high: 150,
-        low: 140,
-        ticker: 'AAPL',
+        date: TEST_DATE,
+        high: PRICE_HIGH_150,
+        low: PRICE_LOW_140,
+        ticker: TEST_TICKER_AAPL,
       })
 
-      // Second call should return cached data
-      const result2 = await fetchStockPrice('AAPL', '2024-01-01')
+      const result2 = await fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)
       expect(result2).toEqual({
-        date: '2024-01-01',
-        high: 150,
-        low: 140,
-        ticker: 'AAPL',
+        date: TEST_DATE,
+        high: PRICE_HIGH_150,
+        low: PRICE_LOW_140,
+        ticker: TEST_TICKER_AAPL,
       })
     })
 
     it('should normalize ticker to uppercase', async () => {
-      const result = await fetchStockPrice('aapl', '2024-01-01')
-      expect(result.ticker).toBe('AAPL')
+      const result = await fetchStockPrice('aapl', TEST_DATE)
+      expect(result.ticker).toBe(TEST_TICKER_AAPL)
     })
 
     it('should fetch from API if not cached', async () => {
-      const result = await fetchStockPrice('AAPL', '2024-01-01')
-      expect(result.high).toBe(150)
-      expect(result.low).toBe(140)
-      expect(result.ticker).toBe('AAPL')
+      const result = await fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)
+      expect(result.high).toBe(PRICE_HIGH_150)
+      expect(result.low).toBe(PRICE_LOW_140)
+      expect(result.ticker).toBe(TEST_TICKER_AAPL)
     })
 
     it('should handle API errors gracefully', async () => {
-      await expect(fetchStockPrice('INVALID123', '2024-01-01')).rejects.toThrow(
+      await expect(fetchStockPrice('INVALID123', TEST_DATE)).rejects.toThrow(
         /Invalid ticker/
       )
     })
 
     it('should handle BRK.B ticker correctly', async () => {
-      const result = await fetchStockPrice('BRK.B', '2025-11-07')
+      const result = await fetchStockPrice(BRK_B_TICKER, BRK_B_DATE)
       expect(result).toEqual({
-        date: '2025-11-07',
-        high: 500.16,
-        low: 493.35,
-        ticker: 'BRK.B',
+        date: BRK_B_DATE,
+        high: BRK_B_HIGH,
+        low: BRK_B_LOW,
+        ticker: BRK_B_TICKER,
       })
     })
 
     it('should cache results after fetching', async () => {
-      // Fetch from API
-      await fetchStockPrice('AAPL', '2024-01-01')
+      await fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)
 
-      // Check that it's in cache
-      const cached = stockPriceCache.get('AAPL', '2024-01-01')
+      const cached = stockPriceCache.get(TEST_TICKER_AAPL, TEST_DATE)
       expect(cached).toBeTruthy()
-      expect(cached?.high).toBe(150)
-      expect(cached?.low).toBe(140)
+      expect(cached?.high).toBe(PRICE_HIGH_150)
+      expect(cached?.low).toBe(PRICE_LOW_140)
     })
 
     it('should handle network errors', async () => {
-      // Override the handler to simulate network error
-      server.use(
-        http.get('*/api/stock-price', () => {
-          return HttpResponse.json({ error: 'Network error' }, { status: 500 })
-        })
-      )
-
-      await expect(fetchStockPrice('AAPL', '2024-01-01')).rejects.toThrow()
+      server.use(networkErrorHandler)
+      await expect(fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)).rejects.toThrow()
     })
 
     it('should handle malformed JSON in error response', async () => {
-      // Override the handler to return non-JSON error response
-      server.use(
-        http.get('*/api/stock-price', () => {
-          return new Response('Internal Server Error', {
-            status: 500,
-            headers: { 'Content-Type': 'text/plain' },
-          })
-        })
-      )
-
-      await expect(fetchStockPrice('AAPL', '2024-01-01')).rejects.toThrow(
+      server.use(malformedResponseHandler)
+      await expect(fetchStockPrice(TEST_TICKER_AAPL, TEST_DATE)).rejects.toThrow(
         /Unknown error/
       )
     })
