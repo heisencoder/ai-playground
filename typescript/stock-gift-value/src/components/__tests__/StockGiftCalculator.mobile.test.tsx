@@ -302,9 +302,7 @@ describe('StockGiftCalculator - Mobile Responsive CSS', () => {
     const { container } = render(<StockGiftCalculator />)
 
     // Verify the main container has the calculator-container class
-    const calculatorContainer = container.querySelector(
-      '.calculator-container'
-    )
+    const calculatorContainer = container.querySelector('.calculator-container')
     expect(calculatorContainer).toBeInTheDocument()
 
     // Verify table container exists
