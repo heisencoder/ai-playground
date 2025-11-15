@@ -5,6 +5,7 @@ import { useGiftValueCalculation } from '../hooks/useGiftValueCalculation'
 import { useSorting } from '../hooks/useSorting'
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 import { useClipboard } from '../hooks/useClipboard'
+import { StockGiftTableHeader } from './StockGiftTableHeader'
 import './StockGiftCalculator.css'
 
 export function StockGiftCalculator(): React.JSX.Element {
@@ -27,84 +28,52 @@ export function StockGiftCalculator(): React.JSX.Element {
 
   const sortedGifts = sortGifts(gifts)
 
+  // Get yesterday's date since market prices are only known after close
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const maxDate = yesterday.toISOString().split('T')[0]
+
   return (
     <div className="calculator-container">
       <header className="calculator-header">
         <h1>Stock Gift Value Calculator</h1>
-        <p className="subtitle">
-          Calculate IRS-approved donated value based on the average of high and
-          low prices
-        </p>
+        <div className="subtitle-container">
+          <p className="subtitle">
+            Calculate IRS-approved donated value based on the average of high
+            and low prices
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              void handleCopy(gifts)
+            }}
+            className="copy-button copy-button-header"
+            aria-label="Copy all data to clipboard"
+            title="Copy to clipboard"
+          >
+            📋
+          </button>
+          {copyMessage && (
+            <span
+              className="copy-message copy-message-header"
+              role="status"
+              aria-live="polite"
+            >
+              {copyMessage}
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="table-container">
         <table className="stock-gift-table" role="table">
-          <thead>
-            <tr>
-              <th>
-                <button
-                  type="button"
-                  onClick={() => handleSort('date')}
-                  className="sort-button"
-                  aria-label={`Sort by date ${getSortIndicator('date')}`}
-                >
-                  Date {getSortIndicator('date')}
-                </button>
-              </th>
-              <th>
-                <button
-                  type="button"
-                  onClick={() => handleSort('ticker')}
-                  className="sort-button"
-                  aria-label={`Sort by ticker ${getSortIndicator('ticker')}`}
-                >
-                  Ticker {getSortIndicator('ticker')}
-                </button>
-              </th>
-              <th>
-                <button
-                  type="button"
-                  onClick={() => handleSort('shares')}
-                  className="sort-button"
-                  aria-label={`Sort by shares ${getSortIndicator('shares')}`}
-                >
-                  Shares {getSortIndicator('shares')}
-                </button>
-              </th>
-              <th>
-                <button
-                  type="button"
-                  onClick={() => handleSort('value')}
-                  className="sort-button"
-                  aria-label={`Sort by value ${getSortIndicator('value')}`}
-                >
-                  Value {getSortIndicator('value')}
-                </button>
-              </th>
-              <th className="actions-header">
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handleCopy(gifts)
-                  }}
-                  className="copy-button"
-                  aria-label="Copy all data to clipboard"
-                  title="Copy to clipboard"
-                >
-                  📋
-                </button>
-                {copyMessage && (
-                  <span
-                    className="copy-message"
-                    role="status"
-                    aria-live="polite"
-                  >
-                    {copyMessage}
-                  </span>
-                )}
-              </th>
-            </tr>
-          </thead>
+          <StockGiftTableHeader
+            onSort={handleSort}
+            getSortIndicator={getSortIndicator}
+            onCopy={handleCopy}
+            gifts={gifts}
+            copyMessage={copyMessage}
+          />
           <tbody>
             {sortedGifts.map((gift) => (
               <tr key={gift.id} className="stock-gift-row">
@@ -122,7 +91,7 @@ export function StockGiftCalculator(): React.JSX.Element {
                       handleKeyDown(e, gift.id, 'date', sortedGifts)
                     }
                     className="date-input"
-                    max={new Date().toISOString().split('T')[0]}
+                    max={maxDate}
                     aria-label="Date"
                   />
                 </td>

@@ -151,9 +151,9 @@ describe('StockGiftCalculator - Mobile Rendering', () => {
     // Click should work (testing touch interaction)
     await user.click(copyButton)
 
-    // Should show copy message
+    // Should show copy message (may have multiple due to mobile/desktop variants)
     await waitFor(() => {
-      expect(screen.getByText(/copied/i)).toBeInTheDocument()
+      expect(screen.getAllByText(/copied/i).length).toBeGreaterThan(0)
     })
   })
 
