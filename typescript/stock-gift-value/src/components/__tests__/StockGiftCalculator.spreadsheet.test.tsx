@@ -94,7 +94,9 @@ describe('StockGiftCalculator - Grid Layout', () => {
     expect(headers[FIRST_ELEMENT]).toHaveTextContent(/date/i)
     expect(headers[SECOND_ELEMENT]).toHaveTextContent(/ticker/i)
     expect(headers[THIRD_ELEMENT]).toHaveTextContent(/shares/i)
-    expect(headers[THIRD_ELEMENT + 1]).toHaveTextContent(/fair market value|fmv/i)
+    expect(headers[THIRD_ELEMENT + 1]).toHaveTextContent(
+      /fair market value|fmv/i
+    )
   })
 
   it('should start with exactly one empty row', () => {
