@@ -171,6 +171,15 @@
   min-width: 100px;
 }
 
+/* Remove min-width on small screens */
+@media (max-width: 768px) {
+  .stock-gift-table .date-input,
+  .stock-gift-table .ticker-input,
+  .stock-gift-table .shares-input {
+    min-width: 0;
+  }
+}
+
 .value-cell .loading {
   color: #6b7280;
   font-style: italic;
@@ -232,17 +241,68 @@
     border-radius: 6px;
   }
 
-  .stock-gift-table th,
+  .stock-gift-table th {
+    padding: 0.5rem 0.25rem;
+    font-size: 0.75rem;
+  }
+
   .stock-gift-table td {
-    padding: 0.5rem;
+    padding: 0.5rem 0.25rem;
   }
 
   .stock-gift-table input {
-    padding: 0.375rem;
-    font-size: 0.75rem;
+    padding: 0.5rem 0.375rem;
+    font-size: 1rem; /* Increased for better mobile legibility */
+  }
+
+  .stock-gift-table td.value-cell {
+    font-size: 1rem; /* Keep value readable on mobile */
   }
 
   .copy-button {
     font-size: 1rem;
+  }
+
+  .remove-button {
+    width: 28px;
+    height: 28px;
+    font-size: 1.125rem;
+  }
+}
+
+/* Extra small screens - further optimizations */
+@media (max-width: 480px) {
+  .calculator-container {
+    padding: 0.5rem;
+  }
+
+  .calculator-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .calculator-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .calculator-header .subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .stock-gift-table th {
+    padding: 0.375rem 0.25rem;
+    font-size: 0.6875rem;
+  }
+
+  .stock-gift-table td {
+    padding: 0.375rem 0.25rem;
+  }
+
+  .stock-gift-table input {
+    padding: 0.5rem 0.25rem;
+    font-size: 1rem; /* Keep at 16px to prevent zoom on iOS */
+  }
+
+  .stock-gift-table td.value-cell {
+    font-size: 0.9375rem;
   }
 }
