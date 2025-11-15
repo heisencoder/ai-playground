@@ -27,6 +27,11 @@ export function StockGiftCalculator(): React.JSX.Element {
 
   const sortedGifts = sortGifts(gifts)
 
+  // Get yesterday's date since market prices are only known after close
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  const maxDate = yesterday.toISOString().split('T')[0]
+
   return (
     <div className="calculator-container">
       <header className="calculator-header">
@@ -122,7 +127,7 @@ export function StockGiftCalculator(): React.JSX.Element {
                       handleKeyDown(e, gift.id, 'date', sortedGifts)
                     }
                     className="date-input"
-                    max={new Date().toISOString().split('T')[0]}
+                    max={maxDate}
                     aria-label="Date"
                   />
                 </td>
