@@ -42,10 +42,11 @@ export default defineConfig({
         'src/**/*.d.ts',
         'src/vite-env.d.ts',
         'src/types.ts',
-        // Entry points (not directly testable)
+        // Entry points and server-only files (not directly testable)
         'src/main.tsx',
         'src/App.tsx',
         'api/server.ts',
+        'api/logger.ts',
       ],
       all: true,
       thresholds: {

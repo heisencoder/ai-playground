@@ -5,6 +5,88 @@ import {
   StockPriceRequest,
 } from '../handler'
 
+// HTTP Status codes
+const HTTP_STATUS_OK = 200
+const HTTP_STATUS_BAD_REQUEST = 400
+const HTTP_STATUS_NOT_FOUND = 404
+const HTTP_STATUS_INTERNAL_ERROR = 500
+
+// Test constants
+const TEST_TICKER_AAPL = 'AAPL'
+const TEST_TICKER_INVALID = 'INVALID'
+const TEST_DATE = '2024-01-01'
+const PRICE_HIGH_150 = 150
+const PRICE_LOW_140 = 140
+const BRK_B_HIGH = 500.16
+const BRK_B_LOW = 493.35
+
+// Helper to create mock Yahoo Finance response
+interface MockYahooResponseOptions {
+  high?: number | null
+  low?: number | null
+  hasError?: boolean
+  errorDescription?: string
+  emptyQuote?: boolean
+}
+
+function createMockYahooResponse(options: MockYahooResponseOptions = {}): unknown {
+  const { high, low, hasError, errorDescription, emptyQuote } = options
+
+  if (hasError) {
+    return {
+      chart: {
+        error: {
+          description: errorDescription,
+        },
+      },
+    }
+  }
+
+  if (emptyQuote) {
+    return {
+      chart: {
+        result: [
+          {
+            indicators: {
+              quote: [{}],
+            },
+          },
+        ],
+      },
+    }
+  }
+
+  return {
+    chart: {
+      result: [
+        {
+          indicators: {
+            quote: [
+              {
+                high: high !== undefined ? [high] : undefined,
+                low: low !== undefined ? [low] : undefined,
+              },
+            ],
+          },
+        },
+      ],
+    },
+  }
+}
+
+// Helper to create mock fetch response
+function createMockFetchResponse(
+  data: unknown,
+  status: number = HTTP_STATUS_OK
+): Partial<Response> {
+  const isOk = status >= HTTP_STATUS_OK && status < HTTP_STATUS_BAD_REQUEST
+  return {
+    ok: isOk,
+    status,
+    json: (): Promise<unknown> => Promise.resolve(data),
+  }
+}
+
 describe('normalizeTickerForYahoo', () => {
   it('should convert periods to hyphens', () => {
     expect(normalizeTickerForYahoo('BRK.B')).toBe('BRK-B')
@@ -12,7 +94,7 @@ describe('normalizeTickerForYahoo', () => {
   })
 
   it('should handle tickers without periods', () => {
-    expect(normalizeTickerForYahoo('AAPL')).toBe('AAPL')
+    expect(normalizeTickerForYahoo(TEST_TICKER_AAPL)).toBe(TEST_TICKER_AAPL)
     expect(normalizeTickerForYahoo('MSFT')).toBe('MSFT')
   })
 
@@ -21,309 +103,248 @@ describe('normalizeTickerForYahoo', () => {
   })
 })
 
-describe('handleStockPriceRequest', () => {
-  // Store original fetch and console.error
-  const originalFetch = global.fetch
-  const originalConsoleError = console.error
-
+describe('handleStockPriceRequest - Validation', () => {
   beforeEach(() => {
-    // Mock fetch for each test
     global.fetch = vi.fn()
-    // Suppress console.error during tests to avoid confusing error output
     console.error = vi.fn()
   })
 
-  afterEach(() => {
-    // Restore original fetch and console.error
-    global.fetch = originalFetch
-    console.error = originalConsoleError
-    vi.restoreAllMocks()
-  })
-
   it('should return error when ticker is missing', async () => {
-    const request: StockPriceRequest = {
-      date: '2024-01-01',
-    }
-
+    const request: StockPriceRequest = { date: TEST_DATE }
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(400)
+    expect(result.status).toBe(HTTP_STATUS_BAD_REQUEST)
     expect(result.error).toBe('Ticker parameter is required')
     expect(result.data).toBeUndefined()
   })
 
   it('should return error when ticker is array but empty', async () => {
-    const request: StockPriceRequest = {
-      ticker: [],
-      date: '2024-01-01',
-    }
-
+    const request: StockPriceRequest = { ticker: [], date: TEST_DATE }
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(400)
+    expect(result.status).toBe(HTTP_STATUS_BAD_REQUEST)
     expect(result.error).toBe('Ticker parameter is required')
   })
 
   it('should return error when date is missing', async () => {
-    const request: StockPriceRequest = {
-      ticker: 'AAPL',
-    }
-
+    const request: StockPriceRequest = { ticker: TEST_TICKER_AAPL }
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(400)
+    expect(result.status).toBe(HTTP_STATUS_BAD_REQUEST)
     expect(result.error).toBe('Date parameter is required')
     expect(result.data).toBeUndefined()
   })
 
   it('should return error when date is array but empty', async () => {
-    const request: StockPriceRequest = {
-      ticker: 'AAPL',
-      date: [],
-    }
-
+    const request: StockPriceRequest = { ticker: TEST_TICKER_AAPL, date: [] }
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(400)
+    expect(result.status).toBe(HTTP_STATUS_BAD_REQUEST)
     expect(result.error).toBe('Date parameter is required')
+  })
+})
+
+describe('handleStockPriceRequest - Successful Requests', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn()
+    console.error = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('should handle array parameters by taking first element', async () => {
-    const mockResponse = {
-      chart: {
-        result: [
-          {
-            indicators: {
-              quote: [
-                {
-                  high: [150],
-                  low: [140],
-                },
-              ],
-            },
-          },
-        ],
-      },
-    }
+    const mockResponse = createMockYahooResponse({
+      high: PRICE_HIGH_150,
+      low: PRICE_LOW_140,
+    })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockResponse,
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
 
     const request: StockPriceRequest = {
-      ticker: ['AAPL', 'MSFT'], // Array with multiple values
-      date: ['2024-01-01', '2024-01-02'], // Array with multiple values
+      ticker: [TEST_TICKER_AAPL, 'MSFT'],
+      date: [TEST_DATE, '2024-01-02'],
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(200)
-    expect(result.data?.ticker).toBe('AAPL') // Should use first ticker
-    expect(result.data?.date).toBe('2024-01-01') // Should use first date
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    expect(result.data?.ticker).toBe(TEST_TICKER_AAPL)
+    expect(result.data?.date).toBe(TEST_DATE)
   })
 
   it('should successfully fetch stock data', async () => {
-    const mockResponse = {
-      chart: {
-        result: [
-          {
-            indicators: {
-              quote: [
-                {
-                  high: [150],
-                  low: [140],
-                },
-              ],
-            },
-          },
-        ],
-      },
-    }
+    const mockResponse = createMockYahooResponse({
+      high: PRICE_HIGH_150,
+      low: PRICE_LOW_140,
+    })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockResponse,
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
 
     const request: StockPriceRequest = {
-      ticker: 'AAPL',
-      date: '2024-01-01',
+      ticker: TEST_TICKER_AAPL,
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(200)
+    expect(result.status).toBe(HTTP_STATUS_OK)
     expect(result.data).toEqual({
-      date: '2024-01-01',
-      high: 150,
-      low: 140,
-      ticker: 'AAPL',
+      date: TEST_DATE,
+      high: PRICE_HIGH_150,
+      low: PRICE_LOW_140,
+      ticker: TEST_TICKER_AAPL,
     })
     expect(result.error).toBeUndefined()
   })
 
   it('should normalize ticker symbol for Yahoo Finance', async () => {
-    const mockResponse = {
-      chart: {
-        result: [
-          {
-            indicators: {
-              quote: [
-                {
-                  high: [500.16],
-                  low: [493.35],
-                },
-              ],
-            },
-          },
-        ],
-      },
-    }
+    const mockResponse = createMockYahooResponse({
+      high: BRK_B_HIGH,
+      low: BRK_B_LOW,
+    })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockResponse,
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
 
     const request: StockPriceRequest = {
       ticker: 'BRK.B',
-      date: '2024-01-01',
+      date: TEST_DATE,
     }
 
     await handleStockPriceRequest(request)
 
-    // Verify fetch was called with normalized ticker (BRK-B not BRK.B)
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('BRK-B')
     )
   })
 
-  it('should return 404 when ticker not found', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: false,
-      status: 404,
-    } as Response)
+  it('should uppercase ticker symbol', async () => {
+    const mockResponse = createMockYahooResponse({
+      high: PRICE_HIGH_150,
+      low: PRICE_LOW_140,
+    })
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
 
     const request: StockPriceRequest = {
-      ticker: 'INVALID',
-      date: '2024-01-01',
+      ticker: 'aapl',
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(404)
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    expect(result.data?.ticker).toBe(TEST_TICKER_AAPL)
+  })
+})
+
+describe('handleStockPriceRequest - Error Handling', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn()
+    console.error = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('should return 404 when ticker not found', async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: HTTP_STATUS_NOT_FOUND,
+    } as Response)
+
+    const request: StockPriceRequest = {
+      ticker: TEST_TICKER_INVALID,
+      date: TEST_DATE,
+    }
+
+    const result = await handleStockPriceRequest(request)
+
+    expect(result.status).toBe(HTTP_STATUS_NOT_FOUND)
     expect(result.error).toBe("Ticker symbol 'INVALID' not found")
   })
 
   it('should handle API errors', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       ok: false,
-      status: 500,
+      status: HTTP_STATUS_INTERNAL_ERROR,
     } as Response)
 
     const request: StockPriceRequest = {
-      ticker: 'AAPL',
-      date: '2024-01-01',
+      ticker: TEST_TICKER_AAPL,
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(500)
+    expect(result.status).toBe(HTTP_STATUS_INTERNAL_ERROR)
     expect(result.error).toContain('API request failed')
   })
 
   it('should handle invalid API response structure', async () => {
-    const mockResponse = {
-      chart: {
-        error: {
-          description: 'Invalid symbol',
-        },
-      },
-    }
+    const mockResponse = createMockYahooResponse({
+      hasError: true,
+      errorDescription: 'Invalid symbol',
+    })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockResponse,
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
 
     const request: StockPriceRequest = {
-      ticker: 'INVALID',
-      date: '2024-01-01',
+      ticker: TEST_TICKER_INVALID,
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(400)
+    expect(result.status).toBe(HTTP_STATUS_BAD_REQUEST)
     expect(result.error).toBe('Invalid symbol')
   })
 
   it('should handle missing quote data', async () => {
-    const mockResponse = {
-      chart: {
-        result: [
-          {
-            indicators: {
-              quote: [{}], // Empty quote
-            },
-          },
-        ],
-      },
-    }
+    const mockResponse = createMockYahooResponse({ emptyQuote: true })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockResponse,
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
 
     const request: StockPriceRequest = {
-      ticker: 'AAPL',
-      date: '2024-01-01',
+      ticker: TEST_TICKER_AAPL,
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(404)
+    expect(result.status).toBe(HTTP_STATUS_NOT_FOUND)
     expect(result.error).toBe('No price data available for the specified date')
   })
 
   it('should handle null high/low values (market closed)', async () => {
-    const mockResponse = {
-      chart: {
-        result: [
-          {
-            indicators: {
-              quote: [
-                {
-                  high: [null],
-                  low: [null],
-                },
-              ],
-            },
-          },
-        ],
-      },
-    }
+    const mockResponse = createMockYahooResponse({ high: null, low: null })
 
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockResponse,
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
 
     const request: StockPriceRequest = {
-      ticker: 'AAPL',
-      date: '2024-01-01',
+      ticker: TEST_TICKER_AAPL,
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(404)
+    expect(result.status).toBe(HTTP_STATUS_NOT_FOUND)
     expect(result.error).toContain('market may have been closed')
   })
 
@@ -331,13 +352,13 @@ describe('handleStockPriceRequest', () => {
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error('Network error'))
 
     const request: StockPriceRequest = {
-      ticker: 'AAPL',
-      date: '2024-01-01',
+      ticker: TEST_TICKER_AAPL,
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(500)
+    expect(result.status).toBe(HTTP_STATUS_INTERNAL_ERROR)
     expect(result.error).toBe('Failed to fetch stock data')
     expect(result.details).toBe('Network error')
   })
@@ -346,49 +367,14 @@ describe('handleStockPriceRequest', () => {
     vi.mocked(global.fetch).mockRejectedValueOnce('String error')
 
     const request: StockPriceRequest = {
-      ticker: 'AAPL',
-      date: '2024-01-01',
+      ticker: TEST_TICKER_AAPL,
+      date: TEST_DATE,
     }
 
     const result = await handleStockPriceRequest(request)
 
-    expect(result.status).toBe(500)
+    expect(result.status).toBe(HTTP_STATUS_INTERNAL_ERROR)
     expect(result.error).toBe('Failed to fetch stock data')
     expect(result.details).toBe('Unknown error')
-  })
-
-  it('should uppercase ticker symbol', async () => {
-    const mockResponse = {
-      chart: {
-        result: [
-          {
-            indicators: {
-              quote: [
-                {
-                  high: [150],
-                  low: [140],
-                },
-              ],
-            },
-          },
-        ],
-      },
-    }
-
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      json: async () => mockResponse,
-    } as Response)
-
-    const request: StockPriceRequest = {
-      ticker: 'aapl', // lowercase
-      date: '2024-01-01',
-    }
-
-    const result = await handleStockPriceRequest(request)
-
-    expect(result.status).toBe(200)
-    expect(result.data?.ticker).toBe('AAPL') // Should be uppercase
   })
 })

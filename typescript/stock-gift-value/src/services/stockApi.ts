@@ -33,6 +33,13 @@ export async function fetchStockPrice(
 }
 
 /**
+ * Error response structure from API
+ */
+interface ApiErrorResponse {
+  error?: string
+}
+
+/**
  * Fetch stock price from backend API
  * The backend proxies requests to Yahoo Finance to avoid CORS issues
  */
@@ -46,14 +53,17 @@ async function fetchFromYahooFinance(
   const response = await fetch(url)
 
   if (!response.ok) {
-    const errorData = await response
-      .json()
-      .catch(() => ({ error: 'Unknown error' }))
+    let errorData: ApiErrorResponse
+    try {
+      errorData = (await response.json()) as ApiErrorResponse
+    } catch {
+      errorData = { error: 'Unknown error' }
+    }
     throw new Error(
-      errorData.error || `API request failed with status ${response.status}`
+      errorData.error ?? `API request failed with status ${response.status}`
     )
   }
 
-  const data: StockPriceData = await response.json()
+  const data = (await response.json()) as StockPriceData
   return data
 }

@@ -4,26 +4,49 @@ import userEvent from '@testing-library/user-event'
 import { StockGiftRow } from '../StockGiftRow'
 import { StockGift } from '../../types'
 
-describe('StockGiftRow', () => {
-  const mockGift: StockGift = {
-    id: 'test-1',
-    date: '2024-01-01',
-    ticker: 'AAPL',
-    shares: 10,
-  }
+// Test constants
+const TEST_ID = 'test-1'
+const TEST_DATE = '2024-01-01'
+const TEST_TICKER = 'AAPL'
+const TEST_SHARES = 10
+const TEST_VALUE = 1234.56
+const NEW_SHARES = 20
 
+const mockGift: StockGift = {
+  id: TEST_ID,
+  date: TEST_DATE,
+  ticker: TEST_TICKER,
+  shares: TEST_SHARES,
+}
+
+interface RenderStockGiftRowOptions {
+  gift?: StockGift
+  showRemove?: boolean
+}
+
+function renderStockGiftRow(options: RenderStockGiftRowOptions = {}): {
+  onUpdate: ReturnType<typeof vi.fn>
+  onRemove: ReturnType<typeof vi.fn>
+} {
+  const { gift = mockGift, showRemove = true } = options
+  const onUpdate = vi.fn()
+  const onRemove = vi.fn()
+
+  render(
+    <StockGiftRow
+      gift={gift}
+      onUpdate={onUpdate}
+      onRemove={onRemove}
+      showRemove={showRemove}
+    />
+  )
+
+  return { onUpdate, onRemove }
+}
+
+describe('StockGiftRow - Rendering', () => {
   it('should render all input fields', () => {
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
+    renderStockGiftRow()
 
     expect(screen.getByLabelText(/^date$/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/^ticker$/i)).toBeInTheDocument()
@@ -32,61 +55,53 @@ describe('StockGiftRow', () => {
   })
 
   it('should display gift values correctly', () => {
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
+    renderStockGiftRow()
 
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
+    const dateInput = screen.getByLabelText(/^date$/i)
+    const tickerInput = screen.getByLabelText(/^ticker$/i)
+    const sharesInput = screen.getByLabelText(/^shares$/i)
 
-    const dateInput = screen.getByLabelText(/^date$/i) as HTMLInputElement
-    const tickerInput = screen.getByLabelText(/^ticker$/i) as HTMLInputElement
-    const sharesInput = screen.getByLabelText(/^shares$/i) as HTMLInputElement
-
-    expect(dateInput.value).toBe('2024-01-01')
-    expect(tickerInput.value).toBe('AAPL')
-    expect(sharesInput.value).toBe('10')
+    expect(dateInput).toHaveValue(TEST_DATE)
+    expect(tickerInput).toHaveValue(TEST_TICKER)
+    expect(sharesInput).toHaveValue(TEST_SHARES)
   })
 
+  it('should display loading state', () => {
+    const loadingGift = { ...mockGift, loading: true }
+    renderStockGiftRow({ gift: loadingGift })
+
+    expect(screen.getByText(/loading/i)).toBeInTheDocument()
+  })
+
+  it('should display error state', () => {
+    const errorGift = { ...mockGift, error: 'Invalid ticker' }
+    renderStockGiftRow({ gift: errorGift })
+
+    expect(screen.getByText(/invalid ticker/i)).toBeInTheDocument()
+  })
+
+  it('should display calculated value', () => {
+    const valueGift = { ...mockGift, value: TEST_VALUE }
+    renderStockGiftRow({ gift: valueGift })
+
+    expect(screen.getByText('$1,234.56')).toBeInTheDocument()
+  })
+})
+
+describe('StockGiftRow - User Interactions', () => {
   it('should call onUpdate when date changes', async () => {
     const user = userEvent.setup()
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
+    const { onUpdate } = renderStockGiftRow()
 
     const dateInput = screen.getByLabelText(/^date$/i)
     await user.clear(dateInput)
 
-    // After clearing, onUpdate should have been called with empty date
-    expect(onUpdate).toHaveBeenCalledWith('test-1', { date: '' })
+    expect(onUpdate).toHaveBeenCalledWith(TEST_ID, { date: '' })
   })
 
   it('should call onUpdate when ticker changes', async () => {
     const user = userEvent.setup()
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
+    const { onUpdate } = renderStockGiftRow()
 
     const tickerInput = screen.getByLabelText(/^ticker$/i)
     await user.clear(tickerInput)
@@ -97,104 +112,25 @@ describe('StockGiftRow', () => {
 
   it('should call onUpdate when shares change', async () => {
     const user = userEvent.setup()
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
+    const { onUpdate } = renderStockGiftRow()
 
     const sharesInput = screen.getByLabelText(/^shares$/i)
     await user.clear(sharesInput)
-    await user.type(sharesInput, '20')
+    await user.type(sharesInput, NEW_SHARES.toString())
 
     expect(onUpdate).toHaveBeenCalled()
   })
+})
 
-  it('should display loading state', () => {
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-    const loadingGift = { ...mockGift, loading: true }
-
-    render(
-      <StockGiftRow
-        gift={loadingGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
-
-    expect(screen.getByText(/loading/i)).toBeInTheDocument()
-  })
-
-  it('should display error state', () => {
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-    const errorGift = { ...mockGift, error: 'Invalid ticker' }
-
-    render(
-      <StockGiftRow
-        gift={errorGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
-
-    expect(screen.getByText(/invalid ticker/i)).toBeInTheDocument()
-  })
-
-  it('should display calculated value', () => {
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-    const valueGift = { ...mockGift, value: 1234.56 }
-
-    render(
-      <StockGiftRow
-        gift={valueGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
-
-    expect(screen.getByText('$1,234.56')).toBeInTheDocument()
-  })
-
+describe('StockGiftRow - Remove Button', () => {
   it('should show remove button when showRemove is true', () => {
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
+    renderStockGiftRow({ showRemove: true })
 
     expect(screen.getByRole('button', { name: /remove/i })).toBeInTheDocument()
   })
 
   it('should hide remove button when showRemove is false', () => {
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={false}
-      />
-    )
+    renderStockGiftRow({ showRemove: false })
 
     expect(
       screen.queryByRole('button', { name: /remove/i })
@@ -203,21 +139,11 @@ describe('StockGiftRow', () => {
 
   it('should call onRemove when remove button is clicked', async () => {
     const user = userEvent.setup()
-    const onUpdate = vi.fn()
-    const onRemove = vi.fn()
-
-    render(
-      <StockGiftRow
-        gift={mockGift}
-        onUpdate={onUpdate}
-        onRemove={onRemove}
-        showRemove={true}
-      />
-    )
+    const { onRemove } = renderStockGiftRow()
 
     const removeButton = screen.getByRole('button', { name: /remove/i })
     await user.click(removeButton)
 
-    expect(onRemove).toHaveBeenCalledWith('test-1')
+    expect(onRemove).toHaveBeenCalledWith(TEST_ID)
   })
 })
