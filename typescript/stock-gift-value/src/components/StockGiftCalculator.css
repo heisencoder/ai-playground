@@ -171,6 +171,36 @@
   min-width: 100px;
 }
 
+/* Value header text variants */
+.value-header-full {
+  display: inline;
+}
+
+.value-header-short {
+  display: none;
+}
+
+/* Copy button variants - desktop shows in actions column */
+.copy-button-mobile {
+  display: none;
+}
+
+.copy-button-desktop {
+  display: inline-flex;
+}
+
+.value-header {
+  position: relative;
+}
+
+.value-header .sort-button {
+  display: inline-flex;
+}
+
+.copy-message-mobile {
+  display: none;
+}
+
 /* Remove min-width on small screens and set specific column widths */
 @media (max-width: 768px) {
   .stock-gift-table .date-input,
@@ -203,6 +233,33 @@
   /* Hide delete button column on mobile */
   .stock-gift-table th:nth-child(5),
   .stock-gift-table td:nth-child(5) {
+    display: none;
+  }
+
+  /* Show FMV instead of Fair Market Value on mobile */
+  .value-header-full {
+    display: none;
+  }
+
+  .value-header-short {
+    display: inline;
+  }
+
+  /* Show copy button in value header on mobile */
+  .copy-button-mobile {
+    display: inline-flex;
+    margin-left: 0.5rem;
+  }
+
+  .copy-button-desktop {
+    display: none;
+  }
+
+  .copy-message-mobile {
+    display: block;
+  }
+
+  .copy-message-desktop {
     display: none;
   }
 }

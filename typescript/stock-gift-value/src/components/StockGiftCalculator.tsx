@@ -76,23 +76,25 @@ export function StockGiftCalculator(): React.JSX.Element {
                   Shares {getSortIndicator('shares')}
                 </button>
               </th>
-              <th>
+              <th className="value-header">
                 <button
                   type="button"
                   onClick={() => handleSort('value')}
                   className="sort-button"
                   aria-label={`Sort by value ${getSortIndicator('value')}`}
                 >
-                  Value {getSortIndicator('value')}
+                  <span className="value-header-full">
+                    Fair Market Value
+                  </span>
+                  <span className="value-header-short">FMV</span>{' '}
+                  {getSortIndicator('value')}
                 </button>
-              </th>
-              <th className="actions-header">
                 <button
                   type="button"
                   onClick={() => {
                     void handleCopy(gifts)
                   }}
-                  className="copy-button"
+                  className="copy-button copy-button-mobile"
                   aria-label="Copy all data to clipboard"
                   title="Copy to clipboard"
                 >
@@ -100,7 +102,29 @@ export function StockGiftCalculator(): React.JSX.Element {
                 </button>
                 {copyMessage && (
                   <span
-                    className="copy-message"
+                    className="copy-message copy-message-mobile"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {copyMessage}
+                  </span>
+                )}
+              </th>
+              <th className="actions-header">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleCopy(gifts)
+                  }}
+                  className="copy-button copy-button-desktop"
+                  aria-label="Copy all data to clipboard"
+                  title="Copy to clipboard"
+                >
+                  📋
+                </button>
+                {copyMessage && (
+                  <span
+                    className="copy-message copy-message-desktop"
                     role="status"
                     aria-live="polite"
                   >
