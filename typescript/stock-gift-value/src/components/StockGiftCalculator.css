@@ -171,12 +171,39 @@
   min-width: 100px;
 }
 
-/* Remove min-width on small screens */
+/* Remove min-width on small screens and set specific column widths */
 @media (max-width: 768px) {
   .stock-gift-table .date-input,
   .stock-gift-table .ticker-input,
   .stock-gift-table .shares-input {
     min-width: 0;
+  }
+
+  /* Set specific column widths for better mobile layout */
+  .stock-gift-table th:nth-child(1),
+  .stock-gift-table td:nth-child(1) {
+    width: 20%; /* Date column - reduced */
+  }
+
+  .stock-gift-table th:nth-child(2),
+  .stock-gift-table td:nth-child(2) {
+    width: 18%; /* Ticker column - fits 4 chars */
+  }
+
+  .stock-gift-table th:nth-child(3),
+  .stock-gift-table td:nth-child(3) {
+    width: 20%; /* Shares column - fits 4 digits */
+  }
+
+  .stock-gift-table th:nth-child(4),
+  .stock-gift-table td:nth-child(4) {
+    width: 42%; /* Value column - remaining space */
+  }
+
+  /* Hide delete button column on mobile */
+  .stock-gift-table th:nth-child(5),
+  .stock-gift-table td:nth-child(5) {
+    display: none;
   }
 }
 
