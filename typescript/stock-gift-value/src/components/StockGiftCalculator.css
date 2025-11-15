@@ -16,10 +16,26 @@
   margin-bottom: 0.5rem;
 }
 
+.subtitle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
 .calculator-header .subtitle {
   font-size: 1rem;
   color: #6b7280;
   margin: 0;
+}
+
+.copy-button-header {
+  display: none;
+}
+
+.copy-message-header {
+  display: none;
 }
 
 .table-container {
@@ -181,10 +197,6 @@
 }
 
 /* Copy button variants - desktop shows in actions column */
-.copy-button-mobile {
-  display: none;
-}
-
 .copy-button-desktop {
   display: inline-flex;
 }
@@ -195,10 +207,6 @@
 
 .value-header .sort-button {
   display: inline-flex;
-}
-
-.copy-message-mobile {
-  display: none;
 }
 
 /* Remove min-width on small screens and set specific column widths */
@@ -245,18 +253,28 @@
     display: inline;
   }
 
-  /* Show copy button in value header on mobile */
-  .copy-button-mobile {
+  /* Show copy button in header on mobile, hide desktop column copy button */
+  .copy-button-header {
     display: inline-flex;
-    margin-left: 0.5rem;
   }
 
   .copy-button-desktop {
     display: none;
   }
 
-  .copy-message-mobile {
+  .copy-message-header {
     display: block;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: #111827;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 10;
   }
 
   .copy-message-desktop {

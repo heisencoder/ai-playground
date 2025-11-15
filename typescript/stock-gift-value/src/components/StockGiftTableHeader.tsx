@@ -60,26 +60,6 @@ export function StockGiftTableHeader({
             <span className="value-header-short">FMV</span>{' '}
             {getSortIndicator('value')}
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              void onCopy(gifts)
-            }}
-            className="copy-button copy-button-mobile"
-            aria-label="Copy all data to clipboard"
-            title="Copy to clipboard"
-          >
-            📋
-          </button>
-          {copyMessage && (
-            <span
-              className="copy-message copy-message-mobile"
-              role="status"
-              aria-live="polite"
-            >
-              {copyMessage}
-            </span>
-          )}
         </th>
         <th className="actions-header">
           <button

@@ -37,10 +37,32 @@ export function StockGiftCalculator(): React.JSX.Element {
     <div className="calculator-container">
       <header className="calculator-header">
         <h1>Stock Gift Value Calculator</h1>
-        <p className="subtitle">
-          Calculate IRS-approved donated value based on the average of high and
-          low prices
-        </p>
+        <div className="subtitle-container">
+          <p className="subtitle">
+            Calculate IRS-approved donated value based on the average of high
+            and low prices
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              void handleCopy(gifts)
+            }}
+            className="copy-button copy-button-header"
+            aria-label="Copy all data to clipboard"
+            title="Copy to clipboard"
+          >
+            📋
+          </button>
+          {copyMessage && (
+            <span
+              className="copy-message copy-message-header"
+              role="status"
+              aria-live="polite"
+            >
+              {copyMessage}
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="table-container">
