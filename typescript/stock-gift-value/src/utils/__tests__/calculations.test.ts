@@ -184,7 +184,7 @@ describe('isValidTicker', () => {
     expect(isValidTicker('GOOG')).toBe(true)
   })
 
-  it('should accept ticker symbols with dots', () => {
+  it('should accept ticker symbols with dots or hyphens', () => {
     expect(isValidTicker('BRK-B')).toBe(true)
     expect(isValidTicker('BRK.A')).toBe(true)
   })
@@ -198,6 +198,6 @@ describe('isValidTicker', () => {
     expect(isValidTicker('A')).toBe(true)
     expect(isValidTicker('TOOLONG')).toBe(false)
     expect(isValidTicker('12345')).toBe(false)
-    expect(isValidTicker('AA-BB')).toBe(false)
+    expect(isValidTicker('A-BBB')).toBe(false) // Suffix too long (3 letters)
   })
 })
