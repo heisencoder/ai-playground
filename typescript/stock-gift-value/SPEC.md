@@ -251,6 +251,12 @@ Transformed the application from individual card-based rows to a spreadsheet-lik
 - Enter: Move down to cell below
 - Smart cursor handling: only navigates when at start/end of input text
 
+**Improved Tabbing Flow (Phase 8)**
+- Single tab press moves to next cell (no internal field navigation)
+- Date field: Free-form text entry with calendar dropdown on focus (no persistent calendar icon)
+- Ticker field: Tab moves to next field even when dropdown is open
+- Delete button: Skipped in tab order (Tab from Shares goes directly to next row's Date field)
+
 **Copy to Clipboard**
 - 📋 Copy button exports all non-empty rows to TSV format
 - Compatible with Excel, Google Sheets, and other spreadsheet applications

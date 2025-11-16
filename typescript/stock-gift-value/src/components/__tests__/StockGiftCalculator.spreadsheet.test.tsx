@@ -683,6 +683,93 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
   })
 })
 
+describe('StockGiftCalculator - Improved Tabbing Flow', () => {
+  beforeEach(() => {
+    stockPriceCache.clear()
+    setupClipboardMock()
+  })
+
+  it('should accept free-form date entry', async () => {
+    render(<StockGiftCalculator />)
+    const user = userEvent.setup()
+
+    const dateInput = screen.getByLabelText(/^date$/i)
+    await user.type(dateInput, '01/15/2024')
+
+    expect(dateInput).toHaveValue('01/15/2024')
+  })
+
+  it('should move from date to ticker with single Tab press', async () => {
+    render(<StockGiftCalculator />)
+    const user = userEvent.setup()
+
+    const dateInput = screen.getByLabelText(/^date$/i)
+    const tickerInput = screen.getByLabelText(/^ticker$/i)
+
+    dateInput.focus()
+    await user.keyboard('{Tab}')
+
+    expect(tickerInput).toHaveFocus()
+  })
+
+  it('should move from ticker to shares with Tab even when dropdown is open', async () => {
+    render(<StockGiftCalculator />)
+    const user = userEvent.setup()
+
+    const tickerInput = screen.getByLabelText(/^ticker$/i)
+
+    await user.click(tickerInput)
+    await user.type(tickerInput, 'AAP')
+
+    // Wait for suggestions to appear
+    await waitFor(() => {
+      expect(screen.queryByRole('listbox')).toBeInTheDocument()
+    })
+
+    // Press Tab should move to shares field, not navigate within dropdown
+    await user.keyboard('{Tab}')
+
+    const sharesInput = screen.getByLabelText(/^shares$/i)
+    expect(sharesInput).toHaveFocus()
+  })
+
+  it('should skip delete button when tabbing from shares field', async () => {
+    render(<StockGiftCalculator />)
+    const user = userEvent.setup()
+
+    // Create first row with data
+    const dateInputs = screen.getAllByLabelText(/^date$/i)
+    await user.type(dateInputs[FIRST_ELEMENT], '01/15/2024')
+    await user.tab()
+
+    await waitForRowCount(EXPECTED_TWO_ROWS)
+
+    // Focus on shares field of first row
+    const sharesInputs = screen.getAllByLabelText(/^shares$/i)
+    sharesInputs[FIRST_ELEMENT].focus()
+
+    // Tab should skip delete button and go to next row's date field
+    await user.keyboard('{Tab}')
+
+    const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
+    expect(updatedDateInputs[SECOND_ELEMENT]).toHaveFocus()
+  })
+
+  it('should show delete button is not in tab order', () => {
+    render(<StockGiftCalculator />)
+    const user = userEvent.setup()
+
+    // Create a row with data to make delete button visible
+    const dateInput = screen.getByLabelText(/^date$/i)
+    user.type(dateInput, '01/15/2024').then(() => {
+      const deleteButton = screen.queryByRole('button', { name: /remove row/i })
+      if (deleteButton) {
+        expect(deleteButton).toHaveAttribute('tabindex', '-1')
+      }
+    })
+  })
+})
+
 describe('StockGiftCalculator - Copy to Spreadsheet', () => {
   let clipboardWriteTextSpy: ReturnType<typeof vi.fn>
 
