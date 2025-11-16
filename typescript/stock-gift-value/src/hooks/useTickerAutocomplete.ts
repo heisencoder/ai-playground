@@ -21,6 +21,7 @@ interface UseTickerAutocompleteResult {
   setShowSuggestions: (show: boolean) => void
   handleKeyboardNavigation: (key: string) => boolean
   resetSelection: () => void
+  setFocused: (focused: boolean) => void
 }
 
 /**
@@ -36,6 +37,7 @@ export function useTickerAutocomplete(
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const abortControllerRef = useRef<AbortController | null>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isFocusedRef = useRef(false)
 
   // Helper to cleanup pending operations
   const cleanupPendingOperations = useCallback((): void => {
@@ -92,7 +94,8 @@ export function useTickerAutocomplete(
         })
         .then((data) => {
           setSuggestions(data)
-          setShowSuggestions(data.length > 0)
+          // Only show suggestions if input is still focused
+          setShowSuggestions(isFocusedRef.current && data.length > 0)
           setSelectedIndex(-1)
         })
         .catch((error: Error) => {
@@ -171,6 +174,14 @@ export function useTickerAutocomplete(
     ]
   )
 
+  const setFocused = useCallback((focused: boolean) => {
+    isFocusedRef.current = focused
+    if (!focused) {
+      // Hide suggestions when losing focus
+      setShowSuggestions(false)
+    }
+  }, [])
+
   return {
     suggestions,
     loading,
@@ -182,5 +193,6 @@ export function useTickerAutocomplete(
     setShowSuggestions,
     handleKeyboardNavigation,
     resetSelection,
+    setFocused,
   }
 }

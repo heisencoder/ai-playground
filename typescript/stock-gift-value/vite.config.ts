@@ -17,6 +17,7 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: true,
+    pool: 'threads',
     testTimeout: 10000, // 10 seconds per test
     hookTimeout: 10000, // 10 seconds for hooks
     // Fail tests on console warnings/errors (turn warnings into errors)

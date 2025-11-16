@@ -41,6 +41,7 @@ export function TickerAutocompleteInput({
     setShowSuggestions,
     handleKeyboardNavigation,
     resetSelection,
+    setFocused,
   } = useTickerAutocomplete((ticker: string) => {
     onChange(ticker)
   })
@@ -90,12 +91,15 @@ export function TickerAutocompleteInput({
   }
 
   const handleInputFocus = (): void => {
+    setFocused(true)
     if (value.trim() && suggestions.length > 0) {
       setShowSuggestions(true)
     }
   }
 
   const handleInputBlur = (): void => {
+    // Mark as not focused immediately
+    setFocused(false)
     // Small delay to allow mousedown on suggestions to fire first
     setTimeout(() => {
       hideSuggestions()
