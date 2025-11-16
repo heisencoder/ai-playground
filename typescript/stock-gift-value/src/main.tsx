@@ -68,7 +68,7 @@ window.onerror = (message, source, lineno, colno, error) => {
     errorPayload.columnNumber = colno
   }
 
-  logErrorToServer(errorPayload)
+  void logErrorToServer(errorPayload)
 
   // Return false to allow default error handling
   return false
@@ -78,22 +78,28 @@ window.onerror = (message, source, lineno, colno, error) => {
  * Global handler for unhandled promise rejections
  */
 window.onunhandledrejection = (event) => {
+  // Safely extract error information from the rejection reason
+  const reason = event.reason as unknown
+  const isError = reason instanceof Error
+  const message = isError ? reason.message : String(reason)
+  const stack = isError ? reason.stack : undefined
+
   const errorPayload: ClientErrorPayload = {
-    message: event.reason?.message ?? String(event.reason) ?? 'Unhandled promise rejection',
+    message: message || 'Unhandled promise rejection',
     url: window.location.href,
     timestamp: new Date().toISOString(),
     userAgent: navigator.userAgent,
     type: 'unhandledrejection',
     additionalContext: {
-      reason: event.reason,
+      reason: isError ? undefined : reason,
     },
   }
 
-  if (event.reason?.stack) {
-    errorPayload.stack = event.reason.stack
+  if (stack) {
+    errorPayload.stack = stack
   }
 
-  logErrorToServer(errorPayload)
+  void logErrorToServer(errorPayload)
 }
 
 const rootElement = document.getElementById('root')

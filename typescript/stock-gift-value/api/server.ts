@@ -13,6 +13,21 @@ import { logger } from './logger.js'
  * Can be used for local development or production deployment
  */
 
+/**
+ * Type definition for client error payload
+ */
+interface ClientErrorPayload {
+  message?: string
+  stack?: string
+  url?: string
+  lineNumber?: number
+  columnNumber?: number
+  timestamp?: string
+  userAgent?: string
+  type?: string
+  additionalContext?: Record<string, unknown>
+}
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -123,7 +138,7 @@ app.get('/api/ticker-search', async (req, res) => {
  */
 app.post('/api/log-client-error', (req, res) => {
   try {
-    const errorData = req.body
+    const errorData = req.body as ClientErrorPayload
 
     // Log the client-side error with clear distinction from server errors
     logger.error('═══════════════════════════════════════════════════')
