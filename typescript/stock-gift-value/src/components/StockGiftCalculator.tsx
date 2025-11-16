@@ -6,6 +6,7 @@ import { useSorting } from '../hooks/useSorting'
 import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 import { useClipboard } from '../hooks/useClipboard'
 import { StockGiftTableHeader } from './StockGiftTableHeader'
+import { TickerAutocompleteInput } from './TickerAutocompleteInput'
 import './StockGiftCalculator.css'
 
 export function StockGiftCalculator(): React.JSX.Element {
@@ -96,22 +97,20 @@ export function StockGiftCalculator(): React.JSX.Element {
                   />
                 </td>
                 <td>
-                  <input
-                    ref={(el) => setInputRef(gift.id, 'ticker', el)}
+                  <TickerAutocompleteInput
                     id={`ticker-${gift.id}`}
-                    type="text"
                     value={gift.ticker}
-                    onChange={(e) =>
-                      handleInputChange(gift.id, 'ticker', e.target.value)
+                    onChange={(value) =>
+                      handleInputChange(gift.id, 'ticker', value)
                     }
                     onBlur={() => handleBlur(gift.id)}
                     onKeyDown={(e) =>
                       handleKeyDown(e, gift.id, 'ticker', sortedGifts)
                     }
+                    inputRef={(el) => setInputRef(gift.id, 'ticker', el)}
                     className="ticker-input"
                     placeholder="AAPL"
-                    maxLength={10}
-                    aria-label="Ticker"
+                    hasError={!!gift.error}
                   />
                 </td>
                 <td>
