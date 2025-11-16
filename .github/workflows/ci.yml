@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript/stock-gift-value
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: typescript/stock-gift-value
+          push: false
+          tags: stock-gift-value:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker image runs
+        run: |
+          docker run --rm -d --name test-container -p 8080:8080 stock-gift-value:test
+          sleep 5
+          curl --fail http://localhost:8080/health || exit 1
+          docker stop test-container
+
+  test-and-lint:
+    name: Tests and Linting
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: typescript/stock-gift-value
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: typescript/stock-gift-value/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: typescript/stock-gift-value/coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
