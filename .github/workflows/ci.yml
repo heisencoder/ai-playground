@@ -33,9 +33,9 @@ jobs:
 
       - name: Test Docker image runs
         run: |
-          # Start container with verbose output
+          # Start container WITHOUT --rm so we can inspect it after crash
           echo "Starting container..."
-          docker run --rm -d --name test-container -p 8080:8080 stock-gift-value:test
+          docker run -d --name test-container -p 8080:8080 stock-gift-value:test
 
           # Capture container ID for reference
           CONTAINER_ID=$(docker ps -aq --filter name=test-container | head -1)
@@ -45,18 +45,22 @@ jobs:
           sleep 2
           echo ""
           echo "=== Container status after 2 seconds ==="
-          docker ps -a --filter name=test-container || true
-          echo ""
-          echo "=== Container logs ==="
-          docker logs test-container 2>&1 || docker logs $CONTAINER_ID 2>&1 || echo "Could not retrieve logs"
+          docker ps -a --filter name=test-container
           echo ""
 
           # Check if container is still running
           if ! docker ps --filter name=test-container | grep -q test-container; then
             echo "ERROR: Container exited immediately!"
             echo ""
-            echo "=== Inspecting container ==="
-            docker inspect $CONTAINER_ID 2>&1 | grep -A 20 "State" || true
+            echo "=== Container logs (stdout/stderr) ==="
+            docker logs test-container 2>&1
+            echo ""
+            echo "=== Container inspection ==="
+            docker inspect test-container --format='Exit Code: {{.State.ExitCode}}'
+            docker inspect test-container --format='Error: {{.State.Error}}'
+            echo ""
+            # Cleanup and exit
+            docker rm test-container
             exit 1
           fi
 
@@ -72,7 +76,8 @@ jobs:
               echo "ERROR: Container exited after ${i} seconds!"
               echo ""
               echo "Final logs:"
-              docker logs $CONTAINER_ID 2>&1 || echo "Could not get logs"
+              docker logs test-container 2>&1
+              docker rm test-container
               exit 1
             fi
 
@@ -82,6 +87,7 @@ jobs:
                 echo "Health check passed after ${i} seconds!"
                 docker logs test-container 2>&1 | tail -20
                 docker stop test-container
+                docker rm test-container
                 exit 0
               fi
             fi
@@ -94,12 +100,14 @@ jobs:
             echo "ERROR: Health check failed after 15 seconds"
             echo ""
             echo "Container logs:"
-            docker logs $CONTAINER_ID 2>&1
-            docker stop test-container || true
+            docker logs test-container 2>&1
+            docker stop test-container
+            docker rm test-container
             exit 1
           fi
 
           docker stop test-container
+          docker rm test-container
 
   test-and-lint:
     name: Tests and Linting
