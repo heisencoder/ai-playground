@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
 import './DateInput.css'
 
+// Constants
+const CALENDAR_SHOW_DELAY_MS = 500
+
 interface DateInputProps {
   id: string
   value: string
@@ -27,7 +30,7 @@ function parseDate(input: string): string {
 
   // MM/DD/YYYY or M/D/YYYY
   const slashMatch = input.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
-  if (slashMatch) {
+  if (slashMatch && slashMatch[1] && slashMatch[2] && slashMatch[3]) {
     const month = slashMatch[1].padStart(2, '0')
     const day = slashMatch[2].padStart(2, '0')
     const year = slashMatch[3]
@@ -36,7 +39,7 @@ function parseDate(input: string): string {
 
   // MM-DD-YYYY or M-D-YYYY
   const dashMatch = input.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)
-  if (dashMatch) {
+  if (dashMatch && dashMatch[1] && dashMatch[2] && dashMatch[3]) {
     const month = dashMatch[1].padStart(2, '0')
     const day = dashMatch[2].padStart(2, '0')
     const year = dashMatch[3]
@@ -45,7 +48,7 @@ function parseDate(input: string): string {
 
   // YYYY/MM/DD
   const isoSlashMatch = input.match(/^(\d{4})\/(\d{2})\/(\d{2})$/)
-  if (isoSlashMatch) {
+  if (isoSlashMatch && isoSlashMatch[1] && isoSlashMatch[2] && isoSlashMatch[3]) {
     return `${isoSlashMatch[1]}-${isoSlashMatch[2]}-${isoSlashMatch[3]}`
   }
 
@@ -84,6 +87,7 @@ function formatDateForDisplay(isoDate: string, isFocused: boolean): string {
   return `${month}/${day}/${year}`
 }
 
+/* eslint-disable max-lines-per-function -- Component requires multiple handlers and state management */
 export function DateInput({
   id,
   value,
@@ -118,12 +122,14 @@ export function DateInput({
     }
   }, [])
 
-  const handleTextInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const newValue = e.target.value
     setDisplayValue(newValue)
   }
 
-  const handleTextInputBlur = () => {
+  const handleTextInputBlur = (): void => {
     const parsedDate = parseDate(displayValue)
     onChange(parsedDate)
     setDisplayValue(formatDateForDisplay(parsedDate, false))
@@ -135,22 +141,24 @@ export function DateInput({
     onBlur()
   }
 
-  const handleTextInputFocus = () => {
+  const handleTextInputFocus = (): void => {
     setFocused(true)
     setDisplayValue(formatDateForDisplay(value, true))
     // Delay showing calendar to avoid interfering with tab navigation
     showCalendarTimeoutRef.current = setTimeout(() => {
       setShowCalendar(true)
-    }, 500)
+    }, CALENDAR_SHOW_DELAY_MS)
   }
 
-  const handleCalendarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCalendarChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
     const newValue = e.target.value
     onChange(newValue)
     setDisplayValue(formatDateForDisplay(newValue, focused))
   }
 
-  const handleCalendarClick = () => {
+  const handleCalendarClick = (): void => {
     if (calendarInputRef.current) {
       calendarInputRef.current.showPicker()
     }

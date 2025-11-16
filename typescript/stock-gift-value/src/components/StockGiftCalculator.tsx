@@ -92,7 +92,7 @@ export function StockGiftCalculator(): React.JSX.Element {
                     }
                     inputRef={(el) => setInputRef(gift.id, 'date', el)}
                     className="date-input"
-                    maxDate={maxDate}
+                    {...(maxDate && { maxDate })}
                   />
                 </td>
                 <td>

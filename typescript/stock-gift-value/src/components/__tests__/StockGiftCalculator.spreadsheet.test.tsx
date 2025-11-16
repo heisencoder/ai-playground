@@ -773,18 +773,18 @@ describe('StockGiftCalculator - Improved Tabbing Flow', () => {
     expect(updatedDateInputs[SECOND_ELEMENT]).toHaveFocus()
   })
 
-  it('should show delete button is not in tab order', () => {
+  it('should show delete button is not in tab order', async () => {
     render(<StockGiftCalculator />)
     const user = userEvent.setup()
 
     // Create a row with data to make delete button visible
     const dateInput = screen.getByLabelText(/^date$/i)
-    user.type(dateInput, '01/15/2024').then(() => {
-      const deleteButton = screen.queryByRole('button', { name: /remove row/i })
-      if (deleteButton) {
-        expect(deleteButton).toHaveAttribute('tabindex', '-1')
-      }
-    })
+    await user.type(dateInput, '01/15/2024')
+
+    const deleteButton = screen.queryByRole('button', { name: /remove row/i })
+    if (deleteButton) {
+      expect(deleteButton).toHaveAttribute('tabindex', '-1')
+    }
   })
 })
 
