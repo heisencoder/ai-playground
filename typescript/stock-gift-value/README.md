@@ -126,20 +126,209 @@ npm run format:check      # Check formatting
 
 ## Deployment
 
-This is a standard Node.js Express app that can be deployed to any platform supporting Node.js 22+:
+This is a standard Node.js Express app that can be deployed to any platform supporting Node.js 22+. Below are detailed instructions for deploying to **Google Cloud Platform (GCP)**.
 
-- **Google Cloud Platform** (App Engine, Cloud Run, Compute Engine)
+### Option 1: GCP Compute Engine (e2-micro - Free Tier)
+
+Deploy to a small VM instance with full control. The e2-micro instance is part of GCP's free tier (750 hours/month).
+
+#### Prerequisites
+
+1. Install [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+2. Authenticate: `gcloud auth login`
+3. Set your project: `gcloud config set project YOUR_PROJECT_ID`
+
+#### Deployment Steps
+
+**1. Create an e2-micro VM instance:**
+
+```bash
+gcloud compute instances create stock-gift-app \
+  --zone=us-central1-a \
+  --machine-type=e2-micro \
+  --image-family=cos-stable \
+  --image-project=cos-cloud \
+  --boot-disk-size=10GB \
+  --boot-disk-type=pd-standard \
+  --tags=http-server,https-server
+```
+
+**2. Configure firewall rules to allow HTTP/HTTPS traffic:**
+
+```bash
+gcloud compute firewall-rules create allow-http \
+  --allow tcp:80 \
+  --target-tags http-server
+
+gcloud compute firewall-rules create allow-https \
+  --allow tcp:443 \
+  --target-tags https-server
+
+# Allow the app port (8080)
+gcloud compute firewall-rules create allow-app \
+  --allow tcp:8080 \
+  --target-tags http-server
+```
+
+**3. SSH into your instance:**
+
+```bash
+gcloud compute ssh stock-gift-app --zone=us-central1-a
+```
+
+**4. Install Docker (on Container-Optimized OS, Docker is pre-installed):**
+
+If using a different OS, install Docker:
+```bash
+sudo apt-get update
+sudo apt-get install -y docker.io
+sudo systemctl start docker
+sudo systemctl enable docker
+```
+
+**5. Build and run your Docker container:**
+
+First, copy your code to the VM or clone from git:
+
+```bash
+# Option A: Clone from git repository
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
+cd YOUR_REPO/typescript/stock-gift-value
+
+# Option B: Copy files from local machine (run on your local machine)
+gcloud compute scp --recurse ./typescript/stock-gift-value stock-gift-app:~/app --zone=us-central1-a
+```
+
+Then build and run:
+
+```bash
+cd ~/app  # or your app directory
+
+# Build the Docker image
+sudo docker build -t stock-gift-app .
+
+# Run the container
+sudo docker run -d \
+  --name stock-gift-app \
+  --restart unless-stopped \
+  -p 8080:8080 \
+  -e PORT=8080 \
+  -e NODE_ENV=production \
+  stock-gift-app
+
+# Check if running
+sudo docker ps
+sudo docker logs stock-gift-app
+```
+
+**6. Access your app:**
+
+Get your VM's external IP:
+```bash
+gcloud compute instances describe stock-gift-app \
+  --zone=us-central1-a \
+  --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+```
+
+Visit: `http://YOUR_EXTERNAL_IP:8080`
+
+#### Managing the Deployment
+
+**View logs:**
+```bash
+sudo docker logs -f stock-gift-app
+```
+
+**Update the app:**
+```bash
+# Pull latest changes
+git pull
+
+# Rebuild and restart
+sudo docker stop stock-gift-app
+sudo docker rm stock-gift-app
+sudo docker build -t stock-gift-app .
+sudo docker run -d --name stock-gift-app --restart unless-stopped -p 8080:8080 stock-gift-app
+```
+
+**Stop/Start the VM (to save costs):**
+```bash
+# Stop (from local machine)
+gcloud compute instances stop stock-gift-app --zone=us-central1-a
+
+# Start
+gcloud compute instances start stock-gift-app --zone=us-central1-a
+```
+
+### Option 2: GCP Cloud Run (Serverless)
+
+Fully managed serverless option with automatic scaling. Better for variable traffic patterns.
+
+**1. Build and push to Google Container Registry:**
+
+```bash
+# Set your project ID
+export PROJECT_ID=YOUR_PROJECT_ID
+
+# Build and push using Cloud Build
+gcloud builds submit --tag gcr.io/$PROJECT_ID/stock-gift-app
+
+# Or build locally and push
+docker build -t gcr.io/$PROJECT_ID/stock-gift-app .
+docker push gcr.io/$PROJECT_ID/stock-gift-app
+```
+
+**2. Deploy to Cloud Run:**
+
+```bash
+gcloud run deploy stock-gift-app \
+  --image gcr.io/$PROJECT_ID/stock-gift-app \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --memory 256Mi \
+  --cpu 1 \
+  --max-instances 5 \
+  --port 8080
+```
+
+**3. Access your app:**
+
+Cloud Run will provide a URL like: `https://stock-gift-app-xxxxx-uc.a.run.app`
+
+**Update the app:**
+```bash
+gcloud builds submit --tag gcr.io/$PROJECT_ID/stock-gift-app
+gcloud run deploy stock-gift-app --image gcr.io/$PROJECT_ID/stock-gift-app --region us-central1
+```
+
+### Option 3: Other Platforms
+
+This app can also deploy to:
 - **AWS** (Elastic Beanstalk, EC2, ECS)
 - **Azure** (App Service, Container Instances)
 - **Railway, Render, Fly.io, Heroku, DigitalOcean**
 
 **General deployment steps:**
 1. Build: `npm run build:all`
-2. Set environment: `NODE_ENV=production PORT=3001`
+2. Set environment: `NODE_ENV=production PORT=8080`
 3. Start: `npm start`
 
-**Docker deployment:**
-See the Dockerfile example in the full documentation.
+### Docker Deployment
+
+A production-ready Dockerfile is included with:
+- Multi-stage build for optimal image size
+- Non-root user for security
+- Health checks
+- Alpine Linux base (smaller image)
+
+**Local Docker testing:**
+```bash
+docker build -t stock-gift-app .
+docker run -p 8080:8080 stock-gift-app
+```
+
+Visit: `http://localhost:8080`
 
 ## Usage
 
