@@ -3,14 +3,14 @@
  * Used by both Vercel serverless function and local dev server
  */
 
-import { HTTP_STATUS } from './constants'
+import { HTTP_STATUS } from './constants.js'
 import {
   validateTicker,
   validateDate,
   extractTicker,
   extractDate,
-} from './validators'
-import { fetchFromYahooFinance } from './yahooFinanceClient'
+} from './validators.js'
+import { fetchFromYahooFinance } from './yahooFinanceClient.js'
 import type { StockPriceRequest, StockPriceResponse } from '../shared/types.js'
 
 /**
