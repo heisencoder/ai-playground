@@ -7,6 +7,7 @@ import { useKeyboardNavigation } from '../hooks/useKeyboardNavigation'
 import { useClipboard } from '../hooks/useClipboard'
 import { StockGiftTableHeader } from './StockGiftTableHeader'
 import { TickerAutocompleteInput } from './TickerAutocompleteInput'
+import { DateInput } from './DateInput'
 import './StockGiftCalculator.css'
 
 export function StockGiftCalculator(): React.JSX.Element {
@@ -79,21 +80,19 @@ export function StockGiftCalculator(): React.JSX.Element {
             {sortedGifts.map((gift) => (
               <tr key={gift.id} className="stock-gift-row">
                 <td>
-                  <input
-                    ref={(el) => setInputRef(gift.id, 'date', el)}
+                  <DateInput
                     id={`date-${gift.id}`}
-                    type="date"
                     value={gift.date}
-                    onChange={(e) =>
-                      handleInputChange(gift.id, 'date', e.target.value)
+                    onChange={(value) =>
+                      handleInputChange(gift.id, 'date', value)
                     }
                     onBlur={() => handleBlur(gift.id)}
                     onKeyDown={(e) =>
                       handleKeyDown(e, gift.id, 'date', sortedGifts)
                     }
+                    inputRef={(el) => setInputRef(gift.id, 'date', el)}
                     className="date-input"
-                    max={maxDate}
-                    aria-label="Date"
+                    maxDate={maxDate}
                   />
                 </td>
                 <td>
@@ -154,6 +153,7 @@ export function StockGiftCalculator(): React.JSX.Element {
                       onClick={() => removeGift(gift.id)}
                       className="remove-button"
                       aria-label="Remove row"
+                      tabIndex={-1}
                     >
                       ×
                     </button>

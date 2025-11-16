@@ -148,6 +148,10 @@ export function useTickerAutocomplete(
         case 'Escape':
           hideSuggestions()
           return true
+        case 'Tab':
+          // Allow Tab to move to next field even when dropdown is open
+          hideSuggestions()
+          return false
         default:
           return false
       }

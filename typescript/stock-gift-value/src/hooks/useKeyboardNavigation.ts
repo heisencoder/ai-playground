@@ -114,8 +114,7 @@ export function useKeyboardNavigation(): UseKeyboardNavigationReturn {
 
       case 'ArrowLeft': {
         const input = e.target as HTMLInputElement
-        const shouldNavigate =
-          input.type === 'date' || input.selectionStart === 0
+        const shouldNavigate = input.selectionStart === 0
         if (shouldNavigate) {
           e.preventDefault()
           target.rowId = rowId
@@ -126,8 +125,7 @@ export function useKeyboardNavigation(): UseKeyboardNavigationReturn {
 
       case 'ArrowRight': {
         const input = e.target as HTMLInputElement
-        const shouldNavigate =
-          input.type === 'date' || input.selectionStart === input.value.length
+        const shouldNavigate = input.selectionStart === input.value.length
         if (shouldNavigate) {
           e.preventDefault()
           target.rowId = rowId
