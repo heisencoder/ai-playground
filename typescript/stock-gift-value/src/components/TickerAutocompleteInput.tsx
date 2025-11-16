@@ -21,6 +21,7 @@ interface TickerAutocompleteInputProps {
   className?: string
   placeholder?: string
   hasError?: boolean
+  onFocusChange?: (focused: boolean) => void
 }
 
 /* eslint-disable max-lines-per-function -- Component requires multiple handlers */
@@ -34,6 +35,7 @@ export function TickerAutocompleteInput({
   className = '',
   placeholder = 'AAPL',
   hasError = false,
+  onFocusChange,
 }: TickerAutocompleteInputProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputElementRef = useRef<HTMLInputElement>(null)
@@ -52,6 +54,10 @@ export function TickerAutocompleteInput({
     setFocused,
   } = useTickerAutocomplete((ticker: string) => {
     onChange(ticker)
+    // Mark as not focused when a suggestion is selected (via Enter or click)
+    if (onFocusChange) {
+      onFocusChange(false)
+    }
   })
 
   // Position dropdown using fixed positioning
@@ -140,6 +146,7 @@ export function TickerAutocompleteInput({
 
   const handleSuggestionMouseDown = (suggestion: TickerSuggestion): void => {
     // Use mousedown instead of click to fire before blur
+    // onFocusChange(false) is called in the selectSuggestion callback
     selectSuggestion(suggestion)
   }
 
@@ -148,11 +155,17 @@ export function TickerAutocompleteInput({
     if (value.trim() && suggestions.length > 0) {
       setShowSuggestions(true)
     }
+    if (onFocusChange) {
+      onFocusChange(true)
+    }
   }
 
   const handleInputBlur = (): void => {
     // Mark as not focused immediately
     setFocused(false)
+    if (onFocusChange) {
+      onFocusChange(false)
+    }
     // Small delay to allow mousedown on suggestions to fire first
     setTimeout(() => {
       hideSuggestions()

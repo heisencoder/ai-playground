@@ -1,5 +1,5 @@
 import type React from 'react'
-import { formatCurrency } from '../utils/calculations'
+import { formatCurrency, isValidDate } from '../utils/calculations'
 import { useGiftManagement } from '../hooks/useGiftManagement'
 import { useGiftValueCalculation } from '../hooks/useGiftValueCalculation'
 import { useSorting } from '../hooks/useSorting'
@@ -87,6 +87,7 @@ export function StockGiftCalculator(): React.JSX.Element {
                     }
                     inputRef={(el) => setInputRef(gift.id, 'date', el)}
                     className="date-input"
+                    hasError={gift.date !== '' && !isValidDate(gift.date)}
                   />
                 </td>
                 <td>
@@ -104,6 +105,9 @@ export function StockGiftCalculator(): React.JSX.Element {
                     className="ticker-input"
                     placeholder="AAPL"
                     hasError={!!gift.error}
+                    onFocusChange={(focused) =>
+                      updateGift(gift.id, { tickerInputFocused: focused })
+                    }
                   />
                 </td>
                 <td>

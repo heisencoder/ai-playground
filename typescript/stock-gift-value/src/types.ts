@@ -7,6 +7,7 @@ export interface StockGift {
   loading?: boolean | undefined
   error?: string | undefined
   cacheKey?: string | undefined // Cache key to track when to recalculate
+  tickerInputFocused?: boolean | undefined // Track if ticker field is being edited
 }
 
 export interface StockPriceData {
