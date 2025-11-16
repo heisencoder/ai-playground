@@ -78,37 +78,37 @@ export function useTickerAutocomplete(
         return
       }
 
-    // Debounce the search
-    searchTimeoutRef.current = setTimeout(() => {
-      setLoading(true)
-      abortControllerRef.current = new AbortController()
+      // Debounce the search
+      searchTimeoutRef.current = setTimeout(() => {
+        setLoading(true)
+        abortControllerRef.current = new AbortController()
 
-      fetch(`/api/ticker-search?q=${encodeURIComponent(trimmedQuery)}`, {
-        signal: abortControllerRef.current.signal,
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Failed to search tickers')
-          }
-          return response.json() as Promise<TickerSuggestion[]>
+        fetch(`/api/ticker-search?q=${encodeURIComponent(trimmedQuery)}`, {
+          signal: abortControllerRef.current.signal,
         })
-        .then((data) => {
-          setSuggestions(data)
-          // Only show suggestions if input is still focused
-          setShowSuggestions(isFocusedRef.current && data.length > 0)
-          setSelectedIndex(-1)
-        })
-        .catch((error: Error) => {
-          // Ignore abort errors
-          if (error.name !== 'AbortError') {
-            console.error('Error searching tickers:', error)
-            clearSuggestions()
-          }
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    }, DEBOUNCE_DELAY_MS)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to search tickers')
+            }
+            return response.json() as Promise<TickerSuggestion[]>
+          })
+          .then((data) => {
+            setSuggestions(data)
+            // Only show suggestions if input is still focused
+            setShowSuggestions(isFocusedRef.current && data.length > 0)
+            setSelectedIndex(-1)
+          })
+          .catch((error: Error) => {
+            // Ignore abort errors
+            if (error.name !== 'AbortError') {
+              console.error('Error searching tickers:', error)
+              clearSuggestions()
+            }
+          })
+          .finally(() => {
+            setLoading(false)
+          })
+      }, DEBOUNCE_DELAY_MS)
     },
     [cleanupPendingOperations, clearSuggestions]
   )

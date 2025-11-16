@@ -53,7 +53,11 @@ export function TickerAutocompleteInput({
   // Position dropdown using fixed positioning
   useEffect(() => {
     function updateDropdownPosition(): void {
-      if (!showSuggestions || !inputElementRef.current || !dropdownRef.current) {
+      if (
+        !showSuggestions ||
+        !inputElementRef.current ||
+        !dropdownRef.current
+      ) {
         return
       }
 
@@ -115,9 +119,7 @@ export function TickerAutocompleteInput({
     }
   }
 
-  const handleSuggestionMouseDown = (
-    suggestion: TickerSuggestion
-  ): void => {
+  const handleSuggestionMouseDown = (suggestion: TickerSuggestion): void => {
     // Use mousedown instead of click to fire before blur
     selectSuggestion(suggestion)
   }

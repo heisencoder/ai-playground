@@ -13,10 +13,7 @@ interface DateInputProps {
 /**
  * Helper function to parse date with a specific delimiter (/, -)
  */
-function parseDelimitedDate(
-  input: string,
-  delimiter: string
-): string | null {
+function parseDelimitedDate(input: string, delimiter: string): string | null {
   const escapedDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const regex = new RegExp(
     `^(\\d{1,2})${escapedDelimiter}(\\d{1,2})${escapedDelimiter}(\\d{4})$`
