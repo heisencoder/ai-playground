@@ -2,23 +2,25 @@
  * Yahoo Finance ticker search API client
  */
 
+import yahooFinance from 'yahoo-finance2'
 import { HTTP_STATUS } from './constants.js'
+
+/**
+ * Yahoo Finance search quote result structure
+ */
+interface YahooSearchQuote {
+  symbol: string
+  longname?: string
+  shortname?: string
+  exchange?: string
+  quoteType?: string
+}
 
 /**
  * Yahoo Finance search API response structure
  */
-export interface YahooSearchResult {
-  symbol: string
-  name: string
-  exchDisp?: string
-  typeDisp?: string
-}
-
-interface YahooSearchResponse {
-  quotes?: YahooSearchResult[]
-  error?: {
-    description?: string
-  }
+interface YahooSearchResults {
+  quotes: YahooSearchQuote[]
 }
 
 export interface TickerSearchResult {
@@ -89,15 +91,7 @@ class TickerSearchCache {
 export const tickerSearchCache = new TickerSearchCache()
 
 /**
- * Build Yahoo Finance search API URL
- */
-function buildYahooSearchUrl(query: string): string {
-  const encodedQuery = encodeURIComponent(query)
-  return `https://query1.finance.yahoo.com/v1/finance/search?q=${encodedQuery}&quotesCount=10&newsCount=0`
-}
-
-/**
- * Fetch ticker search results from Yahoo Finance API
+ * Fetch ticker search results from Yahoo Finance API using yahoo-finance2 library
  */
 export async function searchTickers(query: string): Promise<TickerSearchResponse> {
   const trimmedQuery = query.trim()
@@ -120,33 +114,23 @@ export async function searchTickers(query: string): Promise<TickerSearchResponse
   }
 
   try {
-    const url = buildYahooSearchUrl(trimmedQuery)
-    const response = await fetch(url)
+    // Use yahoo-finance2 library which handles API authentication
+    // Type assertion needed because yahoo-finance2 doesn't export proper types
+    const searchResults = (yahooFinance.search(trimmedQuery, {
+      quotesCount: 10,
+      newsCount: 0,
+    }) as unknown) as Promise<YahooSearchResults>
 
-    if (!response.ok) {
-      return {
-        status: response.status,
-        error: `Search API request failed with status ${response.status}`,
-      }
-    }
+    const data = await searchResults
 
-    const json = (await response.json()) as YahooSearchResponse
-
-    if (json.error) {
-      return {
-        status: HTTP_STATUS.BAD_REQUEST,
-        error: json.error.description ?? 'Invalid response from search API',
-      }
-    }
-
-    // Transform Yahoo Finance results to our format
-    const results: TickerSearchResult[] = (json.quotes ?? [])
-      .filter((quote) => quote.symbol && quote.name)
-      .map((quote) => ({
+    // Transform results to our format
+    const results: TickerSearchResult[] = data.quotes
+      .filter((quote: YahooSearchQuote) => quote.symbol && quote.longname)
+      .map((quote: YahooSearchQuote) => ({
         symbol: quote.symbol,
-        name: quote.name,
-        exchange: quote.exchDisp,
-        type: quote.typeDisp,
+        name: quote.longname ?? quote.shortname ?? quote.symbol,
+        exchange: quote.exchange,
+        type: quote.quoteType,
       }))
       .slice(0, 10) // Limit to 10 results
 
