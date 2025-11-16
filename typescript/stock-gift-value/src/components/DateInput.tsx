@@ -34,6 +34,35 @@ function parseDelimitedDate(
 }
 
 /**
+ * Parse short date format (MM/DD or MM-DD) and return ISO date with current year
+ */
+function parseShortDate(input: string, delimiter: string): string | null {
+  const escapedDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`^(\\d{1,2})${escapedDelimiter}(\\d{1,2})$`)
+  const match = input.match(regex)
+
+  if (match && match[1] && match[2]) {
+    const currentYear = new Date().getFullYear()
+    const month = match[1].padStart(2, '0')
+    const day = match[2].padStart(2, '0')
+    return `${currentYear}-${month}-${day}`
+  }
+
+  return null
+}
+
+/**
+ * Parse ISO format with slashes (YYYY/MM/DD)
+ */
+function parseIsoSlashFormat(input: string): string | null {
+  const match = input.match(/^(\d{4})\/(\d{2})\/(\d{2})$/)
+  if (match && match[1] && match[2] && match[3]) {
+    return `${match[1]}-${match[2]}-${match[3]}`
+  }
+  return null
+}
+
+/**
  * Parse various date formats and return ISO date string (YYYY-MM-DD)
  */
 function parseDate(input: string): string {
@@ -58,18 +87,25 @@ function parseDate(input: string): string {
     return dashResult
   }
 
-  // YYYY/MM/DD
-  const isoSlashMatch = input.match(/^(\d{4})\/(\d{2})\/(\d{2})$/)
-  if (
-    isoSlashMatch &&
-    isoSlashMatch[1] &&
-    isoSlashMatch[2] &&
-    isoSlashMatch[3]
-  ) {
-    return `${isoSlashMatch[1]}-${isoSlashMatch[2]}-${isoSlashMatch[3]}`
+  // Try MM/DD or M/D (no year) - default to current year
+  const shortSlashResult = parseShortDate(input, '/')
+  if (shortSlashResult) {
+    return shortSlashResult
   }
 
-  // Try to parse with Date constructor as fallback
+  // Try MM-DD or M-D (no year) - default to current year
+  const shortDashResult = parseShortDate(input, '-')
+  if (shortDashResult) {
+    return shortDashResult
+  }
+
+  // Try YYYY/MM/DD
+  const isoSlashResult = parseIsoSlashFormat(input)
+  if (isoSlashResult) {
+    return isoSlashResult
+  }
+
+  // Fallback to Date constructor
   try {
     const date = new Date(input)
     if (!isNaN(date.getTime())) {
