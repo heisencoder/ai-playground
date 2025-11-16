@@ -125,7 +125,7 @@ describe('StockGiftCalculator - Value Calculation', () => {
     )
   })
 
-  it('should handle BRK.B test case', async () => {
+  it('should handle BRK-B test case', async () => {
     const user = userEvent.setup()
     render(<StockGiftCalculator />)
 
@@ -136,7 +136,7 @@ describe('StockGiftCalculator - Value Calculation', () => {
       screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
 
     await user.type(dateInput, '2025-11-07')
-    await user.type(tickerInput, 'BRK.B')
+    await user.type(tickerInput, 'BRK-B')
     await user.click(sharesInput)
     await user.keyboard('{Backspace}34')
 

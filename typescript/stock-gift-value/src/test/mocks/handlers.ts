@@ -11,13 +11,13 @@ export const handlers = [
     const ticker = url.searchParams.get('ticker')
     const date = url.searchParams.get('date')
 
-    // Handle BRK.B test case with specific date
-    if (ticker === 'BRK.B' && date === '2025-11-07') {
+    // Handle BRK-B test case with specific date (Yahoo Finance format)
+    if (ticker === 'BRK-B' && date === '2025-11-07') {
       return HttpResponse.json({
         date: '2025-11-07',
         high: 500.16,
         low: 493.35,
-        ticker: 'BRK.B',
+        ticker: 'BRK-B',
       })
     }
 
@@ -132,13 +132,13 @@ export const handlers = [
     if (normalizedQuery.startsWith('brk')) {
       return HttpResponse.json([
         {
-          symbol: 'BRK.B',
+          symbol: 'BRK-B',
           name: 'Berkshire Hathaway Inc. Class B',
           exchange: 'NYSE',
           type: 'Equity',
         },
         {
-          symbol: 'BRK.A',
+          symbol: 'BRK-A',
           name: 'Berkshire Hathaway Inc. Class A',
           exchange: 'NYSE',
           type: 'Equity',

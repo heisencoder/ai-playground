@@ -67,7 +67,7 @@ describe('calculateStockGiftValue', () => {
     expect(result).toBe(EXPECTED_VALUE_950)
   })
 
-  it('should calculate BRK.B test case correctly', () => {
+  it('should calculate BRK-B test case correctly', () => {
     const result = calculateStockGiftValue(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
     expect(result).toBe(BRK_B_EXPECTED_VALUE)
   })
@@ -185,7 +185,7 @@ describe('isValidTicker', () => {
   })
 
   it('should accept ticker symbols with dots', () => {
-    expect(isValidTicker('BRK.B')).toBe(true)
+    expect(isValidTicker('BRK-B')).toBe(true)
     expect(isValidTicker('BRK.A')).toBe(true)
   })
 

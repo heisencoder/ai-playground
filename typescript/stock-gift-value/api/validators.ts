@@ -56,11 +56,3 @@ export function extractTicker(ticker: string | string[] | undefined): string {
 export function extractDate(date: string | string[] | undefined): string {
   return Array.isArray(date) ? date[0] : date ?? ''
 }
-
-/**
- * Normalize ticker symbol for Yahoo Finance API
- * Yahoo Finance uses hyphens instead of periods (e.g., BRK-B instead of BRK.B)
- */
-export function normalizeTickerForYahoo(ticker: string): string {
-  return ticker.replace(/\./g, '-')
-}
