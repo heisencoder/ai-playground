@@ -6,6 +6,8 @@ import {
 import './TickerAutocompleteInput.css'
 
 const DROPDOWN_OFFSET_PX = 4
+const MIN_DROPDOWN_HEIGHT_PX = 100
+const VIEWPORT_BOTTOM_MARGIN_PX = 10
 
 interface TickerAutocompleteInputProps {
   id: string
@@ -65,9 +67,18 @@ export function TickerAutocompleteInput({
       const dropdown = dropdownRef.current
 
       // Position dropdown below input
-      dropdown.style.top = `${inputRect.bottom + DROPDOWN_OFFSET_PX}px`
+      const topPosition = inputRect.bottom + DROPDOWN_OFFSET_PX
+      dropdown.style.top = `${topPosition}px`
       dropdown.style.left = `${inputRect.left}px`
       dropdown.style.width = `${inputRect.width}px`
+
+      // Limit max height to prevent extending below viewport
+      const availableHeight = window.innerHeight - topPosition
+      const maxHeight = Math.max(
+        MIN_DROPDOWN_HEIGHT_PX,
+        availableHeight - VIEWPORT_BOTTOM_MARGIN_PX
+      )
+      dropdown.style.maxHeight = `${maxHeight}px`
     }
 
     if (showSuggestions) {
@@ -203,11 +214,6 @@ export function TickerAutocompleteInput({
                   <span className="ticker-suggestion-name">
                     {suggestion.name}
                   </span>
-                  {suggestion.exchange && (
-                    <span className="ticker-suggestion-exchange">
-                      {suggestion.exchange}
-                    </span>
-                  )}
                 </div>
               </li>
             ))}
