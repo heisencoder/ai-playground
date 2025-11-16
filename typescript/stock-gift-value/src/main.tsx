@@ -2,23 +2,12 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import type { ClientErrorPayload } from '../shared/types.js'
 
 /**
  * Global error handler for production error tracking
  * Sends client-side errors to the server for logging
  */
-
-interface ClientErrorPayload {
-  message: string
-  stack?: string
-  url: string
-  lineNumber?: number
-  columnNumber?: number
-  timestamp: string
-  userAgent: string
-  type: 'error' | 'unhandledrejection'
-  additionalContext?: Record<string, unknown>
-}
 
 /**
  * Sends error details to the server for logging

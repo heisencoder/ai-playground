@@ -6,27 +6,13 @@ import { handleStockPriceRequest } from './handler.js'
 import { searchTickers } from './tickerSearchClient.js'
 import { DEFAULT_PORT, HTTP_STATUS } from './constants.js'
 import { logger } from './logger.js'
+import type { ClientErrorPayload } from '../shared/types.js'
 
 /**
  * Standalone Express server for Stock Gift Value Calculator
  * Serves both API endpoints and static frontend files
  * Can be used for local development or production deployment
  */
-
-/**
- * Type definition for client error payload
- */
-interface ClientErrorPayload {
-  message?: string
-  stack?: string
-  url?: string
-  lineNumber?: number
-  columnNumber?: number
-  timestamp?: string
-  userAgent?: string
-  type?: string
-  additionalContext?: Record<string, unknown>
-}
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)

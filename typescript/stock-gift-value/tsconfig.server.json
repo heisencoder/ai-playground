@@ -18,6 +18,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["api/**/*.ts"],
+  "include": ["api/**/*.ts", "shared/**/*.ts"],
   "exclude": ["api/**/__tests__", "api/**/*.test.ts"]
 }
