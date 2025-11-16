@@ -98,9 +98,9 @@ describe('StockGiftCalculator - Mobile Rendering', () => {
 
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getAllByLabelText(
-      /^date$/i
-    )[FIRST_ELEMENT_INDEX] as HTMLInputElement
+    const dateInput = screen.getAllByLabelText(/^date$/i)[
+      FIRST_ELEMENT_INDEX
+    ] as HTMLInputElement
 
     // Verify placeholder is set
     expect(dateInput.placeholder).toBeTruthy()
