@@ -152,4 +152,85 @@ describe('TickerAutocompleteInput', () => {
 
     expect(onBlur).toHaveBeenCalled()
   })
+
+  it('should call custom onKeyDown when provided', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const onBlur = vi.fn()
+    const onKeyDown = vi.fn()
+
+    render(
+      <TickerAutocompleteInput
+        id="test-ticker"
+        value=""
+        onChange={onChange}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+      />
+    )
+
+    const input = screen.getByLabelText('Ticker')
+    await user.type(input, 'a')
+
+    expect(onKeyDown).toHaveBeenCalled()
+  })
+
+  it('should use inputRef when provided', () => {
+    const onChange = vi.fn()
+    const onBlur = vi.fn()
+    const inputRef = vi.fn()
+
+    render(
+      <TickerAutocompleteInput
+        id="test-ticker"
+        value=""
+        onChange={onChange}
+        onBlur={onBlur}
+        inputRef={inputRef}
+      />
+    )
+
+    expect(inputRef).toHaveBeenCalled()
+  })
+
+  it('should handle focus event', async () => {
+    const user = userEvent.setup()
+    const onChange = vi.fn()
+    const onBlur = vi.fn()
+
+    render(
+      <TickerAutocompleteInput
+        id="test-ticker"
+        value="AAPL"
+        onChange={onChange}
+        onBlur={onBlur}
+      />
+    )
+
+    const input = screen.getByLabelText('Ticker')
+    await user.click(input)
+
+    // Input should be focused
+    expect(input).toHaveFocus()
+  })
+
+  it('should have correct ARIA attributes', () => {
+    const onChange = vi.fn()
+    const onBlur = vi.fn()
+
+    render(
+      <TickerAutocompleteInput
+        id="test-ticker"
+        value=""
+        onChange={onChange}
+        onBlur={onBlur}
+      />
+    )
+
+    const input = screen.getByLabelText('Ticker')
+    expect(input).toHaveAttribute('aria-autocomplete', 'list')
+    expect(input).toHaveAttribute('aria-controls', 'test-ticker-suggestions')
+    expect(input).toHaveAttribute('aria-expanded', 'false')
+    expect(input).toHaveAttribute('autoComplete', 'off')
+  })
 })

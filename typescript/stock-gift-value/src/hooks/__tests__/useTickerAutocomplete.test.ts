@@ -116,4 +116,85 @@ describe('useTickerAutocomplete', () => {
 
     expect(result.current.showSuggestions).toBe(false)
   })
+
+  it('should clear suggestions and hide on empty search', () => {
+    const onSelect = vi.fn()
+    const { result } = renderHook(() => useTickerAutocomplete(onSelect))
+
+    // Set some initial state
+    act(() => {
+      result.current.setShowSuggestions(true)
+    })
+
+    // Search with empty string
+    act(() => {
+      result.current.searchTickers('')
+    })
+
+    expect(result.current.suggestions).toEqual([])
+    expect(result.current.showSuggestions).toBe(false)
+  })
+
+  it('should clear suggestions and hide on whitespace-only search', () => {
+    const onSelect = vi.fn()
+    const { result } = renderHook(() => useTickerAutocomplete(onSelect))
+
+    // Search with whitespace
+    act(() => {
+      result.current.searchTickers('   ')
+    })
+
+    expect(result.current.suggestions).toEqual([])
+    expect(result.current.showSuggestions).toBe(false)
+  })
+
+  it('should handle ArrowUp when no item is selected', () => {
+    const onSelect = vi.fn()
+    const { result } = renderHook(() => useTickerAutocomplete(onSelect))
+
+    // Initially no selection
+    expect(result.current.selectedIndex).toBe(-1)
+
+    // ArrowUp with no selection should keep it at -1
+    act(() => {
+      result.current.handleKeyboardNavigation('ArrowUp')
+    })
+
+    expect(result.current.selectedIndex).toBe(-1)
+  })
+
+  it('should return false for keyboard navigation when no suggestions', () => {
+    const onSelect = vi.fn()
+    const { result } = renderHook(() => useTickerAutocomplete(onSelect))
+
+    // No suggestions, keyboard navigation should return false
+    let handled: boolean = true
+    act(() => {
+      handled = result.current.handleKeyboardNavigation('ArrowDown')
+    })
+    expect(handled).toBe(false)
+
+    act(() => {
+      handled = result.current.handleKeyboardNavigation('ArrowUp')
+    })
+    expect(handled).toBe(false)
+
+    act(() => {
+      handled = result.current.handleKeyboardNavigation('Enter')
+    })
+    expect(handled).toBe(false)
+    expect(onSelect).not.toHaveBeenCalled()
+  })
+
+  it('should return false for unhandled keys', () => {
+    const onSelect = vi.fn()
+    const { result } = renderHook(() => useTickerAutocomplete(onSelect))
+
+    let handled: boolean = false
+    act(() => {
+      handled = result.current.handleKeyboardNavigation('Tab')
+    })
+
+    expect(handled).toBe(false)
+  })
 })
