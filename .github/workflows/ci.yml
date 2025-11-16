@@ -33,9 +33,30 @@ jobs:
 
       - name: Test Docker image runs
         run: |
+          # Start container
           docker run --rm -d --name test-container -p 8080:8080 stock-gift-value:test
-          sleep 5
-          curl --fail http://localhost:8080/health || exit 1
+
+          # Wait for container to be ready
+          echo "Waiting for container to start..."
+          sleep 10
+
+          # Check if container is still running
+          if ! docker ps | grep -q test-container; then
+            echo "Container is not running! Logs:"
+            docker logs test-container || true
+            exit 1
+          fi
+
+          # Test health endpoint
+          echo "Testing health endpoint..."
+          if ! curl --fail --retry 3 --retry-delay 2 http://localhost:8080/health; then
+            echo "Health check failed! Container logs:"
+            docker logs test-container
+            docker stop test-container || true
+            exit 1
+          fi
+
+          echo "Health check passed!"
           docker stop test-container
 
   test-and-lint:
