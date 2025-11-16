@@ -16,3 +16,31 @@ export interface ClientErrorPayload {
   type: 'error' | 'unhandledrejection'
   additionalContext?: Record<string, unknown>
 }
+
+/**
+ * Stock price data structure returned by the API
+ */
+export interface StockPriceData {
+  date: string
+  high: number
+  low: number
+  ticker: string
+}
+
+/**
+ * Request parameters for stock price endpoint
+ */
+export interface StockPriceRequest {
+  ticker?: string | string[]
+  date?: string | string[]
+}
+
+/**
+ * Response structure from stock price endpoint
+ */
+export interface StockPriceResponse {
+  status: number
+  data?: StockPriceData
+  error?: string
+  details?: string
+}

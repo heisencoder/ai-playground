@@ -3,7 +3,7 @@
  */
 
 import { HTTP_STATUS, SECONDS_PER_DAY } from './constants'
-import { StockPriceData, StockPriceResponse } from './handler'
+import type { StockPriceData, StockPriceResponse } from '../shared/types.js'
 
 /**
  * Yahoo Finance API response structure

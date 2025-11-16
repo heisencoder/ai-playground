@@ -11,25 +11,7 @@ import {
   extractDate,
 } from './validators'
 import { fetchFromYahooFinance } from './yahooFinanceClient'
-
-export interface StockPriceData {
-  date: string
-  high: number
-  low: number
-  ticker: string
-}
-
-export interface StockPriceRequest {
-  ticker?: string | string[]
-  date?: string | string[]
-}
-
-export interface StockPriceResponse {
-  status: number
-  data?: StockPriceData
-  error?: string
-  details?: string
-}
+import type { StockPriceRequest, StockPriceResponse } from '../shared/types.js'
 
 /**
  * Core handler logic for fetching stock prices

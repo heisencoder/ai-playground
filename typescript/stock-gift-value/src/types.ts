@@ -1,3 +1,5 @@
+import type { StockPriceData } from '../shared/types.js'
+
 export interface StockGift {
   id: string
   date: string // ISO date format
@@ -10,12 +12,8 @@ export interface StockGift {
   tickerInputFocused?: boolean | undefined // Track if ticker field is being edited
 }
 
-export interface StockPriceData {
-  date: string
-  high: number
-  low: number
-  ticker: string
-}
+// Re-export shared types for convenience
+export type { StockPriceData }
 
 export interface CacheEntry {
   data: StockPriceData
