@@ -3,6 +3,99 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 
+/**
+ * Global error handler for production error tracking
+ * Sends client-side errors to the server for logging
+ */
+
+interface ClientErrorPayload {
+  message: string
+  stack?: string
+  url: string
+  lineNumber?: number
+  columnNumber?: number
+  timestamp: string
+  userAgent: string
+  type: 'error' | 'unhandledrejection'
+  additionalContext?: Record<string, unknown>
+}
+
+/**
+ * Sends error details to the server for logging
+ */
+async function logErrorToServer(errorPayload: ClientErrorPayload): Promise<void> {
+  try {
+    // In production, use relative URL; in development, use full URL
+    const apiUrl =
+      window.location.hostname === 'localhost' && window.location.port === '5173'
+        ? 'http://localhost:8080/api/log-client-error'
+        : '/api/log-client-error'
+
+    await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(errorPayload),
+    })
+  } catch (error) {
+    // Silently fail - don't want error logging to cause more errors
+    console.error('Failed to log error to server:', error)
+  }
+}
+
+/**
+ * Global error handler for uncaught exceptions
+ */
+window.onerror = (message, source, lineno, colno, error) => {
+  const errorPayload: ClientErrorPayload = {
+    message: typeof message === 'string' ? message : 'Unknown error',
+    url: source ?? window.location.href,
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    type: 'error',
+  }
+
+  if (error?.stack) {
+    errorPayload.stack = error.stack
+  }
+
+  if (lineno !== undefined) {
+    errorPayload.lineNumber = lineno
+  }
+
+  if (colno !== undefined) {
+    errorPayload.columnNumber = colno
+  }
+
+  logErrorToServer(errorPayload)
+
+  // Return false to allow default error handling
+  return false
+}
+
+/**
+ * Global handler for unhandled promise rejections
+ */
+window.onunhandledrejection = (event) => {
+  const errorPayload: ClientErrorPayload = {
+    message: event.reason?.message ?? String(event.reason) ?? 'Unhandled promise rejection',
+    url: window.location.href,
+    timestamp: new Date().toISOString(),
+    userAgent: navigator.userAgent,
+    type: 'unhandledrejection',
+    additionalContext: {
+      reason: event.reason,
+    },
+  }
+
+  if (event.reason?.stack) {
+    errorPayload.stack = event.reason.stack
+  }
+
+  logErrorToServer(errorPayload)
+}
+
 const rootElement = document.getElementById('root')
 if (!rootElement) {
   throw new Error('Failed to find the root element')

@@ -117,6 +117,57 @@ app.get('/api/ticker-search', async (req, res) => {
 })
 
 /**
+ * Client error logging endpoint
+ * POST /api/log-client-error
+ * Receives and logs errors that occur in the client-side JavaScript
+ */
+app.post('/api/log-client-error', (req, res) => {
+  try {
+    const errorData = req.body
+
+    // Log the client-side error with clear distinction from server errors
+    logger.error('═══════════════════════════════════════════════════')
+    logger.error('CLIENT-SIDE ERROR (not a server error)')
+    logger.error('═══════════════════════════════════════════════════')
+    logger.error(`Type: ${errorData.type ?? 'unknown'}`)
+    logger.error(`Message: ${errorData.message ?? 'No message provided'}`)
+    logger.error(`URL: ${errorData.url ?? 'unknown'}`)
+
+    if (errorData.lineNumber !== undefined || errorData.columnNumber !== undefined) {
+      logger.error(
+        `Location: Line ${errorData.lineNumber ?? 'unknown'}, Column ${errorData.columnNumber ?? 'unknown'}`
+      )
+    }
+
+    logger.error(`Timestamp: ${errorData.timestamp ?? 'unknown'}`)
+    logger.error(`User Agent: ${errorData.userAgent ?? 'unknown'}`)
+
+    if (errorData.stack) {
+      logger.error('Stack trace:')
+      logger.error(errorData.stack)
+    }
+
+    if (errorData.additionalContext) {
+      logger.error('Additional context:')
+      logger.error(JSON.stringify(errorData.additionalContext, null, 2))
+    }
+
+    logger.error('═══════════════════════════════════════════════════')
+
+    // Acknowledge receipt
+    return res.status(HTTP_STATUS.OK).json({
+      status: 'logged',
+      message: 'Client error logged successfully',
+    })
+  } catch (error) {
+    logger.error('Failed to log client error:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Failed to log client error',
+    })
+  }
+})
+
+/**
  * Static file serving for production
  * In development, Vite dev server handles the frontend
  * In production, serve the built files from dist/
@@ -146,6 +197,9 @@ app.listen(PORT, () => {
   )
   logger.info(
     `  - Ticker Search: http://localhost:${PORT}/api/ticker-search?q=AAPL`
+  )
+  logger.info(
+    `  - Client Error Logging: http://localhost:${PORT}/api/log-client-error`
   )
   if (NODE_ENV === 'production') {
     logger.info(`\nServing static files from: dist/`)
