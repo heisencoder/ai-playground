@@ -37,7 +37,7 @@ A React web application to calculate the IRS-approved donated value of stock gif
    - 70+ unit and integration tests
    - Component tests with React Testing Library
    - API mocking with MSW
-   - Required test: BRK.B on 11/7/2025 with 34 shares = $16,889.67
+   - Required test: BRK-B on 11/7/2025 with 34 shares = $16,889.67
 
 2. **Code Quality**
    - TypeScript strict mode
@@ -199,7 +199,7 @@ typescript/stock-gift-value/
 3. **Components** - Render, add/remove rows, validation
 
 ### Integration Test
-- **BRK.B Test Case**: 11/7/2025, 34 shares → $16,889.67
+- **BRK-B Test Case**: 11/7/2025, 34 shares → $16,889.67
 
 ## Success Criteria
 
