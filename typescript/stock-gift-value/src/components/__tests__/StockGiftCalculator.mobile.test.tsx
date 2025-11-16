@@ -73,9 +73,9 @@ describe('StockGiftCalculator - Mobile Rendering', () => {
     const user = userEvent.setup()
     render(<StockGiftCalculator />)
 
-    const dateInput = screen.getAllByLabelText(
-      /^date$/i
-    )[FIRST_ELEMENT_INDEX] as HTMLInputElement
+    const dateInput = screen.getAllByLabelText(/^date$/i)[
+      FIRST_ELEMENT_INDEX
+    ] as HTMLInputElement
 
     // Type a full date
     await user.type(dateInput, '12/31/2024')
