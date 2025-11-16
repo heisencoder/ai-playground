@@ -187,6 +187,16 @@
   min-width: 100px;
 }
 
+.date-input-error {
+  border-color: #dc2626 !important;
+  background-color: #fef2f2 !important;
+}
+
+.date-input-error:focus {
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+}
+
 /* Value header text variants */
 .value-header-full {
   display: inline;

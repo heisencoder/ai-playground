@@ -11,7 +11,13 @@ import {
  * Check if gift should be skipped or cleared
  */
 function shouldSkipGift(gift: StockGift): boolean {
-  return !gift.date || !gift.ticker || !gift.shares || Boolean(gift.loading)
+  return (
+    !gift.date ||
+    !gift.ticker ||
+    !gift.shares ||
+    Boolean(gift.loading) ||
+    Boolean(gift.tickerInputFocused)
+  )
 }
 
 /**

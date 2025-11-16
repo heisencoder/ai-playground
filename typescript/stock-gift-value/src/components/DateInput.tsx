@@ -8,6 +8,7 @@ interface DateInputProps {
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void
   inputRef?: (el: HTMLInputElement | null) => void
   className?: string
+  hasError?: boolean
 }
 
 /**
@@ -138,6 +139,7 @@ export function DateInput({
   onKeyDown,
   inputRef,
   className = '',
+  hasError = false,
 }: DateInputProps): React.JSX.Element {
   const [displayValue, setDisplayValue] = useState(() =>
     formatDateForDisplay(value)
@@ -169,7 +171,7 @@ export function DateInput({
       onChange={handleInputChange}
       onBlur={handleInputBlur}
       onKeyDown={onKeyDown}
-      className={className}
+      className={`${className} ${hasError ? 'date-input-error' : ''}`}
       placeholder="MM/DD/YYYY"
       aria-label="Date"
     />
