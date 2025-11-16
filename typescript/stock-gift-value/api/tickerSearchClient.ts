@@ -2,26 +2,11 @@
  * Yahoo Finance ticker search API client
  */
 
-import yahooFinance from 'yahoo-finance2'
+import YahooFinance from 'yahoo-finance2'
 import { HTTP_STATUS } from './constants.js'
 
-/**
- * Yahoo Finance search quote result structure
- */
-interface YahooSearchQuote {
-  symbol: string
-  longname?: string
-  shortname?: string
-  exchange?: string
-  quoteType?: string
-}
-
-/**
- * Yahoo Finance search API response structure
- */
-interface YahooSearchResults {
-  quotes: YahooSearchQuote[]
-}
+// Instantiate yahoo-finance2 client
+const yahooFinance = new YahooFinance()
 
 export interface TickerSearchResult {
   symbol: string
@@ -115,24 +100,25 @@ export async function searchTickers(query: string): Promise<TickerSearchResponse
 
   try {
     // Use yahoo-finance2 library which handles API authentication
-    // Type assertion needed because yahoo-finance2 doesn't export proper types
-    const searchResults = (yahooFinance.search(trimmedQuery, {
+    // yahoo-finance2 doesn't export proper TypeScript types, so we use 'any' here
+    /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
+    const data: any = await yahooFinance.search(trimmedQuery, {
       quotesCount: 10,
       newsCount: 0,
-    }) as unknown) as Promise<YahooSearchResults>
-
-    const data = await searchResults
+    })
 
     // Transform results to our format
-    const results: TickerSearchResult[] = data.quotes
-      .filter((quote: YahooSearchQuote) => quote.symbol && quote.longname)
-      .map((quote: YahooSearchQuote) => ({
-        symbol: quote.symbol,
-        name: quote.longname ?? quote.shortname ?? quote.symbol,
-        exchange: quote.exchange,
-        type: quote.quoteType,
+    const quotes = data.quotes || []
+    const results: TickerSearchResult[] = quotes
+      .filter((quote: any) => quote.symbol && quote.longname)
+      .map((quote: any) => ({
+        symbol: quote.symbol as string,
+        name: (quote.longname ?? quote.shortname ?? quote.symbol) as string,
+        exchange: quote.exchange as string | undefined,
+        type: quote.quoteType as string | undefined,
       }))
       .slice(0, 10) // Limit to 10 results
+    /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 
     // Cache the results
     tickerSearchCache.set(trimmedQuery, results)
