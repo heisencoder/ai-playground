@@ -27,14 +27,9 @@ async function logErrorToServer(
   errorPayload: ClientErrorPayload
 ): Promise<void> {
   try {
-    // In production, use relative URL; in development, use full URL
-    const apiUrl =
-      window.location.hostname === 'localhost' &&
-      window.location.port === '5173'
-        ? 'http://localhost:8080/api/log-client-error'
-        : '/api/log-client-error'
-
-    await fetch(apiUrl, {
+    // Use relative URL - Vite proxy will forward to correct port in development
+    // In production, this goes to the same server serving the app
+    await fetch('/api/log-client-error', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
