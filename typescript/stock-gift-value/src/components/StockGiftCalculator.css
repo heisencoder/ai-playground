@@ -220,12 +220,12 @@
   /* Set specific column widths for better mobile layout */
   .stock-gift-table th:nth-child(1),
   .stock-gift-table td:nth-child(1) {
-    width: 20%; /* Date column - reduced */
+    width: 24%; /* Date column - fits MM/DD/YYYY */
   }
 
   .stock-gift-table th:nth-child(2),
   .stock-gift-table td:nth-child(2) {
-    width: 18%; /* Ticker column - fits 4 chars */
+    width: 21%; /* Ticker column - fits BRK-B */
   }
 
   .stock-gift-table th:nth-child(3),
@@ -235,7 +235,7 @@
 
   .stock-gift-table th:nth-child(4),
   .stock-gift-table td:nth-child(4) {
-    width: 42%; /* Value column - remaining space */
+    width: 35%; /* Value column - fits up to $1M values */
   }
 
   /* Hide delete button column on mobile */
@@ -355,6 +355,12 @@
   .stock-gift-table input {
     padding: 0.5rem 0.375rem;
     font-size: 1rem; /* Increased for better mobile legibility */
+  }
+
+  /* Smaller font for date and ticker to fit content */
+  .stock-gift-table .date-input,
+  .stock-gift-table .ticker-input {
+    font-size: 0.9375rem; /* 15px - slightly smaller */
   }
 
   .stock-gift-table td.value-cell {

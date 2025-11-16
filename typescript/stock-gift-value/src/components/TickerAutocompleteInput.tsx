@@ -8,6 +8,8 @@ import './TickerAutocompleteInput.css'
 const DROPDOWN_OFFSET_PX = 4
 const MIN_DROPDOWN_HEIGHT_PX = 100
 const VIEWPORT_BOTTOM_MARGIN_PX = 10
+const MOBILE_BREAKPOINT_PX = 768
+const MOBILE_DROPDOWN_WIDTH_MULTIPLIER = 2
 
 interface TickerAutocompleteInputProps {
   id: string
@@ -70,7 +72,13 @@ export function TickerAutocompleteInput({
       const topPosition = inputRect.bottom + DROPDOWN_OFFSET_PX
       dropdown.style.top = `${topPosition}px`
       dropdown.style.left = `${inputRect.left}px`
-      dropdown.style.width = `${inputRect.width}px`
+
+      // On mobile, make dropdown wider to show company names (span ticker + shares columns)
+      const isMobile = window.innerWidth <= MOBILE_BREAKPOINT_PX
+      const dropdownWidth = isMobile
+        ? inputRect.width * MOBILE_DROPDOWN_WIDTH_MULTIPLIER
+        : inputRect.width
+      dropdown.style.width = `${dropdownWidth}px`
 
       // Limit max height to prevent extending below viewport
       const availableHeight = window.innerHeight - topPosition
