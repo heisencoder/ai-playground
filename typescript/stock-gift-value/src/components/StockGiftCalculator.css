@@ -220,7 +220,7 @@
   /* Set specific column widths for better mobile layout */
   .stock-gift-table th:nth-child(1),
   .stock-gift-table td:nth-child(1) {
-    width: 25%; /* Date column - fits full MM/DD/YYYY without clipping */
+    width: 26%; /* Date column - fits full MM/DD/YYYY without clipping on iPhone SE */
   }
 
   .stock-gift-table th:nth-child(2),
@@ -235,7 +235,7 @@
 
   .stock-gift-table th:nth-child(4),
   .stock-gift-table td:nth-child(4) {
-    width: 34%; /* Value column - fits up to $1M values */
+    width: 33%; /* Value column - fits up to $1M values */
   }
 
   /* Hide delete button column on mobile */
@@ -361,6 +361,11 @@
   .stock-gift-table .date-input,
   .stock-gift-table .ticker-input {
     font-size: 0.9375rem; /* 15px - slightly smaller */
+  }
+
+  /* Even smaller placeholder font for date to prevent clipping on iPhone SE */
+  .stock-gift-table .date-input::placeholder {
+    font-size: 0.875rem; /* 14px - prevents MM/DD/YYYY placeholder clipping */
   }
 
   .stock-gift-table td.value-cell {
