@@ -178,13 +178,13 @@ describe('StockGiftCalculator - Column Sorting', () => {
     const user = userEvent.setup()
 
     const dateInputs = screen.getAllByLabelText(/^date$/i)
-    await user.type(dateInputs[FIRST_ELEMENT], '2024-03-15')
+    await user.type(dateInputs[FIRST_ELEMENT], '03/15/2024')
     await user.tab()
 
     await waitForRowCount(EXPECTED_TWO_ROWS)
 
     const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
-    await user.type(updatedDateInputs[SECOND_ELEMENT], '2024-01-10')
+    await user.type(updatedDateInputs[SECOND_ELEMENT], '01/10/2024')
     await user.tab()
 
     await waitForRowCount(EXPECTED_THREE_ROWS)
@@ -195,8 +195,8 @@ describe('StockGiftCalculator - Column Sorting', () => {
     await user.click(dateButton)
 
     const sortedDateInputs = screen.getAllByLabelText(/^date$/i)
-    expect(sortedDateInputs[FIRST_ELEMENT]).toHaveValue('2024-01-10')
-    expect(sortedDateInputs[SECOND_ELEMENT]).toHaveValue('2024-03-15')
+    expect(sortedDateInputs[FIRST_ELEMENT]).toHaveValue('01/10/2024')
+    expect(sortedDateInputs[SECOND_ELEMENT]).toHaveValue('03/15/2024')
     expect(sortedDateInputs[THIRD_ELEMENT]).toHaveValue('')
     expect(dateButton).toHaveTextContent('↑')
   })
@@ -206,13 +206,13 @@ describe('StockGiftCalculator - Column Sorting', () => {
     const user = userEvent.setup()
 
     const dateInputs = screen.getAllByLabelText(/^date$/i)
-    await user.type(dateInputs[FIRST_ELEMENT], '2024-03-15')
+    await user.type(dateInputs[FIRST_ELEMENT], '03/15/2024')
     await user.tab()
 
     await waitForRowCount(EXPECTED_TWO_ROWS)
 
     const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
-    await user.type(updatedDateInputs[SECOND_ELEMENT], '2024-01-10')
+    await user.type(updatedDateInputs[SECOND_ELEMENT], '01/10/2024')
     await user.tab()
 
     await waitForRowCount(EXPECTED_THREE_ROWS)
@@ -226,8 +226,8 @@ describe('StockGiftCalculator - Column Sorting', () => {
 
     await waitFor(() => {
       const sortedDateInputs = screen.getAllByLabelText(/^date$/i)
-      expect(sortedDateInputs[FIRST_ELEMENT]).toHaveValue('2024-03-15')
-      expect(sortedDateInputs[SECOND_ELEMENT]).toHaveValue('2024-01-10')
+      expect(sortedDateInputs[FIRST_ELEMENT]).toHaveValue('03/15/2024')
+      expect(sortedDateInputs[SECOND_ELEMENT]).toHaveValue('01/10/2024')
     })
 
     expect(dateButton).toHaveTextContent('↓')
@@ -695,9 +695,6 @@ describe('StockGiftCalculator - Improved Tabbing Flow', () => {
 
     const dateInput = screen.getByLabelText(/^date$/i)
 
-    // Focus the input (will show MM/DD/YYYY format)
-    await user.click(dateInput)
-
     // Type in free-form format
     await user.type(dateInput, '01/15/2024')
 
@@ -707,9 +704,9 @@ describe('StockGiftCalculator - Improved Tabbing Flow', () => {
     // Blur to parse the date
     dateInput.blur()
 
-    // After blur, should be converted to ISO format
+    // After blur, should be converted to locale format (MM/DD/YYYY)
     await waitFor(() => {
-      expect(dateInput).toHaveValue('2024-01-15')
+      expect(dateInput).toHaveValue('01/15/2024')
     })
   })
 

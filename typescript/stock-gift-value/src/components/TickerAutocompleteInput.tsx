@@ -5,9 +5,6 @@ import {
 } from '../hooks/useTickerAutocomplete'
 import './TickerAutocompleteInput.css'
 
-// Constants
-const BLUR_DELAY_MS = 200
-
 interface TickerAutocompleteInputProps {
   id: string
   value: string
@@ -85,7 +82,10 @@ export function TickerAutocompleteInput({
     }
   }
 
-  const handleSuggestionClick = (suggestion: TickerSuggestion): void => {
+  const handleSuggestionMouseDown = (
+    suggestion: TickerSuggestion
+  ): void => {
+    // Use mousedown instead of click to fire before blur
     selectSuggestion(suggestion)
   }
 
@@ -96,11 +96,11 @@ export function TickerAutocompleteInput({
   }
 
   const handleInputBlur = (): void => {
-    // Delay hiding suggestions to allow clicking on them
+    // Small delay to allow mousedown on suggestions to fire first
     setTimeout(() => {
       hideSuggestions()
       onBlur()
-    }, BLUR_DELAY_MS)
+    }, 100)
   }
 
   const handleSuggestionMouseEnter = (): void => {
@@ -144,7 +144,7 @@ export function TickerAutocompleteInput({
               <li
                 key={suggestion.symbol}
                 className={`ticker-suggestion ${index === selectedIndex ? 'ticker-suggestion-selected' : ''}`}
-                onClick={() => handleSuggestionClick(suggestion)}
+                onMouseDown={() => handleSuggestionMouseDown(suggestion)}
                 onMouseEnter={handleSuggestionMouseEnter}
                 role="option"
                 aria-selected={index === selectedIndex}

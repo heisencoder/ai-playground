@@ -1,8 +1,4 @@
-import { useState, useRef, useEffect, type KeyboardEvent } from 'react'
-import './DateInput.css'
-
-// Constants
-const CALENDAR_SHOW_DELAY_MS = 500
+import { useState, useEffect, type KeyboardEvent } from 'react'
 
 interface DateInputProps {
   id: string
@@ -12,7 +8,6 @@ interface DateInputProps {
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void
   inputRef?: (el: HTMLInputElement | null) => void
   className?: string
-  maxDate?: string
 }
 
 /**
@@ -91,17 +86,10 @@ function parseDate(input: string): string {
 }
 
 /**
- * Format ISO date (YYYY-MM-DD) for display
- * When not focused, keep ISO format for compatibility
- * When focused, show user-friendly format
+ * Format ISO date (YYYY-MM-DD) for display in locale format (MM/DD/YYYY)
  */
-function formatDateForDisplay(isoDate: string, isFocused: boolean): string {
+function formatDateForDisplay(isoDate: string): string {
   if (!isoDate || !isoDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
-    return isoDate
-  }
-
-  // Keep ISO format when not focused for test compatibility
-  if (!isFocused) {
     return isoDate
   }
 
@@ -109,7 +97,6 @@ function formatDateForDisplay(isoDate: string, isFocused: boolean): string {
   return `${month}/${day}/${year}`
 }
 
-/* eslint-disable max-lines-per-function -- Component requires multiple handlers and state management */
 export function DateInput({
   id,
   value,
@@ -118,114 +105,40 @@ export function DateInput({
   onKeyDown,
   inputRef,
   className = '',
-  maxDate,
 }: DateInputProps): React.JSX.Element {
-  const [focused, setFocused] = useState(false)
-  const [showCalendar, setShowCalendar] = useState(false)
   const [displayValue, setDisplayValue] = useState(() =>
-    formatDateForDisplay(value, false)
+    formatDateForDisplay(value)
   )
-  const calendarInputRef = useRef<HTMLInputElement>(null)
-  const showCalendarTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Update display value when value prop changes
+  // Update display value when value prop changes from parent
   useEffect(() => {
-    if (!focused) {
-      setDisplayValue(formatDateForDisplay(value, false))
-    }
-  }, [value, focused])
+    setDisplayValue(formatDateForDisplay(value))
+  }, [value])
 
-  // Helper to clear calendar timeout
-  const clearCalendarTimeout = (): void => {
-    if (showCalendarTimeoutRef.current) {
-      clearTimeout(showCalendarTimeoutRef.current)
-      showCalendarTimeoutRef.current = null
-    }
-  }
-
-  // Clean up timeout on unmount
-  useEffect(() => {
-    return () => {
-      clearCalendarTimeout()
-    }
-  }, [])
-
-  const handleTextInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newValue = e.target.value
     setDisplayValue(newValue)
   }
 
-  const handleTextInputBlur = (): void => {
+  const handleInputBlur = (): void => {
     const parsedDate = parseDate(displayValue)
     onChange(parsedDate)
-    setDisplayValue(formatDateForDisplay(parsedDate, false))
-    setFocused(false)
-    setShowCalendar(false)
-    clearCalendarTimeout()
+    setDisplayValue(formatDateForDisplay(parsedDate))
     onBlur()
   }
 
-  const handleTextInputFocus = (): void => {
-    setFocused(true)
-    setDisplayValue(formatDateForDisplay(value, true))
-    // Delay showing calendar to avoid interfering with tab navigation
-    showCalendarTimeoutRef.current = setTimeout(() => {
-      setShowCalendar(true)
-    }, CALENDAR_SHOW_DELAY_MS)
-  }
-
-  const handleCalendarChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void => {
-    const newValue = e.target.value
-    onChange(newValue)
-    setDisplayValue(formatDateForDisplay(newValue, focused))
-  }
-
-  const handleCalendarClick = (): void => {
-    if (calendarInputRef.current) {
-      calendarInputRef.current.showPicker()
-    }
-  }
-
   return (
-    <div className="date-input-container">
-      <input
-        ref={inputRef}
-        id={id}
-        type="text"
-        value={displayValue}
-        onChange={handleTextInputChange}
-        onBlur={handleTextInputBlur}
-        onFocus={handleTextInputFocus}
-        onKeyDown={onKeyDown}
-        className={className}
-        placeholder="YYYY-MM-DD"
-        aria-label="Date"
-      />
-      {showCalendar && (
-        <div className="date-calendar-dropdown">
-          <input
-            ref={calendarInputRef}
-            type="date"
-            value={value}
-            onChange={handleCalendarChange}
-            max={maxDate}
-            className="date-calendar-input"
-            aria-label="Calendar picker"
-          />
-          <button
-            type="button"
-            onClick={handleCalendarClick}
-            className="date-calendar-button"
-            tabIndex={-1}
-          >
-            📅
-          </button>
-        </div>
-      )}
-    </div>
+    <input
+      ref={inputRef}
+      id={id}
+      type="text"
+      value={displayValue}
+      onChange={handleInputChange}
+      onBlur={handleInputBlur}
+      onKeyDown={onKeyDown}
+      className={className}
+      placeholder="MM/DD/YYYY"
+      aria-label="Date"
+    />
   )
 }
