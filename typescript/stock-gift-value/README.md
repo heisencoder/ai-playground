@@ -11,6 +11,7 @@ This application helps users calculate the value of stock donations according to
 ## Features
 
 - Simple input interface for donation date, ticker symbol, and number of shares
+- **Ticker autocomplete** with Yahoo Finance search integration
 - Automatic calculation as you type
 - Support for multiple stock gifts
 - Fractional cents precision for accurate calculations
@@ -53,7 +54,6 @@ graph TD
 
 **Why a backend?**
 - Yahoo Finance doesn't support CORS (requires server-side proxy)
-- Ticker symbol normalization (e.g., BRK.B → BRK-B)
 - Secure API handling
 
 **Clean architecture:**
@@ -333,7 +333,7 @@ Visit: `http://localhost:8080`
 ## Usage
 
 1. Enter the **donation date** (must be a past date)
-2. Enter the **ticker symbol** (e.g., AAPL, BRK.B, MSFT)
+2. Enter the **ticker symbol** (e.g., AAPL, BRK-B, MSFT)
 3. Enter the **number of shares** donated
 4. The **IRS-approved value** is calculated automatically
 
@@ -343,7 +343,7 @@ Click **"+ Add Another Stock Gift"** for multiple donations.
 
 For the test case:
 - Date: 11/7/2025
-- Ticker: BRK.B
+- Ticker: BRK-B
 - Shares: 34
 - High: $500.16, Low: $493.35
 - **Calculated Value: $16,889.67**

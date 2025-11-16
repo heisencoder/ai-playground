@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   handleStockPriceRequest,
-  normalizeTickerForYahoo,
   StockPriceRequest,
 } from '../handler'
 
@@ -86,22 +85,6 @@ function createMockFetchResponse(
     json: (): Promise<unknown> => Promise.resolve(data),
   }
 }
-
-describe('normalizeTickerForYahoo', () => {
-  it('should convert periods to hyphens', () => {
-    expect(normalizeTickerForYahoo('BRK.B')).toBe('BRK-B')
-    expect(normalizeTickerForYahoo('BRK.A')).toBe('BRK-A')
-  })
-
-  it('should handle tickers without periods', () => {
-    expect(normalizeTickerForYahoo(TEST_TICKER_AAPL)).toBe(TEST_TICKER_AAPL)
-    expect(normalizeTickerForYahoo('MSFT')).toBe('MSFT')
-  })
-
-  it('should handle multiple periods', () => {
-    expect(normalizeTickerForYahoo('A.B.C')).toBe('A-B-C')
-  })
-})
 
 describe('handleStockPriceRequest - Validation', () => {
   beforeEach(() => {
@@ -214,7 +197,7 @@ describe('handleStockPriceRequest - Successful Requests', () => {
     )
 
     const request: StockPriceRequest = {
-      ticker: 'BRK.B',
+      ticker: 'BRK-B',
       date: TEST_DATE,
     }
 

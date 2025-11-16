@@ -3,6 +3,7 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { handleStockPriceRequest } from './handler.js'
+import { searchTickers } from './tickerSearchClient.js'
 import { DEFAULT_PORT, HTTP_STATUS } from './constants.js'
 import { logger } from './logger.js'
 
@@ -77,6 +78,45 @@ app.get('/api/stock-price', async (req, res) => {
 })
 
 /**
+ * Ticker search endpoint
+ * GET /api/ticker-search?q=AAPL
+ */
+app.get('/api/ticker-search', async (req, res) => {
+  try {
+    const query = req.query.q
+
+    // Validate query parameter
+    if (!query || typeof query !== 'string') {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        error: 'Query parameter "q" is required',
+      })
+    }
+
+    // Search for tickers
+    const result = await searchTickers(query)
+
+    // Send response
+    if (result.data) {
+      return res.status(result.status).json(result.data)
+    }
+
+    const errorResponse: Record<string, string> = {
+      error: result.error ?? 'Unknown error',
+    }
+    if (result.details) {
+      errorResponse.details = result.details
+    }
+    return res.status(result.status).json(errorResponse)
+  } catch (error) {
+    logger.error('Unexpected error in ticker search:', error)
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    })
+  }
+})
+
+/**
  * Static file serving for production
  * In development, Vite dev server handles the frontend
  * In production, serve the built files from dist/
@@ -103,6 +143,9 @@ app.listen(PORT, () => {
   logger.info(`  - Health: http://localhost:${PORT}/health`)
   logger.info(
     `  - Stock Price: http://localhost:${PORT}/api/stock-price?ticker=AAPL&date=2024-01-01`
+  )
+  logger.info(
+    `  - Ticker Search: http://localhost:${PORT}/api/ticker-search?q=AAPL`
   )
   if (NODE_ENV === 'production') {
     logger.info(`\nServing static files from: dist/`)

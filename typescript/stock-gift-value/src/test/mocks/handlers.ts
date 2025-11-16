@@ -11,13 +11,13 @@ export const handlers = [
     const ticker = url.searchParams.get('ticker')
     const date = url.searchParams.get('date')
 
-    // Handle BRK.B test case with specific date
-    if (ticker === 'BRK.B' && date === '2025-11-07') {
+    // Handle BRK-B test case with specific date (Yahoo Finance format)
+    if (ticker === 'BRK-B' && date === '2025-11-07') {
       return HttpResponse.json({
         date: '2025-11-07',
         high: 500.16,
         low: 493.35,
-        ticker: 'BRK.B',
+        ticker: 'BRK-B',
       })
     }
 
@@ -65,5 +65,88 @@ export const handlers = [
       low: 90,
       ticker: ticker || 'MOCK',
     })
+  }),
+
+  // Mock the ticker search API endpoint
+  http.get('*/api/ticker-search', ({ request }) => {
+    const url = new URL(request.url)
+    const query = url.searchParams.get('q')
+
+    // Handle empty query
+    if (!query) {
+      return HttpResponse.json([])
+    }
+
+    // Normalize query for comparison
+    const normalizedQuery = query.toLowerCase()
+
+    // Mock responses for common queries
+    if (
+      normalizedQuery.startsWith('aapl') ||
+      normalizedQuery.startsWith('app')
+    ) {
+      return HttpResponse.json([
+        {
+          symbol: 'AAPL',
+          name: 'Apple Inc.',
+          exchange: 'NASDAQ',
+          type: 'Equity',
+        },
+      ])
+    }
+
+    if (
+      normalizedQuery.startsWith('goog') ||
+      normalizedQuery.startsWith('alp')
+    ) {
+      return HttpResponse.json([
+        {
+          symbol: 'GOOGL',
+          name: 'Alphabet Inc. Class A',
+          exchange: 'NASDAQ',
+          type: 'Equity',
+        },
+        {
+          symbol: 'GOOG',
+          name: 'Alphabet Inc. Class C',
+          exchange: 'NASDAQ',
+          type: 'Equity',
+        },
+      ])
+    }
+
+    if (
+      normalizedQuery.startsWith('msft') ||
+      normalizedQuery.startsWith('mic')
+    ) {
+      return HttpResponse.json([
+        {
+          symbol: 'MSFT',
+          name: 'Microsoft Corporation',
+          exchange: 'NASDAQ',
+          type: 'Equity',
+        },
+      ])
+    }
+
+    if (normalizedQuery.startsWith('brk')) {
+      return HttpResponse.json([
+        {
+          symbol: 'BRK-B',
+          name: 'Berkshire Hathaway Inc. Class B',
+          exchange: 'NYSE',
+          type: 'Equity',
+        },
+        {
+          symbol: 'BRK-A',
+          name: 'Berkshire Hathaway Inc. Class A',
+          exchange: 'NYSE',
+          type: 'Equity',
+        },
+      ])
+    }
+
+    // Return empty array for unknown queries
+    return HttpResponse.json([])
   }),
 ]

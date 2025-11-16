@@ -9,7 +9,6 @@ import {
   validateDate,
   extractTicker,
   extractDate,
-  normalizeTickerForYahoo,
 } from './validators'
 import { fetchFromYahooFinance } from './yahooFinanceClient'
 
@@ -31,9 +30,6 @@ export interface StockPriceResponse {
   error?: string
   details?: string
 }
-
-// Re-export for backward compatibility
-export { normalizeTickerForYahoo }
 
 /**
  * Core handler logic for fetching stock prices
@@ -61,13 +57,10 @@ export async function handleStockPriceRequest(
   }
 
   // Extract validated values
-  const ticker = extractTicker(params.ticker)
+  const ticker = extractTicker(params.ticker).toUpperCase()
   const date = extractDate(params.date)
 
-  // Normalize ticker for Yahoo Finance (BRK.B → BRK-B)
-  const normalizedTicker = normalizeTickerForYahoo(ticker.toUpperCase())
-
-  // Fetch from Yahoo Finance
-  const result = await fetchFromYahooFinance(normalizedTicker, ticker, date)
+  // Fetch from Yahoo Finance - use ticker as-is from autocomplete
+  const result = await fetchFromYahooFinance(ticker, ticker, date)
   return result
 }

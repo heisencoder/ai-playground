@@ -10,7 +10,7 @@ const TEST_DATE = '2024-01-01'
 const PRICE_HIGH_150 = 150
 const PRICE_LOW_140 = 140
 
-const BRK_B_TICKER = 'BRK.B'
+const BRK_B_TICKER = 'BRK-B'
 const BRK_B_DATE = '2025-11-07'
 const BRK_B_HIGH = 500.16
 const BRK_B_LOW = 493.35

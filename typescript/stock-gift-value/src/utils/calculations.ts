@@ -72,7 +72,7 @@ export function isValidTicker(ticker: string): boolean {
     return false
   }
 
-  // Basic validation: 1-5 uppercase letters, may contain dots
-  const tickerRegex = /^[A-Z]{1,5}(\.[A-Z]{1,2})?$/
+  // Basic validation: 1-5 uppercase letters, may contain dots or hyphens (e.g., BRK.B or BRK-B)
+  const tickerRegex = /^[A-Z]{1,5}([.-][A-Z]{1,2})?$/
   return tickerRegex.test(ticker.toUpperCase())
 }

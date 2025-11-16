@@ -67,7 +67,7 @@ describe('calculateStockGiftValue', () => {
     expect(result).toBe(EXPECTED_VALUE_950)
   })
 
-  it('should calculate BRK.B test case correctly', () => {
+  it('should calculate BRK-B test case correctly', () => {
     const result = calculateStockGiftValue(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
     expect(result).toBe(BRK_B_EXPECTED_VALUE)
   })
@@ -184,8 +184,8 @@ describe('isValidTicker', () => {
     expect(isValidTicker('GOOG')).toBe(true)
   })
 
-  it('should accept ticker symbols with dots', () => {
-    expect(isValidTicker('BRK.B')).toBe(true)
+  it('should accept ticker symbols with dots or hyphens', () => {
+    expect(isValidTicker('BRK-B')).toBe(true)
     expect(isValidTicker('BRK.A')).toBe(true)
   })
 
@@ -198,6 +198,6 @@ describe('isValidTicker', () => {
     expect(isValidTicker('A')).toBe(true)
     expect(isValidTicker('TOOLONG')).toBe(false)
     expect(isValidTicker('12345')).toBe(false)
-    expect(isValidTicker('AA-BB')).toBe(false)
+    expect(isValidTicker('A-BBB')).toBe(false) // Suffix too long (3 letters)
   })
 })
