@@ -5,8 +5,11 @@ import {
 } from '../hooks/useTickerAutocomplete'
 import './TickerAutocompleteInput.css'
 
-// Constants
-const BLUR_DELAY_MS = 200
+const DROPDOWN_OFFSET_PX = 4
+const MIN_DROPDOWN_HEIGHT_PX = 100
+const VIEWPORT_BOTTOM_MARGIN_PX = 10
+const MOBILE_BREAKPOINT_PX = 768
+const MOBILE_DROPDOWN_WIDTH_MULTIPLIER = 2
 
 interface TickerAutocompleteInputProps {
   id: string
@@ -33,6 +36,8 @@ export function TickerAutocompleteInput({
   hasError = false,
 }: TickerAutocompleteInputProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
+  const inputElementRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLUListElement>(null)
   const {
     suggestions,
     loading,
@@ -44,9 +49,57 @@ export function TickerAutocompleteInput({
     setShowSuggestions,
     handleKeyboardNavigation,
     resetSelection,
+    setFocused,
   } = useTickerAutocomplete((ticker: string) => {
     onChange(ticker)
   })
+
+  // Position dropdown using fixed positioning
+  useEffect(() => {
+    function updateDropdownPosition(): void {
+      if (
+        !showSuggestions ||
+        !inputElementRef.current ||
+        !dropdownRef.current
+      ) {
+        return
+      }
+
+      const inputRect = inputElementRef.current.getBoundingClientRect()
+      const dropdown = dropdownRef.current
+
+      // Position dropdown below input
+      const topPosition = inputRect.bottom + DROPDOWN_OFFSET_PX
+      dropdown.style.top = `${topPosition}px`
+      dropdown.style.left = `${inputRect.left}px`
+
+      // On mobile, make dropdown wider to show company names (span ticker + shares columns)
+      const isMobile = window.innerWidth <= MOBILE_BREAKPOINT_PX
+      const dropdownWidth = isMobile
+        ? inputRect.width * MOBILE_DROPDOWN_WIDTH_MULTIPLIER
+        : inputRect.width
+      dropdown.style.width = `${dropdownWidth}px`
+
+      // Limit max height to prevent extending below viewport
+      const availableHeight = window.innerHeight - topPosition
+      const maxHeight = Math.max(
+        MIN_DROPDOWN_HEIGHT_PX,
+        availableHeight - VIEWPORT_BOTTOM_MARGIN_PX
+      )
+      dropdown.style.maxHeight = `${maxHeight}px`
+    }
+
+    if (showSuggestions) {
+      updateDropdownPosition()
+      window.addEventListener('scroll', updateDropdownPosition, true)
+      window.addEventListener('resize', updateDropdownPosition)
+    }
+
+    return () => {
+      window.removeEventListener('scroll', updateDropdownPosition, true)
+      window.removeEventListener('resize', updateDropdownPosition)
+    }
+  }, [showSuggestions])
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -85,32 +138,44 @@ export function TickerAutocompleteInput({
     }
   }
 
-  const handleSuggestionClick = (suggestion: TickerSuggestion): void => {
+  const handleSuggestionMouseDown = (suggestion: TickerSuggestion): void => {
+    // Use mousedown instead of click to fire before blur
     selectSuggestion(suggestion)
   }
 
   const handleInputFocus = (): void => {
+    setFocused(true)
     if (value.trim() && suggestions.length > 0) {
       setShowSuggestions(true)
     }
   }
 
   const handleInputBlur = (): void => {
-    // Delay hiding suggestions to allow clicking on them
+    // Mark as not focused immediately
+    setFocused(false)
+    // Small delay to allow mousedown on suggestions to fire first
     setTimeout(() => {
       hideSuggestions()
       onBlur()
-    }, BLUR_DELAY_MS)
+    }, 100)
   }
 
   const handleSuggestionMouseEnter = (): void => {
     resetSelection()
   }
 
+  // Callback ref to set both internal and external refs
+  const setInputRef = (el: HTMLInputElement | null): void => {
+    inputElementRef.current = el
+    if (inputRef) {
+      inputRef(el)
+    }
+  }
+
   return (
     <div ref={containerRef} className="ticker-autocomplete-container">
       <input
-        ref={inputRef}
+        ref={setInputRef}
         id={id}
         type="text"
         value={value}
@@ -129,6 +194,7 @@ export function TickerAutocompleteInput({
       />
       {showSuggestions && (
         <ul
+          ref={dropdownRef}
           id={`${id}-suggestions`}
           className="ticker-suggestions"
           role="listbox"
@@ -144,7 +210,7 @@ export function TickerAutocompleteInput({
               <li
                 key={suggestion.symbol}
                 className={`ticker-suggestion ${index === selectedIndex ? 'ticker-suggestion-selected' : ''}`}
-                onClick={() => handleSuggestionClick(suggestion)}
+                onMouseDown={() => handleSuggestionMouseDown(suggestion)}
                 onMouseEnter={handleSuggestionMouseEnter}
                 role="option"
                 aria-selected={index === selectedIndex}
@@ -156,11 +222,6 @@ export function TickerAutocompleteInput({
                   <span className="ticker-suggestion-name">
                     {suggestion.name}
                   </span>
-                  {suggestion.exchange && (
-                    <span className="ticker-suggestion-exchange">
-                      {suggestion.exchange}
-                    </span>
-                  )}
                 </div>
               </li>
             ))}

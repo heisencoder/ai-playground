@@ -12,6 +12,11 @@ This application helps users calculate the value of stock donations according to
 
 - Simple input interface for donation date, ticker symbol, and number of shares
 - **Ticker autocomplete** with Yahoo Finance search integration
+- **Improved tabbing flow** for efficient data entry
+  - Single Tab press moves to next field (no internal field navigation)
+  - Free-form date entry in MM/DD/YYYY format
+  - Ticker autocomplete doesn't capture Tab key
+  - Delete button skipped in tab order
 - Automatic calculation as you type
 - Support for multiple stock gifts
 - Fractional cents precision for accurate calculations

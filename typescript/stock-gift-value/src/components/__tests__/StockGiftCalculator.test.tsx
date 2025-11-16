@@ -92,7 +92,7 @@ describe('StockGiftCalculator - Row Management', () => {
       )
       expect(
         screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
-      ).toHaveValue('2024-02-01')
+      ).toHaveValue('02/01/2024')
     })
   })
 })

@@ -21,6 +21,7 @@ interface UseTickerAutocompleteResult {
   setShowSuggestions: (show: boolean) => void
   handleKeyboardNavigation: (key: string) => boolean
   resetSelection: () => void
+  setFocused: (focused: boolean) => void
 }
 
 /**
@@ -36,80 +37,88 @@ export function useTickerAutocomplete(
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const abortControllerRef = useRef<AbortController | null>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isFocusedRef = useRef(false)
+
+  // Helper to cleanup pending operations
+  const cleanupPendingOperations = useCallback((): void => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+      searchTimeoutRef.current = null
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+  }, [])
+
+  // Helper to clear all suggestions and reset state
+  const clearSuggestions = useCallback((): void => {
+    setSuggestions([])
+    setShowSuggestions(false)
+    setSelectedIndex(-1)
+  }, [])
 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
+      cleanupPendingOperations()
+    }
+  }, [cleanupPendingOperations])
+
+  const searchTickers = useCallback(
+    (query: string) => {
+      const trimmedQuery = query.trim()
+
+      // Clear previous operations
+      cleanupPendingOperations()
+
+      // Don't search if query is too short
+      if (trimmedQuery.length < 1) {
+        clearSuggestions()
+        return
       }
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
-      }
-    }
-  }, [])
 
-  const searchTickers = useCallback((query: string) => {
-    const trimmedQuery = query.trim()
+      // Debounce the search
+      searchTimeoutRef.current = setTimeout(() => {
+        setLoading(true)
+        abortControllerRef.current = new AbortController()
 
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-
-    // Abort previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-
-    // Don't search if query is too short
-    if (trimmedQuery.length < 1) {
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
-    }
-
-    // Debounce the search
-    searchTimeoutRef.current = setTimeout(() => {
-      setLoading(true)
-      abortControllerRef.current = new AbortController()
-
-      fetch(`/api/ticker-search?q=${encodeURIComponent(trimmedQuery)}`, {
-        signal: abortControllerRef.current.signal,
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error('Failed to search tickers')
-          }
-          return response.json() as Promise<TickerSuggestion[]>
+        fetch(`/api/ticker-search?q=${encodeURIComponent(trimmedQuery)}`, {
+          signal: abortControllerRef.current.signal,
         })
-        .then((data) => {
-          setSuggestions(data)
-          setShowSuggestions(data.length > 0)
-          setSelectedIndex(-1)
-        })
-        .catch((error: Error) => {
-          // Ignore abort errors
-          if (error.name !== 'AbortError') {
-            console.error('Error searching tickers:', error)
-            setSuggestions([])
-            setShowSuggestions(false)
-          }
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    }, DEBOUNCE_DELAY_MS)
-  }, [])
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error('Failed to search tickers')
+            }
+            return response.json() as Promise<TickerSuggestion[]>
+          })
+          .then((data) => {
+            setSuggestions(data)
+            // Only show suggestions if input is still focused
+            setShowSuggestions(isFocusedRef.current && data.length > 0)
+            setSelectedIndex(-1)
+          })
+          .catch((error: Error) => {
+            // Ignore abort errors
+            if (error.name !== 'AbortError') {
+              console.error('Error searching tickers:', error)
+              clearSuggestions()
+            }
+          })
+          .finally(() => {
+            setLoading(false)
+          })
+      }, DEBOUNCE_DELAY_MS)
+    },
+    [cleanupPendingOperations, clearSuggestions]
+  )
 
   const selectSuggestion = useCallback(
     (suggestion: TickerSuggestion) => {
       onSelect(suggestion.symbol)
-      setSuggestions([])
-      setShowSuggestions(false)
-      setSelectedIndex(-1)
+      clearSuggestions()
     },
-    [onSelect]
+    [onSelect, clearSuggestions]
   )
 
   const hideSuggestions = useCallback(() => {
@@ -148,6 +157,10 @@ export function useTickerAutocomplete(
         case 'Escape':
           hideSuggestions()
           return true
+        case 'Tab':
+          // Allow Tab to move to next field even when dropdown is open
+          hideSuggestions()
+          return false
         default:
           return false
       }
@@ -161,6 +174,14 @@ export function useTickerAutocomplete(
     ]
   )
 
+  const setFocused = useCallback((focused: boolean) => {
+    isFocusedRef.current = focused
+    if (!focused) {
+      // Hide suggestions when losing focus
+      setShowSuggestions(false)
+    }
+  }, [])
+
   return {
     suggestions,
     loading,
@@ -172,5 +193,6 @@ export function useTickerAutocomplete(
     setShowSuggestions,
     handleKeyboardNavigation,
     resetSelection,
+    setFocused,
   }
 }

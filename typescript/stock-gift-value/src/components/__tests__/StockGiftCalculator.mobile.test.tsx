@@ -69,6 +69,48 @@ describe('StockGiftCalculator - Mobile Rendering', () => {
     }
   })
 
+  it('should display full date format MM/DD/YYYY on iPhone SE without clipping', async () => {
+    // Explicitly set to iPhone SE dimensions
+    setViewportSize(MOBILE_WIDTH, MOBILE_HEIGHT)
+
+    const user = userEvent.setup()
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[
+      FIRST_ELEMENT_INDEX
+    ] as HTMLInputElement
+
+    // Type a full date with 4-digit year
+    await user.type(dateInput, '12/31/2024')
+
+    // Verify the full date is stored
+    expect(dateInput.value).toBe('12/31/2024')
+
+    // Check that the input has enough width to display all 10 characters
+    // by verifying the scrollWidth equals clientWidth (no overflow/clipping)
+    const hasNoOverflow = dateInput.scrollWidth <= dateInput.clientWidth
+    expect(hasNoOverflow).toBe(true)
+  })
+
+  it('should display full date placeholder without clipping on iPhone SE', () => {
+    // Explicitly set to iPhone SE dimensions
+    setViewportSize(MOBILE_WIDTH, MOBILE_HEIGHT)
+
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[
+      FIRST_ELEMENT_INDEX
+    ] as HTMLInputElement
+
+    // Verify placeholder is set
+    expect(dateInput.placeholder).toBeTruthy()
+
+    // Check that the placeholder doesn't overflow (no clipping)
+    // scrollWidth should be <= clientWidth
+    const hasNoOverflow = dateInput.scrollWidth <= dateInput.clientWidth
+    expect(hasNoOverflow).toBe(true)
+  })
+
   it('should allow touch interactions on mobile', async () => {
     const user = userEvent.setup()
     render(<StockGiftCalculator />)
