@@ -26,6 +26,7 @@ jobs:
         with:
           context: typescript/stock-gift-value
           push: false
+          load: true
           tags: stock-gift-value:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -70,7 +71,9 @@ jobs:
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
         if: always()
+        continue-on-error: true
         with:
           files: typescript/stock-gift-value/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }}
