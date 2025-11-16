@@ -23,11 +23,14 @@ interface ClientErrorPayload {
 /**
  * Sends error details to the server for logging
  */
-async function logErrorToServer(errorPayload: ClientErrorPayload): Promise<void> {
+async function logErrorToServer(
+  errorPayload: ClientErrorPayload
+): Promise<void> {
   try {
     // In production, use relative URL; in development, use full URL
     const apiUrl =
-      window.location.hostname === 'localhost' && window.location.port === '5173'
+      window.location.hostname === 'localhost' &&
+      window.location.port === '5173'
         ? 'http://localhost:8080/api/log-client-error'
         : '/api/log-client-error'
 
