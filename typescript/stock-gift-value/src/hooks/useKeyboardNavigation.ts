@@ -135,6 +135,9 @@ export function useKeyboardNavigation(): UseKeyboardNavigationReturn {
       }
 
       case 'Tab':
+        // Allow default tab behavior - no custom navigation needed
+        break
+
       default: {
         break
       }

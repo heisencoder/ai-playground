@@ -37,37 +37,44 @@ export function useTickerAutocomplete(
   const abortControllerRef = useRef<AbortController | null>(null)
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current)
-      }
+  // Helper to cleanup pending operations
+  const cleanupPendingOperations = useCallback((): void => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current)
+      searchTimeoutRef.current = null
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
     }
   }, [])
 
-  const searchTickers = useCallback((query: string) => {
-    const trimmedQuery = query.trim()
+  // Helper to clear all suggestions and reset state
+  const clearSuggestions = useCallback((): void => {
+    setSuggestions([])
+    setShowSuggestions(false)
+    setSelectedIndex(-1)
+  }, [])
 
-    // Clear previous timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      cleanupPendingOperations()
     }
+  }, [cleanupPendingOperations])
 
-    // Abort previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
+  const searchTickers = useCallback(
+    (query: string) => {
+      const trimmedQuery = query.trim()
 
-    // Don't search if query is too short
-    if (trimmedQuery.length < 1) {
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
-    }
+      // Clear previous operations
+      cleanupPendingOperations()
+
+      // Don't search if query is too short
+      if (trimmedQuery.length < 1) {
+        clearSuggestions()
+        return
+      }
 
     // Debounce the search
     searchTimeoutRef.current = setTimeout(() => {
@@ -92,24 +99,23 @@ export function useTickerAutocomplete(
           // Ignore abort errors
           if (error.name !== 'AbortError') {
             console.error('Error searching tickers:', error)
-            setSuggestions([])
-            setShowSuggestions(false)
+            clearSuggestions()
           }
         })
         .finally(() => {
           setLoading(false)
         })
     }, DEBOUNCE_DELAY_MS)
-  }, [])
+    },
+    [cleanupPendingOperations, clearSuggestions]
+  )
 
   const selectSuggestion = useCallback(
     (suggestion: TickerSuggestion) => {
       onSelect(suggestion.symbol)
-      setSuggestions([])
-      setShowSuggestions(false)
-      setSelectedIndex(-1)
+      clearSuggestions()
     },
-    [onSelect]
+    [onSelect, clearSuggestions]
   )
 
   const hideSuggestions = useCallback(() => {

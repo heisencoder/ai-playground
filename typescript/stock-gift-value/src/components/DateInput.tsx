@@ -16,6 +16,29 @@ interface DateInputProps {
 }
 
 /**
+ * Helper function to parse date with a specific delimiter (/, -)
+ */
+function parseDelimitedDate(
+  input: string,
+  delimiter: string
+): string | null {
+  const escapedDelimiter = delimiter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(
+    `^(\\d{1,2})${escapedDelimiter}(\\d{1,2})${escapedDelimiter}(\\d{4})$`
+  )
+  const match = input.match(regex)
+
+  if (match && match[1] && match[2] && match[3]) {
+    const month = match[1].padStart(2, '0')
+    const day = match[2].padStart(2, '0')
+    const year = match[3]
+    return `${year}-${month}-${day}`
+  }
+
+  return null
+}
+
+/**
  * Parse various date formats and return ISO date string (YYYY-MM-DD)
  */
 function parseDate(input: string): string {
@@ -28,27 +51,26 @@ function parseDate(input: string): string {
     return input
   }
 
-  // MM/DD/YYYY or M/D/YYYY
-  const slashMatch = input.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
-  if (slashMatch && slashMatch[1] && slashMatch[2] && slashMatch[3]) {
-    const month = slashMatch[1].padStart(2, '0')
-    const day = slashMatch[2].padStart(2, '0')
-    const year = slashMatch[3]
-    return `${year}-${month}-${day}`
+  // Try MM/DD/YYYY or M/D/YYYY with slash
+  const slashResult = parseDelimitedDate(input, '/')
+  if (slashResult) {
+    return slashResult
   }
 
-  // MM-DD-YYYY or M-D-YYYY
-  const dashMatch = input.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)
-  if (dashMatch && dashMatch[1] && dashMatch[2] && dashMatch[3]) {
-    const month = dashMatch[1].padStart(2, '0')
-    const day = dashMatch[2].padStart(2, '0')
-    const year = dashMatch[3]
-    return `${year}-${month}-${day}`
+  // Try MM-DD-YYYY or M-D-YYYY with dash
+  const dashResult = parseDelimitedDate(input, '-')
+  if (dashResult) {
+    return dashResult
   }
 
   // YYYY/MM/DD
   const isoSlashMatch = input.match(/^(\d{4})\/(\d{2})\/(\d{2})$/)
-  if (isoSlashMatch && isoSlashMatch[1] && isoSlashMatch[2] && isoSlashMatch[3]) {
+  if (
+    isoSlashMatch &&
+    isoSlashMatch[1] &&
+    isoSlashMatch[2] &&
+    isoSlashMatch[3]
+  ) {
     return `${isoSlashMatch[1]}-${isoSlashMatch[2]}-${isoSlashMatch[3]}`
   }
 
@@ -113,12 +135,18 @@ export function DateInput({
     }
   }, [value, focused])
 
+  // Helper to clear calendar timeout
+  const clearCalendarTimeout = (): void => {
+    if (showCalendarTimeoutRef.current) {
+      clearTimeout(showCalendarTimeoutRef.current)
+      showCalendarTimeoutRef.current = null
+    }
+  }
+
   // Clean up timeout on unmount
   useEffect(() => {
     return () => {
-      if (showCalendarTimeoutRef.current) {
-        clearTimeout(showCalendarTimeoutRef.current)
-      }
+      clearCalendarTimeout()
     }
   }, [])
 
@@ -135,9 +163,7 @@ export function DateInput({
     setDisplayValue(formatDateForDisplay(parsedDate, false))
     setFocused(false)
     setShowCalendar(false)
-    if (showCalendarTimeoutRef.current) {
-      clearTimeout(showCalendarTimeoutRef.current)
-    }
+    clearCalendarTimeout()
     onBlur()
   }
 
