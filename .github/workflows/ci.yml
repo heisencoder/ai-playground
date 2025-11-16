@@ -33,30 +33,56 @@ jobs:
 
       - name: Test Docker image runs
         run: |
-          # Start container
+          # Start container with verbose output
+          echo "Starting container..."
           docker run --rm -d --name test-container -p 8080:8080 stock-gift-value:test
 
-          # Wait for container to be ready
-          echo "Waiting for container to start..."
-          sleep 10
+          echo "Container started, waiting for startup..."
 
-          # Check if container is still running
-          if ! docker ps | grep -q test-container; then
-            echo "Container is not running! Logs:"
-            docker logs test-container || true
-            exit 1
-          fi
+          # Show container info
+          docker ps -a | grep test-container || echo "Container not found in docker ps"
 
-          # Test health endpoint
-          echo "Testing health endpoint..."
-          if ! curl --fail --retry 3 --retry-delay 2 http://localhost:8080/health; then
-            echo "Health check failed! Container logs:"
-            docker logs test-container
+          # Wait and check logs periodically
+          for i in {1..15}; do
+            echo "[$i/15] Waiting... (${i}s elapsed)"
+            sleep 1
+
+            # Check if container exited
+            if ! docker ps | grep -q test-container; then
+              echo "ERROR: Container exited! Exit code:"
+              docker inspect test-container --format='{{.State.ExitCode}}' || echo "Could not get exit code"
+              echo ""
+              echo "Container logs:"
+              docker logs test-container 2>&1 || echo "Could not get logs"
+              exit 1
+            fi
+
+            # Try health check after 10 seconds
+            if [ $i -ge 10 ]; then
+              if curl -sf http://localhost:8080/health > /dev/null 2>&1; then
+                echo "Health check passed after ${i} seconds!"
+                docker logs test-container 2>&1 | tail -20
+                docker stop test-container
+                exit 0
+              fi
+            fi
+          done
+
+          # Final attempt with detailed error
+          echo "Final health check attempt..."
+          if ! curl -v --fail http://localhost:8080/health 2>&1; then
+            echo ""
+            echo "ERROR: Health check failed after 15 seconds"
+            echo ""
+            echo "Container status:"
+            docker ps -a | grep test-container
+            echo ""
+            echo "Container logs:"
+            docker logs test-container 2>&1
             docker stop test-container || true
             exit 1
           fi
 
-          echo "Health check passed!"
           docker stop test-container
 
   test-and-lint:
