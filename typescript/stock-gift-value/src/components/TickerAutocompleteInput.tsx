@@ -5,6 +5,8 @@ import {
 } from '../hooks/useTickerAutocomplete'
 import './TickerAutocompleteInput.css'
 
+const DROPDOWN_OFFSET_PX = 4
+
 interface TickerAutocompleteInputProps {
   id: string
   value: string
@@ -30,6 +32,8 @@ export function TickerAutocompleteInput({
   hasError = false,
 }: TickerAutocompleteInputProps): React.JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
+  const inputElementRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLUListElement>(null)
   const {
     suggestions,
     loading,
@@ -45,6 +49,34 @@ export function TickerAutocompleteInput({
   } = useTickerAutocomplete((ticker: string) => {
     onChange(ticker)
   })
+
+  // Position dropdown using fixed positioning
+  useEffect(() => {
+    function updateDropdownPosition(): void {
+      if (!showSuggestions || !inputElementRef.current || !dropdownRef.current) {
+        return
+      }
+
+      const inputRect = inputElementRef.current.getBoundingClientRect()
+      const dropdown = dropdownRef.current
+
+      // Position dropdown below input
+      dropdown.style.top = `${inputRect.bottom + DROPDOWN_OFFSET_PX}px`
+      dropdown.style.left = `${inputRect.left}px`
+      dropdown.style.width = `${inputRect.width}px`
+    }
+
+    if (showSuggestions) {
+      updateDropdownPosition()
+      window.addEventListener('scroll', updateDropdownPosition, true)
+      window.addEventListener('resize', updateDropdownPosition)
+    }
+
+    return () => {
+      window.removeEventListener('scroll', updateDropdownPosition, true)
+      window.removeEventListener('resize', updateDropdownPosition)
+    }
+  }, [showSuggestions])
 
   // Handle click outside to close suggestions
   useEffect(() => {
@@ -111,10 +143,18 @@ export function TickerAutocompleteInput({
     resetSelection()
   }
 
+  // Callback ref to set both internal and external refs
+  const setInputRef = (el: HTMLInputElement | null): void => {
+    inputElementRef.current = el
+    if (inputRef) {
+      inputRef(el)
+    }
+  }
+
   return (
     <div ref={containerRef} className="ticker-autocomplete-container">
       <input
-        ref={inputRef}
+        ref={setInputRef}
         id={id}
         type="text"
         value={value}
@@ -133,6 +173,7 @@ export function TickerAutocompleteInput({
       />
       {showSuggestions && (
         <ul
+          ref={dropdownRef}
           id={`${id}-suggestions`}
           className="ticker-suggestions"
           role="listbox"
