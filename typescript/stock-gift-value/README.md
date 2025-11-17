@@ -27,11 +27,13 @@ This application helps users calculate the value of stock donations according to
 ## Tech Stack
 
 - **React 18** + **TypeScript** - UI framework with type safety
-- **Vite** - Fast build tool and dev server
-- **Express** - Node.js web server for API and static file serving
+- **Vite 7** - Fast build tool and dev server
+- **Node.js 22** + **Express 5** - Modern ES modules backend for API and static file serving
 - **Vitest + MSW** - Unit testing with API mocking
 - **Yahoo Finance API** - Historical stock price data (proxied through backend)
+- **Docker** - Production containerization with multi-stage builds
 - **CSS Modules** - Component-scoped styling
+- **GitHub Actions** - CI/CD with automated testing and Docker builds
 
 ## Architecture
 
@@ -60,10 +62,16 @@ graph TD
 **Why a backend?**
 - Yahoo Finance doesn't support CORS (requires server-side proxy)
 - Secure API handling
+- ES modules with Node.js 22+
+- Express 5 for modern async/await patterns
 
 **Clean architecture:**
+- `shared/types.ts` - TypeScript types shared between client and server (single source of truth)
 - `api/handler.ts` - Platform-agnostic business logic (fully testable)
 - `api/server.ts` - Express server that uses the handler and serves static files
+- `api/validators.ts` - Request validation logic
+- `api/yahooFinanceClient.ts` - Yahoo Finance API integration
+- `api/tickerSearchClient.ts` - Ticker autocomplete with caching
 
 ## Getting Started
 
@@ -362,17 +370,30 @@ typescript/stock-gift-value/
 ├── api/                     # Backend API
 │   ├── handler.ts           # Platform-agnostic business logic
 │   ├── server.ts            # Express server
+│   ├── validators.ts        # Request validation
+│   ├── yahooFinanceClient.ts # Yahoo Finance integration
+│   ├── tickerSearchClient.ts # Ticker autocomplete
+│   ├── constants.ts         # Shared constants
+│   ├── logger.ts            # Logging utilities
 │   └── __tests__/           # API tests
+├── shared/                  # Shared code between client and server
+│   └── types.ts             # Shared TypeScript type definitions
 ├── src/                     # React frontend
 │   ├── components/          # React components
+│   ├── hooks/               # Custom React hooks
 │   ├── services/            # API client and caching
 │   ├── utils/               # Helper functions
+│   ├── constants/           # Constants
 │   └── test/                # Test configuration
+├── .github/                 # GitHub Actions workflows
+│   └── workflows/
+│       └── ci.yml           # CI/CD pipeline
 ├── dist/                    # Built frontend (gitignored)
 ├── dist-server/             # Built server (gitignored)
 ├── package.json
 ├── tsconfig.json            # Frontend TypeScript config
 ├── tsconfig.server.json     # Server TypeScript config
+├── Dockerfile               # Production Docker image
 └── vite.config.ts
 ```
 
@@ -395,12 +416,21 @@ typescript/stock-gift-value/
 
 ## CI/CD
 
-GitHub Actions workflow automatically runs on pushes:
-1. ESLint code quality checks
-2. Prettier formatting checks
-3. All unit tests (70 tests)
-4. Frontend build
-5. Server build
+GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs on all pull requests and pushes to main:
+
+**Docker Build Test:**
+1. Builds production Docker image using multi-stage build
+2. Starts container and verifies it runs successfully
+3. Tests `/health` endpoint to ensure server is responding
+4. Uses GitHub Actions cache for faster builds
+
+**Tests and Linting:**
+1. Type checking with TypeScript strict mode (`npm run typecheck`)
+2. ESLint code quality checks (`npm run lint`)
+3. Unit tests (70+ tests) with Vitest (`npm run test:coverage`)
+4. Code coverage reporting to Codecov
+
+All checks must pass before merging to main. The workflow validates both the application code and the Docker deployment.
 
 ## IRS Guidelines
 
