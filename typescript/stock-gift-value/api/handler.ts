@@ -3,33 +3,15 @@
  * Used by both Vercel serverless function and local dev server
  */
 
-import { HTTP_STATUS } from './constants'
+import { HTTP_STATUS } from './constants.js'
 import {
   validateTicker,
   validateDate,
   extractTicker,
   extractDate,
-} from './validators'
-import { fetchFromYahooFinance } from './yahooFinanceClient'
-
-export interface StockPriceData {
-  date: string
-  high: number
-  low: number
-  ticker: string
-}
-
-export interface StockPriceRequest {
-  ticker?: string | string[]
-  date?: string | string[]
-}
-
-export interface StockPriceResponse {
-  status: number
-  data?: StockPriceData
-  error?: string
-  details?: string
-}
+} from './validators.js'
+import { fetchFromYahooFinance } from './yahooFinanceClient.js'
+import type { StockPriceRequest, StockPriceResponse } from '../shared/types.js'
 
 /**
  * Core handler logic for fetching stock prices

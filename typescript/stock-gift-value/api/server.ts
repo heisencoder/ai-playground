@@ -179,7 +179,8 @@ if (NODE_ENV === 'production') {
   app.use(express.static(distPath))
 
   // Fallback to index.html for client-side routing (SPA)
-  app.get('*', (_req, res) => {
+  // Use middleware for catch-all route (Express 5 compatible)
+  app.use((_req, res) => {
     res.sendFile(path.join(distPath, 'index.html'))
   })
 }

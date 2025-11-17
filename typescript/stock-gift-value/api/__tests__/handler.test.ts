@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import {
-  handleStockPriceRequest,
-  StockPriceRequest,
-} from '../handler'
+import { handleStockPriceRequest } from '../handler'
+import type { StockPriceRequest } from '../../shared/types.js'
 
 // HTTP Status codes
 const HTTP_STATUS_OK = 200
