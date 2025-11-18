@@ -175,7 +175,8 @@ app.post('/api/log-client-error', (req, res) => {
  */
 if (NODE_ENV === 'production') {
   // Serve static files from the Vite build output
-  const distPath = path.join(__dirname, '..', 'dist')
+  // Note: __dirname is dist-server/api/, so we need to go up two levels to reach /app
+  const distPath = path.join(__dirname, '..', '..', 'dist')
   app.use(express.static(distPath))
 
   // Fallback to index.html for client-side routing (SPA)
