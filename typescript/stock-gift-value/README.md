@@ -337,11 +337,25 @@ A production-ready Dockerfile is included with:
 
 **Local Docker testing:**
 ```bash
+# Build the image
 docker build -t stock-gift-app .
-docker run -p 8080:8080 stock-gift-app
+
+# Run the container with port forwarding
+docker run -p 8080:8080 --name stock-gift-app stock-gift-app
+
+# Stop and remove when done
+docker stop stock-gift-app
+docker rm stock-gift-app
 ```
 
 Visit: `http://localhost:8080`
+
+**To rebuild after changes:**
+```bash
+docker stop stock-gift-app && docker rm stock-gift-app
+docker build -t stock-gift-app .
+docker run -p 8080:8080 --name stock-gift-app stock-gift-app
+```
 
 ## Usage
 
