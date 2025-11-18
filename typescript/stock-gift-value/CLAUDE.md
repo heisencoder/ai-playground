@@ -61,18 +61,12 @@ cd /home/user/ai-playground/typescript/stock-gift-value && npm run format:check
 
 ### TypeScript Compilation Errors
 
-**Problem:** Cannot find module 'express', 'process', 'console', etc.
-```
-api/server.ts: error TS2307: Cannot find module 'express'
-api/server.ts: error TS2580: Cannot find name 'process'
-```
+**Problem:** Module resolution or missing type definitions
 
-**Solution:** Ensure dependencies are installed and TypeScript config is correct
+**Solution:** Ensure dependencies are installed
 ```bash
 cd /home/user/ai-playground/typescript/stock-gift-value && npm ci
 ```
-
-**Root cause:** `tsconfig.server.json` should NOT include a restrictive `"lib"` array. When targeting ES2020, TypeScript uses appropriate defaults that include Node.js globals.
 
 ### ESLint Errors
 
@@ -125,39 +119,6 @@ cd /home/user/ai-playground/typescript/stock-gift-value && npm ci
 - Coverage required for all new features
 - Tests must pass before merging
 
-## Docker & Deployment
-
-- Multi-stage Dockerfile optimized for Cloud Run
-- Runs Node.js as PID 1 - **requires explicit SIGTERM/SIGINT handlers**
-- Health check endpoint: `/health`
-- Default port: 8080 (configurable via PORT env var)
-
-## Signal Handling (Critical for Cloud Run)
-
-When Node.js runs as PID 1 (Docker CMD), it requires explicit signal handlers:
-
-```typescript
-// Store server instance
-const server = app.listen(PORT, ...)
-
-// Graceful shutdown handler
-function gracefulShutdown(signal: string): void {
-  logger.info(`${signal} signal received: closing HTTP server`)
-  server.close(() => {
-    logger.info('HTTP server closed')
-    process.exit(0)
-  })
-
-  setTimeout(() => {
-    logger.error('Forced shutdown after timeout')
-    process.exit(1)
-  }, SHUTDOWN_TIMEOUT_MS)
-}
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
-process.on('SIGINT', () => gracefulShutdown('SIGINT'))
-```
-
 ## Pre-Push Checklist
 
 Before pushing ANY changes to GitHub:
@@ -194,6 +155,4 @@ cd /home/user/ai-playground/typescript/stock-gift-value && git push -u origin <b
 
 - **Absolute paths are mandatory** for all bash commands
 - **Code quality checks are mandatory** before every push
-- **Refactor, don't suppress** - follow SOLID principles
-- **Node.js as PID 1** requires explicit signal handlers
-- **TypeScript configs** should not restrict library access unnecessarily
+- **Refactor, don't suppress** - follow SOLID principles and industry best practices
