@@ -322,7 +322,22 @@ To achieve sub-2 second cold start times, configure the startup probe for faster
 ```bash
 gcloud run services update stock-gift-app \
   --region=us-central1 \
-  --startup-probe=initial-delay-seconds=0,timeout-seconds=1,period-seconds=1,failure-threshold=3
+  --startup-probe httpGet.path=/health,httpGet.port=8080,initialDelaySeconds=0,periodSeconds=1,timeoutSeconds=1,failureThreshold=3
+```
+
+Or include it during initial deployment:
+
+```bash
+gcloud run deploy stock-gift-app \
+  --image gcr.io/$PROJECT_ID/stock-gift-app \
+  --region us-central1 \
+  --platform managed \
+  --allow-unauthenticated \
+  --memory 256Mi \
+  --cpu 1 \
+  --max-instances 5 \
+  --port 8080 \
+  --startup-probe httpGet.path=/health,httpGet.port=8080,initialDelaySeconds=0,periodSeconds=1,timeoutSeconds=1,failureThreshold=3
 ```
 
 **Why this helps:**
