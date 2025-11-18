@@ -187,7 +187,7 @@ if (NODE_ENV === 'production') {
 }
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info(`\n=================================`)
   logger.info(`Stock Gift Value Calculator API`)
   logger.info(`=================================`)
@@ -213,5 +213,31 @@ app.listen(PORT, () => {
   }
   logger.info(`=================================\n`)
 })
+
+/**
+ * Graceful shutdown handler for SIGTERM and SIGINT signals
+ * This is critical for Cloud Run and Docker environments where the app runs as PID 1
+ */
+const SHUTDOWN_TIMEOUT_MS = 10000 // 10 seconds
+
+function gracefulShutdown(signal: string): void {
+  logger.info(`\n${signal} signal received: closing HTTP server`)
+  server.close(() => {
+    logger.info('HTTP server closed')
+    process.exit(0)
+  })
+
+  // Force shutdown after timeout if graceful shutdown fails
+  setTimeout(() => {
+    logger.error('Forced shutdown after timeout')
+    process.exit(1)
+  }, SHUTDOWN_TIMEOUT_MS)
+}
+
+// Handle SIGTERM (sent by Cloud Run and docker stop)
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+
+// Handle SIGINT (Ctrl+C in terminal)
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
 
 export default app

@@ -131,11 +131,28 @@ npm run test:coverage     # Run tests with coverage
 
 ### Code Quality
 
+**IMPORTANT:** Always run code quality checks before pushing changes to ensure CI/CD passes.
+
 ```bash
-npm run lint              # Run ESLint
-npm run format            # Format code with Prettier
-npm run format:check      # Check formatting
+# Install dependencies first (required for type checking)
+npm ci
+
+# Run all quality checks
+npm run typecheck         # TypeScript type checking (critical!)
+npm run lint              # ESLint code quality checks
+npm run format:check      # Check Prettier formatting
+npm run test:coverage     # Run tests with coverage
+
+# Or run the full quality suite at once
+npm run quality           # Runs all of the above
 ```
+
+**Common issues:**
+- If `typecheck` or `build:server` fails with module resolution errors, ensure `npm ci` has been run
+- The project uses strict TypeScript settings - all type errors must be resolved
+- Avoid using linter suppression comments (`eslint-disable`) - refactor code instead
+
+**For more help:** See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for detailed solutions to common issues. If you resolve a new issue, please document it there to help others.
 
 ## Deployment
 
