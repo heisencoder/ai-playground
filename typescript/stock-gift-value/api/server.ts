@@ -218,6 +218,8 @@ const server = app.listen(PORT, () => {
  * Graceful shutdown handler for SIGTERM and SIGINT signals
  * This is critical for Cloud Run and Docker environments where the app runs as PID 1
  */
+const SHUTDOWN_TIMEOUT_MS = 10000 // 10 seconds
+
 function gracefulShutdown(signal: string): void {
   logger.info(`\n${signal} signal received: closing HTTP server`)
   server.close(() => {
@@ -225,11 +227,11 @@ function gracefulShutdown(signal: string): void {
     process.exit(0)
   })
 
-  // Force shutdown after 10 seconds if graceful shutdown fails
+  // Force shutdown after timeout if graceful shutdown fails
   setTimeout(() => {
     logger.error('Forced shutdown after timeout')
     process.exit(1)
-  }, 10000)
+  }, SHUTDOWN_TIMEOUT_MS)
 }
 
 // Handle SIGTERM (sent by Cloud Run and docker stop)
