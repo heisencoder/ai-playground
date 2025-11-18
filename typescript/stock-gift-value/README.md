@@ -322,10 +322,7 @@ To achieve sub-2 second cold start times, configure the startup probe for faster
 ```bash
 gcloud run services update stock-gift-app \
   --region=us-central1 \
-  --startup-probe-period=1 \
-  --startup-probe-timeout=1 \
-  --startup-probe-failure-threshold=3 \
-  --startup-probe-initial-delay=0
+  --startup-probe=initial-delay-seconds=0,timeout-seconds=1,period-seconds=1,failure-threshold=3
 ```
 
 **Why this helps:**
