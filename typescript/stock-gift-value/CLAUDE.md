@@ -57,45 +57,11 @@ cd /home/user/ai-playground/typescript/stock-gift-value && npm run format:check
    - ✅ Good: Extracting magic numbers to named constants
    - ✅ Good: Properly typing variables instead of using `any`
 
-## Common Issues and Solutions
+## Troubleshooting
 
-### TypeScript Compilation Errors
+When encountering issues, consult **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** for common problems and solutions.
 
-**Problem:** Module resolution or missing type definitions
-
-**Solution:** Ensure dependencies are installed
-```bash
-cd /home/user/ai-playground/typescript/stock-gift-value && npm ci
-```
-
-### ESLint Errors
-
-**Problem:** Magic numbers, implicit any types, unused variables
-
-**Solutions:**
-- Extract magic numbers to named constants:
-  ```typescript
-  // Bad
-  setTimeout(callback, 10000)
-
-  // Good
-  const TIMEOUT_MS = 10000 // 10 seconds
-  setTimeout(callback, TIMEOUT_MS)
-  ```
-
-- Add proper types instead of suppressing:
-  ```typescript
-  // Bad
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function foo(x: any) { ... }
-
-  // Good
-  interface FooInput {
-    id: string
-    value: number
-  }
-  function foo(x: FooInput) { ... }
-  ```
+**After resolving a new issue:** Update TROUBLESHOOTING.md with the problem, solution, and root cause so others (including future Claude Code sessions) can benefit from your experience.
 
 ## Project Architecture
 

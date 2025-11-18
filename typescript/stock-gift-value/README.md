@@ -152,6 +152,8 @@ npm run quality           # Runs all of the above
 - The project uses strict TypeScript settings - all type errors must be resolved
 - Avoid using linter suppression comments (`eslint-disable`) - refactor code instead
 
+**For more help:** See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for detailed solutions to common issues. If you resolve a new issue, please document it there to help others.
+
 ## Deployment
 
 This is a standard Node.js Express app that can be deployed to any platform supporting Node.js 22+. Below are detailed instructions for deploying to **Google Cloud Platform (GCP)**.
