@@ -1,0 +1,12 @@
+# Main navigation links
+main:
+  - title: "Home"
+    url: /blog/
+  - title: "About"
+    url: /blog/about/
+  - title: "Categories"
+    url: /blog/categories/
+  - title: "Tags"
+    url: /blog/tags/
+  - title: "Archive"
+    url: /blog/year-archive/
