@@ -1,0 +1,32 @@
+# Minimal GitHub Pages Configuration
+# Uses only default GitHub Pages theme
+
+title: Heisencoder
+description: "Technical blog on software development, cryptography, and security"
+author:
+  name: Matthew V Ball
+  email: # contact via GitHub
+
+# GitHub Pages settings
+baseurl: "/blog"
+url: "https://heisencoder.github.io"
+
+# Use the default GitHub Pages theme (minimal, always works)
+theme: minima
+
+# Permalink structure
+permalink: /:year/:month/:day/:title/
+
+# Markdown
+markdown: kramdown
+
+# Only GitHub Pages approved plugins
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Exclude from processing
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md

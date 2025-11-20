@@ -14,6 +14,10 @@ This repo is a set of projects that are created by AI engines (usually Claude Co
 
 No projects yet.
 
+## Documentation
+
+See the **[docs](docs/)** folder for language-agnostic documentation relating to AI projects in this repo.
+
 ## Organization
 
 The top-level folder is the programming language (e.g., `typescript`, `python`) and within each of those folders is a folder per individual project. In some cases these are stand-alone projects, and in other cases, they are sharable libraries. Most projects are just one programming language and are in one folder.

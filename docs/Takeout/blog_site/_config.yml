@@ -1,0 +1,169 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely edit after that.
+
+# Site settings
+title: Heisencoder
+subtitle: "Technical insights on software development, cryptography, and security"
+email: # No email - contact via GitHub
+description: >-
+  A technical blog covering software development, cryptography, security,
+  and programming languages. Migrated from Blogger (circa 2008-2012).
+url: "https://heisencoder.github.io"
+baseurl: "/blog"
+repository: "heisencoder/blog"
+
+# Author
+author:
+  name: "Matthew V Ball"
+  avatar: # Add path to avatar image if desired
+  bio: "Software engineer focused on security, cryptography, and developer tools"
+  location: # Optional
+  links:
+    - label: "GitHub"
+      icon: "fab fa-fw fa-github"
+      url: "https://github.com/heisencoder"
+
+# Build settings
+markdown: kramdown
+minimal_mistakes_skin: "default" # "air", "aqua", "contrast", "dark", "dirt", "neon", "mint", "plum", "sunrise"
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-include-cache
+  - jekyll-paginate
+  - jekyll-gist
+
+# Site navigation
+include:
+  - _pages
+
+# Pagination
+paginate: 10
+paginate_path: /page:num/
+
+# Archives
+category_archive:
+  type: liquid
+  path: /categories/
+tag_archive:
+  type: liquid
+  path: /tags/
+
+# Permalinks
+permalink: /:year/:month/:day/:title/
+
+# Reading Files
+include:
+  - .htaccess
+  - _pages
+exclude:
+  - "*.sublime-project"
+  - "*.sublime-workspace"
+  - vendor
+  - .asset-cache
+  - .bundle
+  - .jekyll-assets-cache
+  - .sass-cache
+  - assets/js/plugins
+  - assets/js/_main.js
+  - assets/js/vendor
+  - Capfile
+  - CHANGELOG
+  - config
+  - Gemfile
+  - Gruntfile.js
+  - gulpfile.js
+  - LICENSE
+  - log
+  - node_modules
+  - package.json
+  - Rakefile
+  - README
+  - tmp
+
+keep_files:
+  - .git
+
+# Conversion
+highlighter: rouge
+lsi: false
+excerpt_separator: "\n\n"
+incremental: false
+
+# Markdown Processing
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..6
+  smart_quotes: lsquo,rsquo,ldquo,rdquo
+  enable_coderay: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+
+# Sass/SCSS
+sass:
+  sass_dir: _sass
+  style: compressed
+
+# Outputting
+timezone: America/Denver # Change to your timezone
+
+# Defaults
+defaults:
+  # _posts
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: single
+      author_profile: true
+      read_time: true
+      comments: true
+      share: true
+      related: true
+      show_date: true
+  # _pages
+  - scope:
+      path: "_pages"
+      type: pages
+    values:
+      layout: single
+      author_profile: true
+
+# Comments - Giscus (GitHub Discussions)
+# Enable GitHub Discussions in your repository first
+# Then configure at: https://giscus.app/
+comments:
+  provider: "giscus"
+  giscus:
+    repo: "heisencoder/heisencoder.github.io"
+    repo_id: "REPLACE_WITH_YOUR_REPO_ID"
+    category: "Blog Comments"
+    category_id: "REPLACE_WITH_YOUR_CATEGORY_ID"
+    discussion_term: "pathname"
+    reactions_enabled: 1
+    theme: "light"
+
+# Analytics (optional)
+# Uncomment and configure if you want analytics
+# analytics:
+#   provider: "google-gtag"
+#   google:
+#     tracking_id: "G-XXXXXXXXXX"
+
+# SEO
+social:
+  type: Person
+  name: Matthew V Ball
+  links:
+    - "https://github.com/heisencoder"
