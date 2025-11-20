@@ -4,6 +4,10 @@ title: About
 permalink: /about/
 ---
 
+[Home]({{ site.baseurl }}/) | [Archive]({{ site.baseurl }}/archive/) | About
+
+---
+
 ## About Heisencoder
 
 This blog explores software development, cryptography, security, and programming languages.
