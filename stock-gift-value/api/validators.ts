@@ -11,7 +11,7 @@ export interface ValidationResult {
  * Validate ticker parameter from request
  */
 export function validateTicker(
-  ticker: string | string[] | undefined
+  ticker?: string | string[]
 ): ValidationResult {
   const tickerValue = Array.isArray(ticker) ? ticker[0] : ticker
 
@@ -29,7 +29,7 @@ export function validateTicker(
  * Validate date parameter from request
  */
 export function validateDate(
-  date: string | string[] | undefined
+  date?: string | string[]
 ): ValidationResult {
   const dateValue = Array.isArray(date) ? date[0] : date
 
@@ -46,13 +46,13 @@ export function validateDate(
 /**
  * Extract ticker value from request parameter
  */
-export function extractTicker(ticker: string | string[] | undefined): string {
+export function extractTicker(ticker?: string | string[]): string {
   return Array.isArray(ticker) ? ticker[0] : ticker ?? ''
 }
 
 /**
  * Extract date value from request parameter
  */
-export function extractDate(date: string | string[] | undefined): string {
+export function extractDate(date?: string | string[]): string {
   return Array.isArray(date) ? date[0] : date ?? ''
 }
