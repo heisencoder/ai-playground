@@ -2,6 +2,7 @@ name: Stock Gift Value CI
 
 on:
   push:
+    branches: [main]
     paths:
       - 'stock-gift-value/**'
       - '.github/workflows/stock-gift-value-ci.yml'
