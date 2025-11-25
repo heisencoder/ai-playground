@@ -41,7 +41,7 @@ export function useClipboard(
       setTimeout(() => {
         setCopyMessage('')
       }, COPY_MESSAGE_TIMEOUT)
-    } catch (error) {
+    } catch (_error) {
       setCopyMessage('Failed to copy')
       setTimeout(() => {
         setCopyMessage('')
