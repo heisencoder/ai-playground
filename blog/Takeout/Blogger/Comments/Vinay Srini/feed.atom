@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom' xmlns:blogger='http://schemas.google.com/blogger/2018'>
+  <id>tag:blogger.com,1999:blog-8382707986001688102</id>
+  <title>Vinay Srini</title>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8382707986001688102.post-3907961070873427637</id>
+    <blogger:parent>tag:blogger.com,1999:blog-8382707986001688102.post-756335334547214285</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>For those who don&amp;#39;t like to manually hack Thunderbird, I&amp;#39;ve put together an extension called &amp;quot;Show More Recipients&amp;quot; that basically follows these instructions:
+
+See http://addons.mozilla.org/en-US/thunderbird/addon/96304</content>
+    <blogger:created>2010-03-14T15:09:33.047Z</blogger:created>
+    <published>2010-03-14T15:09:33.047Z</published>
+    <updated>2010-03-14T15:09:33.047Z</updated>
+    <blogger:trashed/>
+  </entry>
+</feed>

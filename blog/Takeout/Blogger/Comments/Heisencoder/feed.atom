@@ -1,0 +1,1027 @@
+<?xml version='1.0' encoding='utf-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom' xmlns:blogger='http://schemas.google.com/blogger/2018'>
+  <id>tag:blogger.com,1999:blog-4147841314301981805</id>
+  <title>Heisencoder</title>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-97716385688017583</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Jan -- Unfortunately, I don't know a way (without a lot of research) to allow customizations of the platformHTMLBindings.xml within a plugin.  With just a few lines of code, I can substitute the whole XML file with another.&lt;BR/&gt;&lt;BR/&gt;That said, I think it would be possible (with little work) to double-bind most key shortcuts to both Ctrl and Cmd.  In glancing over the bindings, I don't think this would cause a problem for the standard navigation and editing keys (arrows, PgUp, Home, Del etc).&lt;BR/&gt;&lt;BR/&gt;I'll turn a version 0.4.1 with these changes and let you give it a spin if you like... :)</content>
+    <blogger:created>2008-11-29T23:06:51.998Z</blogger:created>
+    <published>2008-11-29T23:06:00Z</published>
+    <updated>2008-11-29T23:06:52.009Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-182108032263387549</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Thanks for catching the old link!  I&amp;#39;ve updated it to the correct link.</content>
+    <blogger:created>2013-03-11T13:09:41.807Z</blogger:created>
+    <published>2013-03-11T13:09:41.807Z</published>
+    <updated>2013-03-11T13:09:41.807Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-235075975375587805</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Glen:
+To help you, I need a bit more information.  I&amp;#39;ve tested KeyFixer on Thunderbird 2.0.0.21 without issue.  Could you provide more details, like:
+- Specifically, what are the issues you&amp;#39;re seeing?
+- What version of Thunderbird are you running?
+- What other Extensions do you have installed?
+Thanks! -Matt</content>
+    <blogger:created>2009-06-15T12:52:06.235Z</blogger:created>
+    <published>2009-06-15T12:52:06.235Z</published>
+    <updated>2009-06-15T12:52:06.235Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-621437217291792175</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Siva: Unfortunately, I never used Windows 7, and won&amp;#39;t be able to help in that regard.</content>
+    <blogger:created>2010-10-23T12:29:33.133Z</blogger:created>
+    <published>2010-10-23T12:29:33.133Z</published>
+    <updated>2010-10-23T12:29:33.133Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-712945649382060922</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I just checked the Mozilla website, and people are not currently getting automatic updates because Mozilla hasn't yet made it public.  Before Mozilla makes keyfixer public, it needs several reviews.  So, if you want automatic updates to subsequent versions, please go to the &lt;A HREF="https://addons.mozilla.org/en-US/firefox/addon/9796" REL="nofollow"&gt;mozilla keyfixer page&lt;/A&gt; and submit a review.  Thanks!</content>
+    <blogger:created>2008-12-03T20:18:48.539Z</blogger:created>
+    <published>2008-12-03T20:18:00Z</published>
+    <updated>2008-12-03T20:18:48.545Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-717903921912592079</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Guus,&lt;BR/&gt;&lt;BR/&gt;I'm not sure if I quite understand the request, but will try to help.  Do you want to select from the cursor to the top or bottom of the document using Cmd+Home or Cmd+End?  If your goal is to select all the text on a page, you can use Cmd+A.  If you're talking about a "web page" instead of a "text box", then I don't know how to make Cmd+Home or Cmd+End work because there isn't really a current cursor location -- cursors are only in textboxes.&lt;BR/&gt;&lt;BR/&gt;If (in a text box) you want to select from the cursor to the top or bottom of the document, you can use Cmd+Shift+UpArrow or Cmd+Shift+DownArrow.  I think this will address your issue, although it doesn't use keys familiar to Windows users.&lt;BR/&gt;&lt;BR/&gt;After installing Keyfixer 3.0, Cmd+Home and Cmd+End will select from the cursor to either the beginning or end of the current line.  The rough Windows equivalent of selecting from the cursor to the top or bottom of the page is Cmd+Shift+Home or Cmd+Shift+End.  This was a minor oversight on my part when I put this patch together, but you can expect it fixed in subsequent versions.  I'll have time to start work again in October, or when a Firefox upgrade breaks keyfixer, whichever comes first... :)</content>
+    <blogger:created>2008-08-23T20:35:06.343Z</blogger:created>
+    <published>2008-08-23T20:35:00Z</published>
+    <updated>2008-08-23T20:35:06.351Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-754051314818438804</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Siva: I&amp;#39;ve added new instructions for non-programmers that should hopefully help.  Look back at the main article, possibly pressing &amp;#39;Refresh&amp;#39; on your browser, and you should see these instructions.</content>
+    <blogger:created>2010-10-22T21:41:11.743Z</blogger:created>
+    <published>2010-10-22T21:41:11.743Z</published>
+    <updated>2010-10-22T21:41:11.743Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-993604972561108897</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-8160946400488827896</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Anonymous:  Unfortunately, I don&amp;#39;t know about current benchmarks for the subset problem.  Specific implementation is less the focus of this article, and more about the overall &amp;quot;Big-O&amp;quot; complexity for solving the problem.  
+
+How does your code scale when doubling from 300 to 600 positive integers?  I&amp;#39;d be very interested in whether it scales gracefully in this situation.</content>
+    <blogger:created>2010-06-04T17:42:12.275Z</blogger:created>
+    <published>2010-06-04T17:42:12.275Z</published>
+    <updated>2010-06-04T17:42:12.275Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1243972390508690096</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Shaeed:  You can change the font and font size via the .dp-highlighter class selector in the CSS that was copied from http://syntaxhighlighter.googlecode.com/svn/trunk/Styles/SyntaxHighlighter.css.  I think that you&amp;#39;d want to edit the font-family and font-size properties.</content>
+    <blogger:created>2013-11-10T17:17:55.363Z</blogger:created>
+    <published>2013-11-10T17:17:55.363Z</published>
+    <updated>2013-11-10T17:17:55.363Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1257490983743104264</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-4467677816823170535</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Foo: Thanks for catching the error in CH!  I&amp;#39;ve updated the error.
+
+You&amp;#39;ve got lots of good thoughts on a reasonable minimal instruction set and ways to use this set.  But something that I really liked about the Microcomputer Trainer was its autonomy (i.e., no external computer with an assembler and debugger are required) and sense of being really close to the heart of the computer.  There really wasn&amp;#39;t much in the way of abstractions around the raw machine code, and I really enjoyed that feel.  It&amp;#39;s hard to emulate that with an external computer and debugger.
+
+True that it was very frustrating developing and debugging programs on the original Microcomputer Trainer, but there was a lot of satisfaction when it worked.
+
+I suspect that most kids in this high-paced world wouldn&amp;#39;t have the patience for something like that (as I would likely not have the time or patience to do it again), but part of me likes to think that maybe my kids will have an interest in programming as they grow up.</content>
+    <blogger:created>2012-10-23T23:44:33.882Z</blogger:created>
+    <published>2012-10-23T23:44:33.882Z</published>
+    <updated>2012-10-23T23:44:33.882Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1294824295551357233</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5820230211282424453</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi John: NIST has told me privately that they have approved XTS-AES, and will publish an SP 800-XX series draft that says so.  There will be a public review period, and then NIST will update their FIPS 140-2 documentation to allow XTS-AES.  It will take several months before NIST issues algorithm certificates for XTS-AES.  I haven&amp;#39;t heard of any temporary permission to use XTS-AES yes, but I&amp;#39;m not involved in certifying a product that uses XTS.</content>
+    <blogger:created>2009-06-28T19:37:48.954Z</blogger:created>
+    <published>2009-06-28T19:37:48.954Z</published>
+    <updated>2009-06-28T19:37:48.954Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1500896220158974477</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Nathan:  Interesting point!  I typically run in a mode where all the extensions are always shown, so I didn&amp;#39;t notice the feature where TextEdit can silently append a .txt.  I&amp;#39;ll update the blog to mention this.</content>
+    <blogger:created>2010-11-12T15:22:05.742Z</blogger:created>
+    <published>2010-11-12T15:22:05.742Z</published>
+    <updated>2010-11-12T15:22:05.742Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1534374474306613450</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Arjan: Unfortunately, keyfixer does not fix the problem you mentioned.  I confirmed that TinyMCE still has the Cmd-Left problem, and I've been personally using keyconfig to fix it.  I don't think that the approach used by keyfixer (i.e., modifying the platformHTMLBindings.xml file) can fix this.</content>
+    <blogger:created>2009-03-28T16:21:09.778Z</blogger:created>
+    <published>2009-03-28T16:21:00Z</published>
+    <updated>2009-03-28T16:21:09.784Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1557682741033143831</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Maverick:  Your blog is not public, so I cannot look at it to tell what the issue is.</content>
+    <blogger:created>2010-11-07T16:47:26.250Z</blogger:created>
+    <published>2010-11-07T16:47:26.250Z</published>
+    <updated>2010-11-07T16:47:26.250Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1654301391368738405</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Scripter Zone:  Unfortunately, this version of syntax highlighter does not support creating a cut-and-paste URL out of the &amp;quot;view plain&amp;quot; link.  That is because the JavaScript hooks automatically generate the plain text on demand and are not a web server.  You might be able to put the source code after a header or subheader, and then provide a link to that instead.  Beyond that, I don&amp;#39;t have any good ideas.</content>
+    <blogger:created>2013-10-19T17:02:45.600Z</blogger:created>
+    <published>2013-10-19T17:02:45.600Z</published>
+    <updated>2013-10-19T17:02:45.600Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1683779011946939364</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I got three messages this weekend asking for a 3.1b3 update, so I've pushed out a version 0.4.2 to the Mozilla website, with the only change to bump maxVersion to 3.2a1pre, which should now let keyfixer work on all 3.1 versions (including the released version, whenever that happens).  Let me know if anyone see any problems...</content>
+    <blogger:created>2009-03-16T14:09:36.197Z</blogger:created>
+    <published>2009-03-16T14:09:00Z</published>
+    <updated>2009-03-16T14:09:36.205Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1690646710576228569</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-2989466649335666509</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I just tried to log back in to Stack Overflow, and it looks like my user account expired, probably due to inactivity.  Now, if I sign up again, the best I can do is #56451.  There go my plans for world domination...</content>
+    <blogger:created>2009-01-18T17:39:07.004Z</blogger:created>
+    <published>2009-01-18T17:39:00Z</published>
+    <updated>2009-01-18T17:39:07.017Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1736520687723467207</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I&amp;#39;ve had trouble with Google products (in particular GMail).  If it&amp;#39;s particular to Google, then I don&amp;#39;t think it&amp;#39;s possible to fix it with the method that Keyfixer uses (this is probably buried somewhere in the way that Google redefines keystrokes with its JavaScript).</content>
+    <blogger:created>2009-07-22T22:45:29.440Z</blogger:created>
+    <published>2009-07-22T22:45:29.440Z</published>
+    <updated>2009-07-22T22:45:29.440Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-1892450947122096434</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5820230211282424453</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I can&amp;#39;t comment directly on TrueCrypt itself, since I haven&amp;#39;t used it in years, but concerning XTS-AES, Apple has shipped support for XTS-AES in OS X Lion 10.7 as the algorithm used in their full disk-encryption offering (which comes free with the operating system).  I don&amp;#39;t see anything else meaningfully competing with Apple on OS X Lion.  For OS X 10.6 and 10.5, there&amp;#39;s FileVault, but this just provides encryption of the home directory, not the entire hard disk.  But this isn&amp;#39;t nearly as secure as something like PGP-full disk encryption or TrueCrypt&amp;#39;s full disk encryption.
+
+I haven&amp;#39;t used Windows laptops in a couple years, so don&amp;#39;t really know what&amp;#39;s currently the best solution there (probably just PGP full-disk encryption).  Linux has a number of encryption solutions, like ecryptfs, but these can sometimes be a bit slow.  I&amp;#39;m using ecryptfs for a Linux box in my living room, and there is a substantial delay when logging in due to the time it takes to mount the ecryptfs home directory.  I&amp;#39;m half tempted to just turn off the encryption and make sure that I don&amp;#39;t put any sensitive information on that computer.
+
+XTS-AES has been an Approved algorithm under NIST&amp;#39;s FIPS 140-2 for a couple years now, so the algorithm seems to have some staying power.  There&amp;#39;s some talk about maybe recommending that NIST also accept the EME-2 mode of IEEE Std 1619.2, but no one has done this coordination work yet.  I think that PGP&amp;#39;s full disk encryption may use EME-2 or some similar mode.</content>
+    <blogger:created>2012-01-28T18:55:02.898Z</blogger:created>
+    <published>2012-01-28T18:55:02.898Z</published>
+    <updated>2012-01-28T18:55:02.898Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-2606597131729222273</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Ryan: If Firefox properly supported cmd+left/right arrow for moving to the beginning/end of a line, then this whole mess wouldn't has started.  I'm convinced this is a bug in the Mac Firefox code because these shortcuts are already included in the platformHTMLBindings.xml file (the file modified by keyfixer to update the keyboard shortcuts):&lt;BR/&gt;&lt;BR/&gt;&amp;lt;handler event="keypress" keycode="VK_LEFT" modifiers="accel" command="cmd_beginLine"/&amp;gt;&lt;BR/&gt;&amp;lt;handler event="keypress" keycode="VK_RIGHT" modifiers="accel" command="cmd_endLine"/&amp;gt;&lt;BR/&gt;&lt;BR/&gt;(The "accel" modifier equals the "Command" key on a Mac Keyboard)&lt;BR/&gt;&lt;BR/&gt;I think the reason behind this bug is that the Firefox browser uses Cmd+left/right Arrow to go backward or forward in the browse history whenever you're not in a text box.  Safari also does this while navigating, but correctly handles moving to the beginning or end of a line when in a text box using the standard cmd+arrow combos.&lt;BR/&gt;&lt;BR/&gt;So the short answer is that I can't fix cmd+left/right arrow without digging deep into the guts of Firefox.&lt;BR/&gt;&lt;BR/&gt;Just as a side note, Macbooks don't label the 'Home', 'End', 'PageUp', and 'PageDown', keys, but expect you to know to use Fn + Left/Right/Up/Down Arrow instead.  The MacBook Pros label these functions keys (Apple must be assuming that the Pro users are smarter, or something).&lt;BR/&gt;&lt;BR/&gt;Keyfixer affects the Fn + arrow key behavior on the various Macbooks.  If you attach a full sized USB keyboard, Keyfixer will affect the Home/End/PageUp/PageDown keys.</content>
+    <blogger:created>2008-05-20T13:07:54.975Z</blogger:created>
+    <published>2008-05-20T13:07:00Z</published>
+    <updated>2008-05-20T13:07:54.982Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-2724898630414116065</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Ryan and Anonymous,&lt;BR/&gt;&lt;BR/&gt;You guys butter me up way too much... :)&lt;BR/&gt;&lt;BR/&gt;I haven't tried Firefox 3.1b2 yet, but probably should give it a spin shortly.&lt;BR/&gt;&lt;BR/&gt;I appreciate that the hacker community is able to take my weekend's worth of work from 6 months ago and quickly turn a bugfix.  For my own part, I just stole this code from Starry Hope, who did the real work, and tweaked a couple things to work with the latest XML files.&lt;BR/&gt;&lt;BR/&gt;Ryan, I've glanced through your fix and suspect that it won't work for existing users because the path to Firefox has changed from '/Applications/Firefox.app' to '/Applications/Minefield.app'.  With a few minor changes, I think this can be easily remedied.&lt;BR/&gt;&lt;BR/&gt;Do we know whether Firefox 3.1 will install to '/Applications/Firefox.app' or Minefield.app?  Maybe this is just a weird quirk with the beta version.  As a longer term fix, we might want to allow the user to specify where Firefox is installed....&lt;BR/&gt;&lt;BR/&gt;I'm hoping to get some time over the Thanksgiving weekend to hack through some of these issues and produce a nice .dmg file for installation...&lt;BR/&gt;&lt;BR/&gt;Thoughts?  Thanks for quickly finding a solution!</content>
+    <blogger:created>2008-11-25T00:14:24.321Z</blogger:created>
+    <published>2008-11-25T00:14:00Z</published>
+    <updated>2008-11-25T00:14:24.329Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-2926448468997360525</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Thanks for the suggestion to swap shift and cmd!  I&amp;#39;ve confirmed that this works and have modified the code with this change.</content>
+    <blogger:created>2010-02-09T13:15:31.474Z</blogger:created>
+    <published>2010-02-09T13:15:31.474Z</published>
+    <updated>2010-02-09T13:15:31.474Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3070323769071435742</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Feroze: I remember seeing that issue too, where the CPU pegs.  I thought it might have been on Mac&amp;#39;s Safari, but wouldn&amp;#39;t be surprised if they both do it, since Chrome is based on the same browser code as Safari is.
+
+The SyntaxHighlighter project has since been upgraded to version 2, so I suspect that bugs in this version won&amp;#39;t get fixed.  I should probably spend some time to upgrade and maybe write a newer blog post, but I&amp;#39;m a bit lazy... :)</content>
+    <blogger:created>2009-09-30T15:31:00.150Z</blogger:created>
+    <published>2009-09-30T15:31:00.150Z</published>
+    <updated>2009-09-30T15:31:00.150Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3073628161263995822</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>My "Convert line breaks" setting is set to "yes".  However, I typically use the raw html editor instead of the WYSIWYG editor when entering in code.  I think this avoids the problem of inserting the "br" tags.  Also, the Syntaxhighlighter script has some provision for removing the "br" tags within a "pre" section.  That is basically what the dp.SyntaxHighlighter.BloggerMode() function accomplishes.  Does that work for you?</content>
+    <blogger:created>2009-03-10T12:10:40.290Z</blogger:created>
+    <published>2009-03-10T12:10:00Z</published>
+    <updated>2009-03-10T12:10:40.300Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3079205645109257740</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Aaron:  This is a problem that I have in other non-Cocoa applications as well.  I really do miss the Shift-Insert paste option, because I use my left-hand for the mouse, and my right hand for cursor navigation and cut/copy/paste (at least on Windows systems).  On Mac, having to use Ctrl/Cmd-V forces me to either take my hand off the mouse, or move my right hand to the left-side of the keyboard, either of which slows me down.&lt;BR/&gt;&lt;BR/&gt;I suspect that the 'Insert' key is actually some kind of help key on Macs -- pressing Insert sometimes changes the mouse cursor to a question mark.  A real Mac keyboard doesn't even have the Insert key, but has the 'fn' key in it's place (which is completely different than Insert).&lt;BR/&gt;&lt;BR/&gt;I think that the bindings to the Insert key are at a higher level and have to be remapped using a different approach.  Since this key is not on any standard mac keyboard, I suspect it may be a low-level hack.  I would be very interested in finding this out too!</content>
+    <blogger:created>2009-01-05T14:22:19.345Z</blogger:created>
+    <published>2009-01-05T14:22:00Z</published>
+    <updated>2009-01-05T14:22:19.354Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3112322552510690824</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>DJ:  Cmd-Left is very troublesome because this causes the browser to go to the previous page if a text box (or similar widget) doesn&amp;#39;t have the input focus.  I&amp;#39;ve gotten around this problem by installing the keyconfig extension (see http://mozilla.dorando.at/) and mapping Alt-Left instead of Cmd-Left for going to the previous page.  I don&amp;#39;t know an easy way to change KeyFixer to do this without a major revamp.</content>
+    <blogger:created>2011-05-06T20:58:00.682Z</blogger:created>
+    <published>2011-05-06T20:58:00.682Z</published>
+    <updated>2011-05-06T20:58:00.682Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3336350300022794119</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-3156320350131084893</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>You found me!  And here I thought I was being inconspicuous...&lt;BR/&gt;&lt;BR/&gt;I'm thinking about continuing this blog in the same vein as iDrone, with a slightly lower editorial expectation, and with higher volume.  After my new business gets set up, I'm hoping to devote a little time each day to blog maintenance.  (Of course, I said the same thing last year...).  But being self-employed, I'm hoping to have a little more free-time.  So far, I've just been busier than before.</content>
+    <blogger:created>2007-11-02T01:23:19.617Z</blogger:created>
+    <published>2007-11-02T01:23:00Z</published>
+    <updated>2007-11-02T01:23:19.622Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3606333149854011310</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I've found an active bug that covers the issue of Cmd+Right/Left Arrow not working in Gmail compose mode on Firefox for Mac:&lt;BR/&gt;&lt;BR/&gt;https://bugzilla.mozilla.org/show_bug.cgi?id=341886&lt;BR/&gt;&lt;BR/&gt;This bug has been outstanding for two years now, and hasn't seen a resolution.  It looks like Gmail somehow steals the Cmd+Arrow shortcut when using the "Rich formatting" mode for entering e-mails.</content>
+    <blogger:created>2008-06-15T17:54:45.645Z</blogger:created>
+    <published>2008-06-15T17:54:00Z</published>
+    <updated>2008-06-15T17:54:45.731Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3773355862978226261</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7334326846499743591</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Here is what Paul Graham said about the simple Python solution:&lt;BR/&gt;&lt;BR/&gt;If you try to translate the Lisp/Perl/Smalltalk/Javascript code into Python you run into some limitations. Because Python doesn't fully support lexical variables, you have to create a data structure to hold the value of n. And although Python does have a function data type, there is no literal representation for one (unless the body is only a single expression) so you need to create a named function to return.&lt;BR/&gt;&lt;BR/&gt;Python users might legitimately ask why they can't just write &lt;BR/&gt;&lt;BR/&gt;def foo(n): &lt;BR/&gt;&amp;nbsp;&amp;nbsp;return lambda i: return n += i &lt;BR/&gt;&lt;BR/&gt;or even &lt;BR/&gt;&lt;BR/&gt;def foo(n): &lt;BR/&gt;&amp;nbsp;&amp;nbsp;lambda i: n += i &lt;BR/&gt;&lt;BR/&gt;and my guess is that they probably will, one day. (But if they don't want to wait for Python to evolve the rest of the way into Lisp, they could always just...)</content>
+    <blogger:created>2008-05-12T23:29:38.727Z</blogger:created>
+    <published>2008-05-12T23:29:00Z</published>
+    <updated>2008-05-12T23:29:38.736Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3857587416808721023</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>@Anonymous: For Mac Terminal.app key bindings, I wrote up a brief discussion here: http://mavaball.net/wiki/Changing_KeyBindings_on_Mac_Terminal
+
+This doesn&amp;#39;t include ctrl and cmd, but will hopefully give enough information to get started... :)</content>
+    <blogger:created>2010-05-20T19:03:56.142Z</blogger:created>
+    <published>2010-05-20T19:03:56.142Z</published>
+    <updated>2010-05-20T19:03:56.142Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-3869717873449645263</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I hope you're all using version 0.4 (see top of post) and not version 0.3.  Version 0.4 is much better... This blog post is basically dead and is just here for posterity. :)</content>
+    <blogger:created>2009-03-26T16:19:44.389Z</blogger:created>
+    <published>2009-03-26T16:19:00Z</published>
+    <updated>2009-03-26T16:19:44.405Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-4155485585547131576</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Jan,&lt;BR/&gt;&lt;BR/&gt;I made it use &amp;quot;Cmd&amp;quot; instead of &amp;quot;Ctrl&amp;quot; because I have Cmd and Ctrl switched so that all the other applications behave more like Windows.  If I used &amp;quot;Ctrl&amp;quot; in this extension, it would actually mess me up.&lt;BR/&gt;&lt;BR/&gt;To switch &amp;quot;Cmd&amp;quot; and &amp;quot;Ctrl&amp;quot;, use the apple menu as follows:&lt;BR/&gt;&lt;BR/&gt;Apple Icon-&amp;gt;System Preferences...-&amp;gt;Keyboard &amp;amp; Mouse-&amp;gt;Keyboard-&amp;gt;Modifier Keys...&lt;BR/&gt;&lt;BR/&gt;Then change the Control (^) Key to use &amp;quot;Command&amp;quot;, and the Command Key to use &amp;quot;^ Control&amp;quot;.&lt;BR/&gt;&lt;BR/&gt;That said, if you still prefer keeping all your other applications more &amp;quot;Mac-like&amp;quot;, you could probably directly replace the platformHTMLBindings.xml file directly with one taken from a Windows Firefox of the same version.  This is a fairly quick hack, and if there&amp;#39;s enough demand, I could look into adding a &amp;quot;Preferences...&amp;quot; Menu to keyfixer that would let you choose which version to use...&lt;BR/&gt;&lt;BR/&gt;Cheers, -Matt</content>
+    <blogger:created>2008-11-29T21:45:21.788Z</blogger:created>
+    <published>2008-11-29T21:45:00Z</published>
+    <updated>2008-11-29T21:45:21.810Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-4233194679628609076</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Lo Sauer,
+
+I&amp;#39;m not sure if the recommendations on my blog post were affected by the outage of alexgorbatchev.com since my instructions use code.google.com as the content distribution server instead.  Is there a dependency on alexgorbatchev.com that I wasn&amp;#39;t aware of?</content>
+    <blogger:created>2011-09-09T13:52:11.012Z</blogger:created>
+    <published>2011-09-09T13:52:11.012Z</published>
+    <updated>2011-09-09T13:52:11.012Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-4394903177213971647</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Anonymous:  Unfortunately, these instructions are outdated.  My recommendation is to try SyntaxHighlighter 3, available at http://alexgorbatchev.com/SyntaxHighlighter/</content>
+    <blogger:created>2013-03-13T18:35:26.529Z</blogger:created>
+    <published>2013-03-13T18:35:26.529Z</published>
+    <updated>2013-03-13T18:35:26.529Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-5172658873176547589</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Brent:  Good catch!  I've updated the post with the final /script... :)</content>
+    <blogger:created>2009-02-03T19:29:04.782Z</blogger:created>
+    <published>2009-02-03T19:29:00Z</published>
+    <updated>2009-02-03T19:29:04.786Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-5536480788972470332</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I don&amp;#39;t know all the possible problems, but you might check whether the whole thing is enclosed with curly brackets and whether the filename is in the exact correct location with the correct name:  ~/Library/KeyBindings/DefaultKeyBinding.dict
+
+The ~ is the location of your home directory (e.g., /Users/myusername)
+
+I don&amp;#39;t know off-hand whether you can remap unshifted keys like &amp;quot;b&amp;quot;.  You may need to at least add a @ or something.  Maybe try:
+
+{ &amp;quot;@b&amp;quot; = &amp;quot;insertText:&amp;quot;; }</content>
+    <blogger:created>2012-03-13T12:45:39.429Z</blogger:created>
+    <published>2012-03-13T12:45:39.429Z</published>
+    <updated>2012-03-13T12:45:39.429Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-5923971465021658337</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-4467677816823170535</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>To get the instruction set, I copied this information out of the manual that is posted at polylith.com.  See links in the article.  I don&amp;#39;t know anything about the Hornby Zero One controller, so you&amp;#39;ll have to ask Dr. Google.</content>
+    <blogger:created>2010-05-21T19:39:09.990Z</blogger:created>
+    <published>2010-05-21T19:39:09.990Z</published>
+    <updated>2010-05-21T19:39:09.990Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-5949155447019062081</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Robin: I haven&amp;#39;t been planning to upgrade keyfixer for Thunderbird 5 since I don&amp;#39;t use Thunderbird anymore.  However, I could take a look.  Is there a particular problem that you&amp;#39;re running in to?</content>
+    <blogger:created>2011-07-06T23:27:21.630Z</blogger:created>
+    <published>2011-07-06T23:27:21.630Z</published>
+    <updated>2011-07-06T23:27:21.630Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-6170717901306687616</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Alex&amp;#39;s Blog: I&amp;#39;m guessing that you somehow logged out of Google on a different window or through a timeout.  For example, logging out of gmail may cause this behavior.  I don&amp;#39;t think that it&amp;#39;s related to the instructions in this post.</content>
+    <blogger:created>2010-01-10T13:26:36.058Z</blogger:created>
+    <published>2010-01-10T13:26:36.058Z</published>
+    <updated>2010-01-10T13:26:36.058Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-6294649046724734041</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Pawel:  Unfortunately, I fail to see the difference in the two lines you've given as an example.  Maybe Blogger converted your comment?  Could you explain in more detail what was changed?</content>
+    <blogger:created>2009-04-28T14:27:26.624Z</blogger:created>
+    <published>2009-04-28T14:27:00Z</published>
+    <updated>2009-04-28T14:27:26.629Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-6587501132747161759</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Douglas:  I feel your pain, because I have to uninstall, then reinstall this patch whenever Firefox is upgraded, just like everyone else!&lt;BR/&gt;&lt;BR/&gt;I don't know of a way to easily solve this problem using a firefox plug-in.  I &lt;A HREF="http://blog.mvballtech.com/2008/05/can-firefox-keyconfig-fix-homeend.html" REL="nofollow"&gt;wrote a post&lt;/A&gt; on an existing Firefox plug-in named keyconfig, but it's unclear to me whether the Firefox plug-in API is rich enough to allow the low-level changes required by Keyfixer.  If anyone can find a way to modify keyconfig to do what keyfixer does, I'd be very interested to hear!</content>
+    <blogger:created>2008-11-17T23:46:09.839Z</blogger:created>
+    <published>2008-11-17T23:46:00Z</published>
+    <updated>2008-11-17T23:46:09.972Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-6618501996685650821</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi jonz:  By doing a &amp;quot;view source&amp;quot; on this page, I&amp;#39;ve discovered that blogger converts the self-closing javascript tags (i.e., &amp;lt;script.../&amp;gt;) into tag pairs (i.e., &amp;lt;script...&amp;gt;&amp;lt;/script&amp;gt;).  If you&amp;#39;re not using blogger, then it won&amp;#39;t automatically update the text for you.  I&amp;#39;ll update the main example to use the tag pairs for the non-blogger users.  Thanks for noticing this!</content>
+    <blogger:created>2009-03-25T12:21:26.272Z</blogger:created>
+    <published>2009-03-25T12:21:00Z</published>
+    <updated>2009-03-25T12:21:26.278Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-6734737700552622713</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi J,&lt;BR/&gt;&lt;BR/&gt;I probably won't work on an 'F3' extension anytime soon, since I don't use this shortcut. :( However, I can give you a couple hints how to fix it.&lt;BR/&gt;&lt;BR/&gt;(I'm going off memory since I've got a Windows computer right now, so the exact text may be wrong...) One thing you can do is to use the Keyboard configuration under Mac OS X 'System Preferences...' menu (click the Apple icon, typically in the upper left, then go to System Preferences).  Once in System preferences, click on the keyboard icon, and then you can go into the right-most tab that lets you bind particular keystrokes to menu commands.  In this case, you want to bind F3 to 'Find Again' for Firefox.&lt;BR/&gt;&lt;BR/&gt;Modifying keyfixer to do this is probably tricky and may not be possible.  What you want is to invoke 'Browser:FindAgain', but the closest cmd_ available is 'cmd_findTypeText', which I think is the behavior you get when you press '/'.&lt;BR/&gt;&lt;BR/&gt;In short, I hope you're able to get the Mac Preferences thing working, because going the 'keyfixer' route looks tricky...</content>
+    <blogger:created>2008-06-30T14:24:44.474Z</blogger:created>
+    <published>2008-06-30T14:24:00Z</published>
+    <updated>2008-06-30T14:24:44.483Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-6748423548661985324</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5820230211282424453</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>NIST expects to make a decision by the end of May 2009, or shortly thereafter.</content>
+    <blogger:created>2009-05-18T17:49:43.379Z</blogger:created>
+    <published>2009-05-18T17:49:00Z</published>
+    <updated>2009-05-18T17:49:43.398Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-6930124733473527861</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-8160946400488827896</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I think the question is whether this 'rectangle subset sum' problem is NP-complete -- like the subset sum problem.  That is to say, does the complexity of finding a solution in the general case increase in a manner similar to that of the Subset Sum problem.&lt;BR/&gt;&lt;BR/&gt;In the rectangle variant, finding the target sum is straightforward:&lt;BR/&gt;&lt;BR/&gt;target sum = total sum / k&lt;BR/&gt;&lt;BR/&gt;We need a criterion for deciding whether we achieved the 'closest' solution.  I think the easiest way  would be to sum the absolute value of the errors (i.e., the difference between the actual sum and the target sum) for all the rectangles, then minimize that value.&lt;BR/&gt;&lt;BR/&gt;If the problem was then to find a single grouping of elements that most closely sums to the target sum, I think this would be the subset sum problem.&lt;BR/&gt;&lt;BR/&gt;However, the requirement of tiling 'k' rectangles over the grid of cells significantly reduces the possible configurations -- there are a limited number of ways to tile rectangles.  Because of that restriction, I suspect the rectangle version's complexity doesn't grow as fast as for the subset sum problem, but I don't know whether it grows polynomially or exponentially as the grid size increases.&lt;BR/&gt;&lt;BR/&gt;Let's take the case of k = 2 rectangles for an n by n grid.  In this case, there are 2(n-1) ways to tile two rectangles onto the grid (split either horizontally or vertically, and the first rectangle can have between 1 and n-1 widths -- n-1 because the second rectangle needs at least a width of 1).  In this case the complexity of finding the optimal solution is about O(n^2) -- it takes 2(n^2) operations to sum all the rows and columns, and testing for the optimal split afterwards takes linear time.&lt;BR/&gt;&lt;BR/&gt;So, for k = 2, this is not an NP-complete problem.  For larger k, I don't know how the complexity increases, but I suspect it's not exponential.&lt;BR/&gt;&lt;BR/&gt;Given this back-of-the-napkin analysis, I suspect that this 'rectangle' problem is not in the same complexity class as the subset sum problem, but it's quite possible that the total rectangle groupings grows exponentially for large k.</content>
+    <blogger:created>2008-03-05T22:57:07.560Z</blogger:created>
+    <published>2008-03-05T22:57:00Z</published>
+    <updated>2008-03-05T22:57:07.568Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7015892267945149566</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>id: 
+
+Note that there is a known issue with Firefox and GMail compose (in Rich text editing mode), concerning the Cmd-Left/Cmd-Right mappings.  GMail seems to snarf this up, probably through JavaScript.  Maybe this is part of the problem?
+
+I&amp;#39;ve never seen KeyRemap4MacBook before, so I don&amp;#39;t know the strategy it uses for doing the key remapping.  The Keyfixer 0.1 strategy is to change the Cocoa default key bindings, and this method does not interfere with the Firefox KeyFixer 0.4.x because Firefox doesn&amp;#39;t seem to use the Cocoa key bindings.  If KeyRemap4MacBook uses a more general remapping, then it&amp;#39;s quite possible that it interferes with Firefox KeyFixer.  
+
+Anyone else have thoughts?</content>
+    <blogger:created>2009-10-19T16:40:47.982Z</blogger:created>
+    <published>2009-10-19T16:40:47.982Z</published>
+    <updated>2009-10-19T16:40:47.982Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7024399431059055404</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>See https://addons.mozilla.org/en-US/thunderbird/addon/9796 for the Thunderbird plugin page.  Note, though, that this is an identical extension as for Firefox.</content>
+    <blogger:created>2009-08-02T00:42:32.452Z</blogger:created>
+    <published>2009-08-02T00:42:32.452Z</published>
+    <updated>2009-08-02T00:42:32.452Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7045385320675117435</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Kady,
+I haven&amp;#39;t edited this template in years, but I suspect that the newer blogger templates may be incompatible with the instructions given here.  Several months ago I played with upgrading the template on this blog, but had to revert it because it messed-up the syntax highlighting.</content>
+    <blogger:created>2012-03-02T14:38:07.044Z</blogger:created>
+    <published>2012-03-02T14:38:07.044Z</published>
+    <updated>2012-03-02T14:38:07.044Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7147276465024504655</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Okay, I discovered that it is possible to change keyfixer into an Extension.  Keyfixer 0.4 is now available.  See updated blog text.</content>
+    <blogger:created>2008-11-29T03:04:53.717Z</blogger:created>
+    <published>2008-11-29T03:04:00Z</published>
+    <updated>2008-11-29T03:04:53.728Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7378350928183249580</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>If you run the program again, it will remove a previous patch, which also makes Firefox ready for an upgrade.</content>
+    <blogger:created>2008-07-18T11:38:16.554Z</blogger:created>
+    <published>2008-07-18T11:38:00Z</published>
+    <updated>2008-07-18T11:38:16.567Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7420696801964608736</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Thank you Jan for giving it a spin!  I'll investigate the updating issue, although I suspect it didn't update because keyfixer is currently not public on Mozilla's site.  This is my first Extension, so it's quite possible that I need to do something special to enable automatic updates. (Anyone know?)</content>
+    <blogger:created>2008-12-03T12:32:27.621Z</blogger:created>
+    <published>2008-12-03T12:32:00Z</published>
+    <updated>2008-12-03T12:32:27.633Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7439118769125957320</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Chi: I suspect that these instructions may need to be tweaked for some of the newer blogger templates.  That said, I haven&amp;#39;t looked into upgrading my own template yet, so I don&amp;#39;t know what the specific issues are.  Anyone else tried the new Blogger templates yet?</content>
+    <blogger:created>2011-12-05T17:29:07.724Z</blogger:created>
+    <published>2011-12-05T17:29:07.724Z</published>
+    <updated>2011-12-05T17:29:07.724Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7485623765090367687</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-5806621335772140380</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Noah: I haven&amp;#39;t found a way to change ctrl+tab to alt+tab for switching windows, so I&amp;#39;ve been having to re-learn that aspect of the windowing system.  I would be interested if anyone else finds a way to change this... :)</content>
+    <blogger:created>2010-06-22T13:05:45.387Z</blogger:created>
+    <published>2010-06-22T13:05:45.387Z</published>
+    <updated>2010-06-22T13:05:45.387Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-7888136027035739328</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-9086128592849595429</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi Peach,&lt;BR/&gt;&lt;BR/&gt;Could you provide more information about your system?  (version of OS X and version of Firefox).  This utility has only been tested on Firefox 2.0.0.14 and Firefox 3, and may not work on previous versions.&lt;BR/&gt;&lt;BR/&gt;Lifehacker has linked this article, so there may be some more clues there (see http://lifehacker.com/396685/firefox-keyfixer-makes-home-and-end-keys-work-like-windows) -- although it looks like you've already commented on that blog...&lt;BR/&gt;&lt;BR/&gt;There may be some issues if you try to install other 'keyfixer' variants before running this one.  If this is the case, try reinstalling Firefox (preferably version 3), then run Firefox Keyfixer version 0.3 (from this article).  Let me know if that fails to work, and we can try to debug it.</content>
+    <blogger:created>2008-06-26T18:00:50.115Z</blogger:created>
+    <published>2008-06-26T18:00:00Z</published>
+    <updated>2008-06-26T18:00:50.126Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-8456013116572898798</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Okay, I did some quick checking, and it looks like Keyfixer 0.5 will work as-is in Thunderbird 5.  I&amp;#39;ve updated the allowed versions on the Mozilla extensions page, so next time you search for extension updates, Keyfixer 0.5 should work again in Thunderbird 5 beta.</content>
+    <blogger:created>2011-07-07T00:34:51.099Z</blogger:created>
+    <published>2011-07-07T00:34:51.099Z</published>
+    <updated>2011-07-07T00:34:51.099Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-8588228510261748707</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Hi ambientnoise,&lt;BR/&gt;&lt;BR/&gt;I've added some rough instructions here: &lt;A HREF="http://mavaball.net/wiki/index.php/Keyfixer#Hacking_Keyfixer" REL="nofollow"&gt; Hacking Keyfixer&lt;/A&gt;&lt;BR/&gt;&lt;BR/&gt;Basically, platformHTMLBindings.xml is stored within a zip within a zip. (i.e., the .jar file within the .xpi file).&lt;BR/&gt;&lt;BR/&gt;Let me know if these instructions give you the basics...</content>
+    <blogger:created>2009-03-09T15:12:09.386Z</blogger:created>
+    <published>2009-03-09T15:12:00Z</published>
+    <updated>2009-03-09T15:12:09.506Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-8712332953495537771</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-1931230437782103552</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>Olly: I've got Spaces disabled on my system, but I do remember running into some issues previously... :)&lt;BR/&gt;&lt;BR/&gt;Unfortunately, a configuration menu would be a large change -- I'd have to learn a whole lot more about extension programming.  I wouldn't mind doing some of this for a "1.0" release, but as you'd expect, my time is somewhat limited.&lt;BR/&gt;&lt;BR/&gt;BTW, I think that Cmd-Left/Right should do what you want, in this case.</content>
+    <blogger:created>2009-01-29T12:45:18.504Z</blogger:created>
+    <published>2009-01-29T12:45:00Z</published>
+    <updated>2009-01-29T12:45:18.511Z</updated>
+    <blogger:trashed/>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-4147841314301981805.post-8820782403052714118</id>
+    <blogger:parent>tag:blogger.com,1999:blog-4147841314301981805.post-7694451485568280571</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>suresh dasari:  I poked around a bit, but couldn&amp;#39;t find an obvious way to get scroll bars working for large snippets of code.  This may not be possible with recent browsers when using SyntaxHighlighter version 1.5.  Just recently, Alex G released version 3.0, so it might be time to upgrade.</content>
+    <blogger:created>2010-09-20T04:28:33.592Z</blogger:created>
+    <published>2010-09-20T04:28:33.592Z</published>
+    <updated>2010-09-20T04:28:33.592Z</updated>
+    <blogger:trashed/>
+  </entry>
+</feed>

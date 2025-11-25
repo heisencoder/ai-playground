@@ -6,6 +6,10 @@ This repo is a set of projects that are created by AI engines (usually Claude Co
 
 ## Projects
 
+### Blog
+
+- **[Heisencoder Blog](blog/)** - Blogger to GitHub Pages migration project. Contains documentation, conversion scripts, and two deployable blog versions (minimal and full-featured) with 40 posts from 2007-2012.
+
 ### TypeScript
 
 - **[Stock Gift Value Calculator](typescript/stock-gift-value)** - A React web application that calculates the IRS-approved donated value of stock gifts. Features a full-stack Express backend with Yahoo Finance API integration, comprehensive testing, and CI/CD.
@@ -16,6 +20,8 @@ No projects yet.
 
 ## Organization
 
-The top-level folder is the programming language (e.g., `typescript`, `python`) and within each of those folders is a folder per individual project. In some cases these are stand-alone projects, and in other cases, they are sharable libraries. Most projects are just one programming language and are in one folder.
+Each top-level folder represents a project. Some projects may have language-specific subfolders (like `typescript/stock-gift-value`), while others are standalone projects (like `blog/`).
 
-If you are an AI coding agent, start the project by picking the appropriate programming language folder, and create a new subfolder with the project name.
+If you are an AI coding agent creating a new project:
+- For language-specific projects, use or create a language folder (e.g., `typescript/`, `python/`) and create a subfolder for your project
+- For language-agnostic projects (documentation, tools, etc.), create a top-level folder with the project name

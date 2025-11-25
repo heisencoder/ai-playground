@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<feed xmlns='http://www.w3.org/2005/Atom' xmlns:blogger='http://schemas.google.com/blogger/2018'>
+  <id>tag:blogger.com,1999:blog-8944066499054412440</id>
+  <title>Matzner(d)</title>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8944066499054412440.post-3229643713242846011</id>
+    <blogger:parent>tag:blogger.com,1999:blog-8944066499054412440.post-2302978013307304023</blogger:parent>
+    <blogger:inReplyTo/>
+    <blogger:type>COMMENT</blogger:type>
+    <blogger:status>LIVE</blogger:status>
+    <author>
+      <name>Matthew V Ball</name>
+      <uri>http://www.mavaball.net</uri>
+      <blogger:type>BLOGGER</blogger:type>
+    </author>
+    <content type='html'>I've updated keyfixer to &lt;A HREF="http://mavaball.net/wiki/index.php/Keyfixer" REL="nofollow"&gt;version 0.4.1&lt;/A&gt;.  You'll be much happier using this version, since it's a Firefox extension instead of a script hack.  Let me know if you have issues with the latest Firefox 3.1.</content>
+    <blogger:created>2009-03-15T23:52:07.300Z</blogger:created>
+    <published>2009-03-15T23:52:00Z</published>
+    <updated>2009-03-15T23:52:07.319Z</updated>
+    <blogger:trashed/>
+  </entry>
+</feed>
