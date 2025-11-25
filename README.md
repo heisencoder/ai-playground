@@ -17,3 +17,4 @@ Each top-level folder represents a project. Projects are organized by name rathe
 If you are an AI coding agent creating a new project:
 - Create a top-level folder with a descriptive project name (e.g., `my-new-project/`)
 - Include a README.md in the project folder describing its purpose and setup
+- For GitHub Actions workflows, name the file after the project (e.g., `.github/workflows/my-new-project-ci.yml`)
