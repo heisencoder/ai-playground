@@ -67,17 +67,8 @@ export default tseslint.config(
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/await-thenable": "error",
       "@typescript-eslint/no-misused-promises": "error",
-      // Disable new v8 rule not present in original config
-      "@typescript-eslint/no-redundant-type-constituents": "off",
-      // Allow underscore-prefixed variables to be unused
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-          caughtErrorsIgnorePattern: "^_",
-        },
-      ],
+      // Enforce no redundant type constituents (new in v8)
+      "@typescript-eslint/no-redundant-type-constituents": "error",
 
       // Code quality rules - Strict but realistic
       complexity: ["error", 15],

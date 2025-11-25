@@ -41,7 +41,15 @@ export function useClipboard(
       setTimeout(() => {
         setCopyMessage('')
       }, COPY_MESSAGE_TIMEOUT)
-    } catch (_error) {
+    } catch (error) {
+      // Log the error for debugging - clipboard API can fail due to:
+      // - Missing permissions (user denied clipboard access)
+      // - Insecure context (non-HTTPS in production)
+      // - Browser not focused (some browsers require focus)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown clipboard error'
+      console.error('Clipboard write failed:', errorMessage)
+
       setCopyMessage('Failed to copy')
       setTimeout(() => {
         setCopyMessage('')

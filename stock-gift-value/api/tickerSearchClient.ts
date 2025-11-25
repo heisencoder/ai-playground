@@ -41,19 +41,19 @@ class TickerSearchCache {
     TickerSearchCache.MINUTES_PER_HOUR *
     TickerSearchCache.HOURS_PER_DAY // 24 hours
 
-  get(query: string): TickerSearchResult[] | null {
+  get(query: string): TickerSearchResult[] | undefined {
     const normalizedQuery = query.toLowerCase().trim()
     const cached = this.cache.get(normalizedQuery)
 
     if (!cached) {
-      return null
+      return undefined
     }
 
     // Check if cache entry is still valid
     const age = Date.now() - cached.timestamp
     if (age > this.CACHE_TTL) {
       this.cache.delete(normalizedQuery)
-      return null
+      return undefined
     }
 
     return cached.results
@@ -114,8 +114,8 @@ export async function searchTickers(query: string): Promise<TickerSearchResponse
       .map((quote: any) => ({
         symbol: quote.symbol as string,
         name: (quote.longname ?? quote.shortname ?? quote.symbol) as string,
-        exchange: quote.exchange as string | undefined,
-        type: quote.quoteType as string | undefined,
+        exchange: quote.exchange as string,
+        type: quote.quoteType as string,
       }))
       .slice(0, 10) // Limit to 10 results
     /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */

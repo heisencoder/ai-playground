@@ -43,7 +43,7 @@ function buildYahooFinanceUrl(
  */
 function validateYahooResponse(
   json: YahooFinanceResponse
-): StockPriceResponse | null {
+): StockPriceResponse | undefined {
   if (
     !json.chart ||
     !json.chart.result ||
@@ -56,7 +56,7 @@ function validateYahooResponse(
     }
   }
 
-  return null
+  return undefined
 }
 
 /**
