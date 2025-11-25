@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: typescript/stock-gift-value
+        working-directory: stock-gift-value
 
     steps:
       - name: Checkout code
@@ -24,7 +24,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          context: typescript/stock-gift-value
+          context: stock-gift-value
           push: false
           load: true
           tags: stock-gift-value:test
@@ -114,7 +114,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: typescript/stock-gift-value
+        working-directory: stock-gift-value
 
     steps:
       - name: Checkout code
@@ -125,7 +125,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: typescript/stock-gift-value/package-lock.json
+          cache-dependency-path: stock-gift-value/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -144,7 +144,7 @@ jobs:
         if: always()
         continue-on-error: true
         with:
-          files: typescript/stock-gift-value/coverage/lcov.info
+          files: stock-gift-value/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           token: ${{ secrets.CODECOV_TOKEN }}

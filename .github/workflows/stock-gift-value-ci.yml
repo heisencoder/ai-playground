@@ -3,11 +3,11 @@ name: Stock Gift Value CI
 on:
   push:
     paths:
-      - 'typescript/stock-gift-value/**'
+      - 'stock-gift-value/**'
 
 defaults:
   run:
-    working-directory: ./typescript/stock-gift-value
+    working-directory: ./stock-gift-value
 
 jobs:
   test:
@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: typescript/stock-gift-value/package-lock.json
+          cache-dependency-path: stock-gift-value/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: typescript/stock-gift-value/coverage/
+          path: stock-gift-value/coverage/
           retention-days: 30
 
       - name: Build frontend
