@@ -1,0 +1,22 @@
+# User Coin Flip Data
+#
+# Instructions:
+# 1. Replace the placeholder below with your own coin flip sequence
+# 2. Use 'H' for heads and 'T' for tails
+# 3. Enter exactly 256 characters (spaces and newlines are ignored)
+# 4. Try to flip the coin mentally and record what you think is random
+#
+# The goal is to see if human-generated "random" sequences differ
+# from computer-generated random sequences.
+#
+# Enter your 256 coin flips below (H or T only):
+# ================================================================
+
+REPLACE_THIS_WITH_YOUR_FLIPS
+
+# ================================================================
+# Example format (64 characters per line for readability):
+# HTTHTHHTHTHTHHTHTHHTHTHTHHTHTHHTHTHHTHTHHTHTHHTHTHHTHTHHTHTHHTHTH
+# HTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHT
+# THTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTH
+# HTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHTHTHTHHT
