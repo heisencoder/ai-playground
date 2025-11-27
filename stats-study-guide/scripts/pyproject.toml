@@ -2,8 +2,7 @@
 name = "stats-study-guide"
 version = "1.0.0"
 description = "Python scripts for probability and statistics study guide"
-authors = ["Stats Study Guide"]
-readme = "../README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.9"
