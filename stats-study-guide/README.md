@@ -54,6 +54,7 @@ stats-study-guide/
 │   ├── random_coin_flips.txt           # Computer-generated random coin flips
 │   └── user_coin_flips.txt             # Your manually entered coin flips
 └── scripts/
+    ├── pyproject.toml                  # Poetry dependency configuration
     ├── generate_coin_flips.py          # Generate random coin flip data
     ├── analyze_coin_flips.py           # Analyze coin flip sequences
     ├── regression_helper.py            # Linear regression calculations
@@ -69,15 +70,40 @@ stats-study-guide/
 
 ## Python Scripts
 
+### Installing Dependencies with Poetry
+
+This project uses [Poetry](https://python-poetry.org/) for dependency management. Make sure you have Poetry installed:
+
+```bash
+# Install Poetry (if not already installed)
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+Install the project dependencies:
+
+```bash
+cd scripts
+poetry install
+```
+
 ### Running the Scripts
 
-Make sure you have Python 3 installed with the following packages:
-- numpy
-- scipy
+Run scripts using Poetry to ensure the correct dependencies are available:
 
-Install dependencies:
 ```bash
-pip install numpy scipy
+cd scripts
+poetry run python generate_coin_flips.py
+poetry run python analyze_coin_flips.py
+poetry run python regression_helper.py
+poetry run python anova_helper.py
+```
+
+Alternatively, activate the Poetry virtual environment first:
+
+```bash
+cd scripts
+poetry shell
+python analyze_coin_flips.py
 ```
 
 ### Available Scripts
