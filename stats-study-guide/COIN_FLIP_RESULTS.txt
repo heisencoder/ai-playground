@@ -1,0 +1,191 @@
+Loaded 256 random coin flips
+
+######################################################################
+# ANALYSIS: Computer-Generated Random Sequence
+######################################################################
+
+============================================================
+ Proportion Test (50/50)
+============================================================
+  Heads: 125 (48.8%)
+  Tails: 131 (51.2%)
+
+  Chi-Square Analysis:
+    χ² = 0.1406
+    df = 1
+    Critical value (α=0.05): 3.841
+    p-value = 0.7077
+
+  ✓ FAIL TO REJECT null hypothesis: No evidence against randomness
+
+============================================================
+ Run-Length Distribution Test
+============================================================
+
+  Run Length Distribution:
+  Length     Observed     Expected    
+  ----------------------------------
+  1          63           64.0         
+  2          33           32.0         
+  3          16           16.0         
+  4          5            8.0          
+  5+         10           8.0          
+
+  Detailed run counts: {2: 33, 1: 63, 3: 16, 5: 5, 4: 5, 6: 2, 7: 2, 8: 1}
+
+  Chi-Square Analysis:
+    χ² = 1.6719
+    df = 4
+    Critical value (α=0.05): 9.488
+    p-value = 0.7958
+
+  ✓ FAIL TO REJECT null hypothesis: No evidence against randomness
+
+============================================================
+ Alternation Frequency Test
+============================================================
+  Alternations: 126 (49.4%)
+  Same consecutive: 129
+  Expected alternation rate: 50%
+
+  Chi-Square Analysis:
+    χ² = 0.0353
+    df = 1
+    Critical value (α=0.05): 3.841
+    p-value = 0.8510
+
+  ✓ FAIL TO REJECT null hypothesis: No evidence against randomness
+
+============================================================
+ Consecutive Pairs Test
+============================================================
+
+  Pair Distribution:
+    HH: 61 (expected: 63.8)
+    HT: 63 (expected: 63.8)
+    TH: 63 (expected: 63.8)
+    TT: 68 (expected: 63.8)
+
+  Chi-Square Analysis:
+    χ² = 0.4196
+    df = 3
+    Critical value (α=0.05): 7.815
+    p-value = 0.9362
+
+  ✓ FAIL TO REJECT null hypothesis: No evidence against randomness
+
+============================================================
+ Serial Correlation Test (lag=1)
+============================================================
+  Correlation coefficient: 0.0110
+  Interpretation: Weak/no dependency
+
+######################################################################
+# ANALYSIS: User-Generated Sequence
+######################################################################
+
+⚠ Warning: Expected 256 flips, got 260
+
+============================================================
+ Proportion Test (50/50)
+============================================================
+  Heads: 138 (53.1%)
+  Tails: 122 (46.9%)
+
+  Chi-Square Analysis:
+    χ² = 0.9846
+    df = 1
+    Critical value (α=0.05): 3.841
+    p-value = 0.3211
+
+  ✓ FAIL TO REJECT null hypothesis: No evidence against randomness
+
+============================================================
+ Run-Length Distribution Test
+============================================================
+
+  Run Length Distribution:
+  Length     Observed     Expected    
+  ----------------------------------
+  1          121          65.0         *
+  2          38           32.5         
+  3          21           16.2         
+  4          0            8.1          *
+  5+         0            8.1          *
+
+  Detailed run counts: {1: 121, 2: 38, 3: 21}
+
+  Chi-Square Analysis:
+    χ² = 66.8154
+    df = 4
+    Critical value (α=0.05): 9.488
+    p-value = 0.0000
+
+  ⚠ REJECT null hypothesis: Evidence suggests NON-RANDOM sequence
+
+============================================================
+ Alternation Frequency Test
+============================================================
+  Alternations: 179 (69.1%)
+  Same consecutive: 80
+  Expected alternation rate: 50%
+
+  Chi-Square Analysis:
+    χ² = 37.8417
+    df = 1
+    Critical value (α=0.05): 3.841
+    p-value = 0.0000
+
+  ⚠ REJECT null hypothesis: Evidence suggests NON-RANDOM sequence
+
+============================================================
+ Consecutive Pairs Test
+============================================================
+
+  Pair Distribution:
+    HH: 48 (expected: 64.8)
+    HT: 89 (expected: 64.8)
+    TH: 90 (expected: 64.8)
+    TT: 32 (expected: 64.8)
+
+  Chi-Square Analysis:
+    χ² = 39.8263
+    df = 3
+    Critical value (α=0.05): 7.815
+    p-value = 0.0000
+
+  ⚠ REJECT null hypothesis: Evidence suggests NON-RANDOM sequence
+
+============================================================
+ Serial Correlation Test (lag=1)
+============================================================
+  Correlation coefficient: -0.3875
+  Interpretation: Strong serial dependency
+
+######################################################################
+# COMPARING: Random vs User
+######################################################################
+
+Test                                Random       User         Critical  
+----------------------------------------------------------------------
+Proportion Test (50/50)             0.14         0.98         3.84      
+Run-Length Distribution Test        1.67         66.82        9.49      
+Alternation Frequency Test          0.04         37.84        3.84      
+Consecutive Pairs Test              0.42         39.83        7.82      
+
+======================================================================
+ INTERPRETATION GUIDE
+======================================================================
+
+    Chi-Square Tests:
+    - If χ² > critical value → Evidence suggests non-random sequence
+    - If χ² ≤ critical value → No evidence against randomness
+
+    Common signs of human-generated sequences:
+    1. TOO MANY alternations (>55%) - Humans avoid long runs
+    2. TOO FEW long runs - True random sequences have occasional long runs
+    3. TOO BALANCED proportions - Humans try to maintain 50/50
+    4. Pattern in pairs - Humans often alternate HT,TH more than HH,TT
+
+    A truly random sequence will occasionally "look" non-random!
+    
