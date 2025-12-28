@@ -3,6 +3,11 @@
  * Per IRS guidelines, the value is the average of the high and low prices
  * on the date of the gift, multiplied by the number of shares.
  *
+ * The high and low prices are first rounded to the nearest penny before
+ * computing the average. If the sum results in an odd number of pennies,
+ * the average will have a half-penny (0.005) which is preserved in the
+ * multiplication before final rounding.
+ *
  * @param high - The high price on the donation date
  * @param low - The low price on the donation date
  * @param shares - The number of shares donated
@@ -13,8 +18,12 @@ export function calculateStockGiftValue(
   low: number,
   shares: number
 ): number {
-  // Calculate average price maintaining precision
-  const averagePrice = (high + low) / 2
+  // Round high and low to nearest penny first
+  const roundedHigh = Math.round(high * 100) / 100
+  const roundedLow = Math.round(low * 100) / 100
+
+  // Calculate average price (may have half-penny if sum is odd)
+  const averagePrice = (roundedHigh + roundedLow) / 2
 
   // Calculate total value
   const totalValue = averagePrice * shares
