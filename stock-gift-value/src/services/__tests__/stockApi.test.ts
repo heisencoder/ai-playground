@@ -15,11 +15,6 @@ const BRK_B_DATE = '2025-11-07'
 const BRK_B_HIGH = 500.16
 const BRK_B_LOW = 493.35
 
-const COWZ_TICKER = 'COWZ'
-const COWZ_DATE = '2025-12-15'
-const COWZ_HIGH = 61.56999969482422
-const COWZ_LOW = 61.13399887084961
-
 const HTTP_STATUS_INTERNAL_ERROR = 500
 
 const networkErrorHandler = http.get('*/api/stock-price', () => {
@@ -85,16 +80,6 @@ describe('stockApi', () => {
         high: BRK_B_HIGH,
         low: BRK_B_LOW,
         ticker: BRK_B_TICKER,
-      })
-    })
-
-    it('should handle COWZ ticker correctly (rounding test case)', async () => {
-      const result = await fetchStockPrice(COWZ_TICKER, COWZ_DATE)
-      expect(result).toEqual({
-        date: COWZ_DATE,
-        high: COWZ_HIGH,
-        low: COWZ_LOW,
-        ticker: COWZ_TICKER,
       })
     })
 

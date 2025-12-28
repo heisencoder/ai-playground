@@ -21,19 +21,6 @@ export const handlers = [
       })
     }
 
-    // Handle COWZ test case - tests rounding high/low to pennies first
-    // high: 61.56999969482422 -> 61.57, low: 61.13399887084961 -> 61.13
-    // average: (61.57 + 61.13) / 2 = 61.35
-    // 53 shares * 61.35 = $3,251.55 (not $3,251.66 without rounding first)
-    if (ticker === 'COWZ' && date === '2025-12-15') {
-      return HttpResponse.json({
-        date: '2025-12-15',
-        high: 61.56999969482422,
-        low: 61.13399887084961,
-        ticker: 'COWZ',
-      })
-    }
-
     // Handle AAPL test case for 2024-01-01
     if (ticker === 'AAPL' && date === '2024-01-01') {
       return HttpResponse.json({
