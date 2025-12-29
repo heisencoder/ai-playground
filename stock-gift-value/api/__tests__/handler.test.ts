@@ -17,6 +17,52 @@ const PRICE_LOW_140 = 140
 const BRK_B_HIGH = 500.16
 const BRK_B_LOW = 493.35
 
+// Split test constants - 4-for-1 split scenario
+const SPLIT_4_FOR_1_ADJUSTED_HIGH = 25
+const SPLIT_4_FOR_1_ADJUSTED_LOW = 24
+const SPLIT_4_FOR_1_ORIGINAL_HIGH = 100
+const SPLIT_4_FOR_1_ORIGINAL_LOW = 96
+
+// Split test constants - multiple splits scenario (7*4 = 28x)
+const MULTI_SPLIT_ADJUSTED_HIGH = 5
+const MULTI_SPLIT_ADJUSTED_LOW = 4
+const MULTI_SPLIT_ORIGINAL_HIGH = 140
+const MULTI_SPLIT_ORIGINAL_LOW = 112
+
+// Split test constants - split before gift date (no adjustment)
+const NO_ADJUSTMENT_HIGH = 130
+const NO_ADJUSTMENT_LOW = 125
+
+// Split test constants - reverse split scenario (1-for-10)
+const REVERSE_SPLIT_ADJUSTED_HIGH = 50
+const REVERSE_SPLIT_ADJUSTED_LOW = 45
+const REVERSE_SPLIT_ORIGINAL_HIGH = 5
+const REVERSE_SPLIT_ORIGINAL_LOW = 4.5
+
+// Google split test constants - tests non-trivial split ratios
+// Split 1: 2015-04-27, 10027455:10000000 (stock dividend with fractional ratio)
+// Split 2: 2022-07-18, 20:1
+// For a gift in early 2015 (before both splits):
+// Cumulative ratio = (10027455/10000000) * (20/1) = 1.0027455 * 20 = 20.05491
+const GOOG_SPLIT_1_NUMERATOR = 10027455
+const GOOG_SPLIT_1_DENOMINATOR = 10000000
+const GOOG_SPLIT_2_NUMERATOR = 20
+const GOOG_SPLIT_2_DENOMINATOR = 1
+const GOOG_SPLIT_1_TIMESTAMP = 1430092800 // 2015-04-27
+const GOOG_SPLIT_2_TIMESTAMP = 1658102400 // 2022-07-18
+const GOOG_GIFT_DATE = '2015-01-15'
+const GOOG_ADJUSTED_HIGH = 50
+const GOOG_ADJUSTED_LOW = 48
+// Expected cumulative ratio: (10027455/10000000) * 20 = 20.05491
+const GOOG_CUMULATIVE_RATIO = (GOOG_SPLIT_1_NUMERATOR / GOOG_SPLIT_1_DENOMINATOR) *
+  (GOOG_SPLIT_2_NUMERATOR / GOOG_SPLIT_2_DENOMINATOR)
+// Original prices = adjusted * cumulative ratio
+const GOOG_ORIGINAL_HIGH = GOOG_ADJUSTED_HIGH * GOOG_CUMULATIVE_RATIO
+const GOOG_ORIGINAL_LOW = GOOG_ADJUSTED_LOW * GOOG_CUMULATIVE_RATIO
+
+// Precision for floating point comparisons
+const FLOAT_PRECISION = 5
+
 // Split event for mock responses
 interface MockSplitEvent {
   date: number
@@ -413,15 +459,14 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
   })
 
   it('should adjust prices for a 4-for-1 split after gift date', async () => {
-    // Gift date: 2020-01-15 (timestamp: 1579046400)
-    // Split date: 2020-08-31 (timestamp: 1598832000) - after gift
+    // Gift date: 2020-01-15, Split date: 2020-08-31 (after gift)
     // Yahoo returns split-adjusted prices, so we need to multiply by 4
     const giftDate = '2020-01-15'
     const splitTimestamp = 1598832000 // 2020-08-31
 
     const mockResponse = createMockYahooResponse({
-      high: 25, // Split-adjusted price (original was $100)
-      low: 24, // Split-adjusted price (original was $96)
+      high: SPLIT_4_FOR_1_ADJUSTED_HIGH,
+      low: SPLIT_4_FOR_1_ADJUSTED_LOW,
       splits: [
         {
           date: splitTimestamp,
@@ -444,8 +489,8 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
 
     expect(result.status).toBe(HTTP_STATUS_OK)
     // Prices should be multiplied by 4 to get original unadjusted values
-    expect(result.data?.high).toBe(100)
-    expect(result.data?.low).toBe(96)
+    expect(result.data?.high).toBe(SPLIT_4_FOR_1_ORIGINAL_HIGH)
+    expect(result.data?.low).toBe(SPLIT_4_FOR_1_ORIGINAL_LOW)
   })
 
   it('should handle multiple splits after gift date', async () => {
@@ -456,8 +501,8 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
     const giftDate = '2014-01-15'
 
     const mockResponse = createMockYahooResponse({
-      high: 5, // Split-adjusted price
-      low: 4, // Split-adjusted price
+      high: MULTI_SPLIT_ADJUSTED_HIGH,
+      low: MULTI_SPLIT_ADJUSTED_LOW,
       splits: [
         {
           date: 1402272000, // 2014-06-09
@@ -485,8 +530,8 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
 
     expect(result.status).toBe(HTTP_STATUS_OK)
     // Prices should be multiplied by 28 (7 * 4)
-    expect(result.data?.high).toBe(140)
-    expect(result.data?.low).toBe(112)
+    expect(result.data?.high).toBe(MULTI_SPLIT_ORIGINAL_HIGH)
+    expect(result.data?.low).toBe(MULTI_SPLIT_ORIGINAL_LOW)
   })
 
   it('should ignore splits that occurred before gift date', async () => {
@@ -496,8 +541,8 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
     const splitTimestamp = 1598832000 // 2020-08-31
 
     const mockResponse = createMockYahooResponse({
-      high: 130,
-      low: 125,
+      high: NO_ADJUSTMENT_HIGH,
+      low: NO_ADJUSTMENT_LOW,
       splits: [
         {
           date: splitTimestamp,
@@ -520,8 +565,8 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
 
     expect(result.status).toBe(HTTP_STATUS_OK)
     // Prices should NOT be adjusted since split was before gift date
-    expect(result.data?.high).toBe(130)
-    expect(result.data?.low).toBe(125)
+    expect(result.data?.high).toBe(NO_ADJUSTMENT_HIGH)
+    expect(result.data?.low).toBe(NO_ADJUSTMENT_LOW)
   })
 
   it('should handle reverse splits (consolidation)', async () => {
@@ -530,8 +575,8 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
     const giftDate = '2020-01-15'
 
     const mockResponse = createMockYahooResponse({
-      high: 50, // Post-consolidation adjusted price
-      low: 45,
+      high: REVERSE_SPLIT_ADJUSTED_HIGH,
+      low: REVERSE_SPLIT_ADJUSTED_LOW,
       splits: [
         {
           date: 1598832000,
@@ -554,7 +599,45 @@ describe('handleStockPriceRequest - Stock Split Adjustment', () => {
 
     expect(result.status).toBe(HTTP_STATUS_OK)
     // For reverse split, multiply by 1/10 = 0.1
-    expect(result.data?.high).toBe(5)
-    expect(result.data?.low).toBe(4.5)
+    expect(result.data?.high).toBe(REVERSE_SPLIT_ORIGINAL_HIGH)
+    expect(result.data?.low).toBe(REVERSE_SPLIT_ORIGINAL_LOW)
+  })
+
+  it('should handle Google splits with non-trivial numerator/denominator', async () => {
+    // Tests the 2015-04-27 Google split (10027455:10000000) and 2022-07-18 split (20:1)
+    // This verifies the calculation works with non-1 values in both numerator and denominator
+    const mockResponse = createMockYahooResponse({
+      high: GOOG_ADJUSTED_HIGH,
+      low: GOOG_ADJUSTED_LOW,
+      splits: [
+        {
+          date: GOOG_SPLIT_1_TIMESTAMP,
+          numerator: GOOG_SPLIT_1_NUMERATOR,
+          denominator: GOOG_SPLIT_1_DENOMINATOR,
+        },
+        {
+          date: GOOG_SPLIT_2_TIMESTAMP,
+          numerator: GOOG_SPLIT_2_NUMERATOR,
+          denominator: GOOG_SPLIT_2_DENOMINATOR,
+        },
+      ],
+    })
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
+
+    const request: StockPriceRequest = {
+      ticker: 'GOOG',
+      date: GOOG_GIFT_DATE,
+    }
+
+    const result = await handleStockPriceRequest(request)
+
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    // Cumulative ratio: (10027455/10000000) * (20/1) = 20.05491
+    // Verify the calculation handles fractional ratios correctly
+    expect(result.data?.high).toBeCloseTo(GOOG_ORIGINAL_HIGH, FLOAT_PRECISION)
+    expect(result.data?.low).toBeCloseTo(GOOG_ORIGINAL_LOW, FLOAT_PRECISION)
   })
 })
