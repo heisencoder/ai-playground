@@ -17,6 +17,13 @@ const PRICE_LOW_140 = 140
 const BRK_B_HIGH = 500.16
 const BRK_B_LOW = 493.35
 
+// Split event for mock responses
+interface MockSplitEvent {
+  date: number
+  numerator: number
+  denominator: number
+}
+
 // Helper to create mock Yahoo Finance response
 interface MockYahooResponseOptions {
   high?: number | null
@@ -24,10 +31,11 @@ interface MockYahooResponseOptions {
   hasError?: boolean
   errorDescription?: string
   emptyQuote?: boolean
+  splits?: MockSplitEvent[]
 }
 
 function createMockYahooResponse(options: MockYahooResponseOptions = {}): unknown {
-  const { high, low, hasError, errorDescription, emptyQuote } = options
+  const { high, low, hasError, errorDescription, emptyQuote, splits } = options
 
   if (hasError) {
     return {
@@ -53,6 +61,17 @@ function createMockYahooResponse(options: MockYahooResponseOptions = {}): unknow
     }
   }
 
+  // Build splits object if provided
+  const splitsObj: Record<string, MockSplitEvent> | undefined = splits
+    ? splits.reduce(
+        (acc, split) => {
+          acc[split.date.toString()] = split
+          return acc
+        },
+        {} as Record<string, MockSplitEvent>
+      )
+    : undefined
+
   return {
     chart: {
       result: [
@@ -65,6 +84,7 @@ function createMockYahooResponse(options: MockYahooResponseOptions = {}): unknow
               },
             ],
           },
+          ...(splitsObj && { events: { splits: splitsObj } }),
         },
       ],
     },
@@ -357,5 +377,184 @@ describe('handleStockPriceRequest - Error Handling', () => {
     expect(result.status).toBe(HTTP_STATUS_INTERNAL_ERROR)
     expect(result.error).toBe('Failed to fetch stock data')
     expect(result.details).toBe('Unknown error')
+  })
+})
+
+describe('handleStockPriceRequest - Stock Split Adjustment', () => {
+  beforeEach(() => {
+    global.fetch = vi.fn()
+    console.error = vi.fn()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('should return unadjusted prices when no splits occurred', async () => {
+    const mockResponse = createMockYahooResponse({
+      high: PRICE_HIGH_150,
+      low: PRICE_LOW_140,
+    })
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
+
+    const request: StockPriceRequest = {
+      ticker: TEST_TICKER_AAPL,
+      date: TEST_DATE,
+    }
+
+    const result = await handleStockPriceRequest(request)
+
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    expect(result.data?.high).toBe(PRICE_HIGH_150)
+    expect(result.data?.low).toBe(PRICE_LOW_140)
+  })
+
+  it('should adjust prices for a 4-for-1 split after gift date', async () => {
+    // Gift date: 2020-01-15 (timestamp: 1579046400)
+    // Split date: 2020-08-31 (timestamp: 1598832000) - after gift
+    // Yahoo returns split-adjusted prices, so we need to multiply by 4
+    const giftDate = '2020-01-15'
+    const splitTimestamp = 1598832000 // 2020-08-31
+
+    const mockResponse = createMockYahooResponse({
+      high: 25, // Split-adjusted price (original was $100)
+      low: 24, // Split-adjusted price (original was $96)
+      splits: [
+        {
+          date: splitTimestamp,
+          numerator: 4,
+          denominator: 1,
+        },
+      ],
+    })
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
+
+    const request: StockPriceRequest = {
+      ticker: TEST_TICKER_AAPL,
+      date: giftDate,
+    }
+
+    const result = await handleStockPriceRequest(request)
+
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    // Prices should be multiplied by 4 to get original unadjusted values
+    expect(result.data?.high).toBe(100)
+    expect(result.data?.low).toBe(96)
+  })
+
+  it('should handle multiple splits after gift date', async () => {
+    // Gift date: 2014-01-15
+    // Split 1: 2014-06-09, 7-for-1
+    // Split 2: 2020-08-31, 4-for-1
+    // Total adjustment: 7 * 4 = 28
+    const giftDate = '2014-01-15'
+
+    const mockResponse = createMockYahooResponse({
+      high: 5, // Split-adjusted price
+      low: 4, // Split-adjusted price
+      splits: [
+        {
+          date: 1402272000, // 2014-06-09
+          numerator: 7,
+          denominator: 1,
+        },
+        {
+          date: 1598832000, // 2020-08-31
+          numerator: 4,
+          denominator: 1,
+        },
+      ],
+    })
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
+
+    const request: StockPriceRequest = {
+      ticker: TEST_TICKER_AAPL,
+      date: giftDate,
+    }
+
+    const result = await handleStockPriceRequest(request)
+
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    // Prices should be multiplied by 28 (7 * 4)
+    expect(result.data?.high).toBe(140)
+    expect(result.data?.low).toBe(112)
+  })
+
+  it('should ignore splits that occurred before gift date', async () => {
+    // Gift date: 2021-01-15
+    // Split date: 2020-08-31 - BEFORE gift date, should be ignored
+    const giftDate = '2021-01-15'
+    const splitTimestamp = 1598832000 // 2020-08-31
+
+    const mockResponse = createMockYahooResponse({
+      high: 130,
+      low: 125,
+      splits: [
+        {
+          date: splitTimestamp,
+          numerator: 4,
+          denominator: 1,
+        },
+      ],
+    })
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
+
+    const request: StockPriceRequest = {
+      ticker: TEST_TICKER_AAPL,
+      date: giftDate,
+    }
+
+    const result = await handleStockPriceRequest(request)
+
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    // Prices should NOT be adjusted since split was before gift date
+    expect(result.data?.high).toBe(130)
+    expect(result.data?.low).toBe(125)
+  })
+
+  it('should handle reverse splits (consolidation)', async () => {
+    // Gift date: 2020-01-15
+    // Reverse split: 1-for-10 (stock consolidation)
+    const giftDate = '2020-01-15'
+
+    const mockResponse = createMockYahooResponse({
+      high: 50, // Post-consolidation adjusted price
+      low: 45,
+      splits: [
+        {
+          date: 1598832000,
+          numerator: 1,
+          denominator: 10, // 1-for-10 reverse split
+        },
+      ],
+    })
+
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      createMockFetchResponse(mockResponse) as Response
+    )
+
+    const request: StockPriceRequest = {
+      ticker: 'XYZ',
+      date: giftDate,
+    }
+
+    const result = await handleStockPriceRequest(request)
+
+    expect(result.status).toBe(HTTP_STATUS_OK)
+    // For reverse split, multiply by 1/10 = 0.1
+    expect(result.data?.high).toBe(5)
+    expect(result.data?.low).toBe(4.5)
   })
 })

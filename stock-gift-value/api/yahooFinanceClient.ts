@@ -6,6 +6,16 @@ import { HTTP_STATUS, SECONDS_PER_DAY } from './constants.js'
 import type { StockPriceData, StockPriceResponse } from '../shared/types.js'
 
 /**
+ * Split event from Yahoo Finance
+ */
+interface SplitEvent {
+  date: number
+  numerator: number
+  denominator: number
+  splitRatio?: string
+}
+
+/**
  * Yahoo Finance API response structure
  */
 interface YahooFinanceResponse {
@@ -13,9 +23,12 @@ interface YahooFinanceResponse {
     result?: Array<{
       indicators?: {
         quote?: Array<{
-          high?: number[]
-          low?: number[]
+          high?: (number | null)[]
+          low?: (number | null)[]
         }>
+      }
+      events?: {
+        splits?: Record<string, SplitEvent>
       }
     }>
     error?: {
@@ -26,6 +39,7 @@ interface YahooFinanceResponse {
 
 /**
  * Build Yahoo Finance API URL for stock price data
+ * Fetches from target date to now to capture any splits that occurred after the gift date
  */
 function buildYahooFinanceUrl(
   normalizedTicker: string,
@@ -33,9 +47,10 @@ function buildYahooFinanceUrl(
 ): string {
   const targetDate = new Date(date)
   const startTimestamp = Math.floor(targetDate.getTime() / 1000)
-  const endTimestamp = startTimestamp + SECONDS_PER_DAY
+  // Fetch to current time to get all splits after the gift date
+  const endTimestamp = Math.floor(Date.now() / 1000)
 
-  return `https://query1.finance.yahoo.com/v8/finance/chart/${normalizedTicker}?period1=${startTimestamp}&period2=${endTimestamp}&interval=1d`
+  return `https://query1.finance.yahoo.com/v8/finance/chart/${normalizedTicker}?period1=${startTimestamp}&period2=${endTimestamp}&interval=1d&events=split`
 }
 
 /**
@@ -60,7 +75,41 @@ function validateYahooResponse(
 }
 
 /**
+ * Calculate the cumulative split ratio for all splits that occurred after the target date.
+ * Yahoo Finance returns split-adjusted historical prices, so we need to multiply
+ * by this ratio to get the original unadjusted prices.
+ *
+ * For example, if a stock had a 4-for-1 split after the gift date:
+ * - Yahoo returns adjusted price: $25
+ * - Split ratio: 4/1 = 4
+ * - Original price: $25 * 4 = $100
+ */
+function calculateSplitAdjustment(
+  splits: Record<string, SplitEvent> | undefined,
+  targetDateTimestamp: number
+): number {
+  if (!splits) {
+    return 1
+  }
+
+  let cumulativeRatio = 1
+
+  for (const split of Object.values(splits)) {
+    // Only include splits that occurred AFTER the target date
+    if (split.date > targetDateTimestamp) {
+      // numerator = new shares, denominator = old shares
+      // e.g., 4-for-1 split: numerator=4, denominator=1
+      // To undo: multiply adjusted price by (numerator / denominator)
+      cumulativeRatio *= split.numerator / split.denominator
+    }
+  }
+
+  return cumulativeRatio
+}
+
+/**
  * Extract stock price data from Yahoo Finance response
+ * Adjusts prices to undo any stock splits that occurred after the target date
  */
 function extractStockPriceData(
   json: YahooFinanceResponse,
@@ -77,16 +126,37 @@ function extractStockPriceData(
     }
   }
 
-  const high = quote.high[0]
-  const low = quote.low[0]
+  // Get the first day's data (the target date)
+  const adjustedHigh = quote.high[0]
+  const adjustedLow = quote.low[0]
 
-  if (high === null || high === undefined || low === null || low === undefined) {
+  if (
+    adjustedHigh === null ||
+    adjustedHigh === undefined ||
+    adjustedLow === null ||
+    adjustedLow === undefined
+  ) {
     return {
       status: HTTP_STATUS.NOT_FOUND,
       error:
         'No trading data available for this date (market may have been closed)',
     }
   }
+
+  // Calculate split adjustment to get original unadjusted prices
+  const targetDate = new Date(date)
+  // Use end of target day to only include splits that occurred on subsequent days
+  const targetDateEndTimestamp =
+    Math.floor(targetDate.getTime() / 1000) + SECONDS_PER_DAY
+
+  const splitRatio = calculateSplitAdjustment(
+    result?.events?.splits,
+    targetDateEndTimestamp
+  )
+
+  // Multiply by split ratio to undo the adjustment
+  const high = adjustedHigh * splitRatio
+  const low = adjustedLow * splitRatio
 
   const stockData: StockPriceData = {
     date,
@@ -103,6 +173,7 @@ function extractStockPriceData(
 
 /**
  * Fetch stock price data from Yahoo Finance API
+ * Returns unadjusted prices by reversing any stock split adjustments
  */
 export async function fetchFromYahooFinance(
   normalizedTicker: string,
