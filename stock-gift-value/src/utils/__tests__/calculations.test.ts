@@ -24,7 +24,13 @@ const EXPECTED_VALUE_12345 = 12345.0
 
 const PRICE_HIGH_10_004 = 10.004
 const PRICE_LOW_10_002 = 10.002
-const EXPECTED_VALUE_1000_3 = 1000.3
+const EXPECTED_VALUE_1000_0 = 1000.0
+
+// COWZ test case - demonstrates rounding high/low to pennies first
+const COWZ_HIGH = 61.56999969482422
+const COWZ_LOW = 61.13399887084961
+const COWZ_SHARES = 53
+const COWZ_EXPECTED_VALUE = 3251.55
 
 const PRICE_HIGH_10_006 = 10.006
 const PRICE_LOW_10_004 = 10.004
@@ -82,19 +88,34 @@ describe('calculateStockGiftValue', () => {
   })
 
   it('should round to cents correctly', () => {
+    // With rounding to pennies first: 10.004 -> 10.00, 10.002 -> 10.00
+    // Average = 10.00, total = 10.00 * 100 = 1000.0
     const result1 = calculateStockGiftValue(
       PRICE_HIGH_10_004,
       PRICE_LOW_10_002,
       SHARES_100
     )
-    expect(result1).toBe(EXPECTED_VALUE_1000_3)
+    expect(result1).toBe(EXPECTED_VALUE_1000_0)
 
+    // With rounding to pennies first: 10.006 -> 10.01, 10.004 -> 10.00
+    // Average = 10.005, total = 10.005 * 100 = 1000.5
     const result2 = calculateStockGiftValue(
       PRICE_HIGH_10_006,
       PRICE_LOW_10_004,
       SHARES_100
     )
     expect(result2).toBe(EXPECTED_VALUE_1000_5)
+  })
+
+  it('should round high/low prices to pennies before calculating average (COWZ case)', () => {
+    // This tests the fix for the rounding bug where high/low prices should be
+    // rounded to nearest penny before computing the average
+    // high: 61.56999969482422 -> 61.57
+    // low: 61.13399887084961 -> 61.13
+    // average: (61.57 + 61.13) / 2 = 61.35
+    // total: 61.35 * 53 = 3251.55
+    const result = calculateStockGiftValue(COWZ_HIGH, COWZ_LOW, COWZ_SHARES)
+    expect(result).toBe(COWZ_EXPECTED_VALUE)
   })
 
   it('should handle single share correctly', () => {
