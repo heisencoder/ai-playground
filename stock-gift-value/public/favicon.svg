@@ -1,30 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
   <!-- Transparent background -->
 
-  <!-- Left hand palm-up (wrist on left, fingertips on right) -->
-  <g fill="#c9a07a">
-    <!-- Palm -->
-    <ellipse cx="12" cy="24" rx="6" ry="5"/>
-    <!-- Thumb (at top) -->
-    <ellipse cx="9" cy="17" rx="2" ry="3.5"/>
-    <!-- Index finger -->
-    <rect x="14" y="19" width="10" height="2.5" rx="1.25"/>
-    <!-- Middle finger -->
-    <rect x="14" y="22" width="12" height="2.5" rx="1.25"/>
-    <!-- Ring finger -->
-    <rect x="14" y="25" width="10" height="2.5" rx="1.25"/>
-    <!-- Pinky finger -->
-    <rect x="14" y="28" width="7" height="2.5" rx="1.25"/>
+  <!-- Left hand side view (wrist left, one finger visible, thumb on palm) -->
+  <g>
     <!-- Wrist -->
-    <rect x="2" y="21" width="8" height="6" rx="2"/>
+    <rect x="1" y="22" width="7" height="5" rx="2" fill="#c9a07a" stroke="#000" stroke-width="0.5"/>
+    <!-- Palm -->
+    <ellipse cx="12" cy="24" rx="6" ry="5" fill="#c9a07a" stroke="#000" stroke-width="0.5"/>
+    <!-- Single finger (side view) -->
+    <rect x="17" y="22" width="11" height="4" rx="2" fill="#c9a07a" stroke="#000" stroke-width="0.5"/>
+    <!-- Thumb resting on palm -->
+    <ellipse cx="12" cy="20" rx="3" ry="2" fill="#c9a07a" stroke="#000" stroke-width="0.5"/>
   </g>
 
-  <!-- Green dollar sign with single vertical bar, sitting in palm -->
+  <!-- Green dollar sign centered on icon (x=16), with black outline -->
   <g>
-    <!-- Vertical bar - bottom sits in center of palm -->
-    <rect x="10.5" y="2" width="3" height="20" rx="1.5" fill="#16a34a"/>
-    <!-- S curve (correct orientation: top curves right, bottom curves right) -->
-    <path d="M17 5 C17 3 15 1.5 12 1.5 C9 1.5 7 3 7 5 C7 7 9 8 12 9 C15 10 17 11 17 13 C17 15 15 16.5 12 16.5 C9 16.5 7 15 7 13"
-          stroke="#16a34a" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- S curve (centered at x=16) -->
+    <path d="M21 5 C21 2.5 18.5 1 16 1 C13.5 1 11 2.5 11 5 C11 7.5 13.5 8.5 16 9.5 C18.5 10.5 21 11.5 21 14 C21 16.5 18.5 18 16 18 C13.5 18 11 16.5 11 14"
+          stroke="#000" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M21 5 C21 2.5 18.5 1 16 1 C13.5 1 11 2.5 11 5 C11 7.5 13.5 8.5 16 9.5 C18.5 10.5 21 11.5 21 14 C21 16.5 18.5 18 16 18 C13.5 18 11 16.5 11 14"
+          stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <!-- Vertical bar centered at x=16, bottom in palm -->
+    <rect x="14.25" y="0" width="3.5" height="22" rx="1.75" fill="#000"/>
+    <rect x="14.75" y="0.5" width="2.5" height="21" rx="1.25" fill="#16a34a"/>
   </g>
 </svg>
