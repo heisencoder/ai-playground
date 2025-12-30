@@ -477,20 +477,15 @@
   color: #374151;
 }
 
-/* FMV Info Popup */
+/* FMV Info Popup - positioned via portal with fixed positioning */
 .fmv-info-popup {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
   background: white;
   border: 1px solid #d1d5db;
   border-radius: 8px;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  z-index: 100;
-  width: 280px;
+  z-index: 1000;
 }
 
 .fmv-info-header {
@@ -587,11 +582,6 @@
   color: #059669;
 }
 
-/* Make value cell position relative for popup positioning */
-.stock-gift-table td.value-cell {
-  position: relative;
-}
-
 /* Mobile responsive styles for FMV popup */
 @media (max-width: 768px) {
   .fmv-info-button {
@@ -608,14 +598,14 @@
   }
 
   .fmv-info-popup {
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    /* Override inline styles for mobile bottom sheet */
+    position: fixed !important;
+    top: auto !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: auto !important;
     margin: 0;
-    max-width: none;
-    min-width: auto;
     border-radius: 12px 12px 0 0;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   }

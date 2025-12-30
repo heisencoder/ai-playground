@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FMVInfoPopup } from '../FMVInfoPopup'
 import { getFMVCalculationDetails } from '../../utils/calculations'
+import React, { useRef } from 'react'
 
 // Test constants
 const BRK_B_HIGH = 500.16
@@ -20,6 +21,39 @@ const SIMPLE_HIGH = 100
 const SIMPLE_LOW = 90
 const SIMPLE_SHARES = 10
 
+// Helper component that provides a mock anchor ref
+function FMVInfoPopupWithAnchor({
+  highPrice,
+  lowPrice,
+  shares,
+  onClose,
+}: {
+  highPrice: number
+  lowPrice: number
+  shares: number
+  onClose: () => void
+}): React.JSX.Element {
+  const buttonRef = useRef<HTMLButtonElement>(null)
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        style={{ position: 'fixed', top: 100, right: 100 }}
+      >
+        Anchor
+      </button>
+      <FMVInfoPopup
+        highPrice={highPrice}
+        lowPrice={lowPrice}
+        shares={shares}
+        onClose={onClose}
+        anchorRef={buttonRef}
+      />
+    </>
+  )
+}
+
 describe('FMVInfoPopup - Rendering', () => {
   const mockOnClose = vi.fn()
 
@@ -36,7 +70,7 @@ describe('FMVInfoPopup - Rendering', () => {
     )
 
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={BRK_B_HIGH}
         lowPrice={BRK_B_LOW}
         shares={BRK_B_SHARES}
@@ -69,7 +103,7 @@ describe('FMVInfoPopup - Rendering', () => {
 
   it('should display rounded values from raw API prices (not raw values)', () => {
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={COWZ_HIGH}
         lowPrice={COWZ_LOW}
         shares={COWZ_SHARES}
@@ -90,7 +124,7 @@ describe('FMVInfoPopup - Rendering', () => {
 
   it('should have proper accessibility attributes', () => {
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={SIMPLE_HIGH}
         lowPrice={SIMPLE_LOW}
         shares={SIMPLE_SHARES}
@@ -116,7 +150,7 @@ describe('FMVInfoPopup - Close Button', () => {
     const user = userEvent.setup()
 
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={SIMPLE_HIGH}
         lowPrice={SIMPLE_LOW}
         shares={SIMPLE_SHARES}
@@ -147,7 +181,7 @@ describe('FMVInfoPopup - Click Outside Dismissal', () => {
     render(
       <div>
         <div data-testid="outside-element">Outside content</div>
-        <FMVInfoPopup
+        <FMVInfoPopupWithAnchor
           highPrice={SIMPLE_HIGH}
           lowPrice={SIMPLE_LOW}
           shares={SIMPLE_SHARES}
@@ -167,7 +201,7 @@ describe('FMVInfoPopup - Click Outside Dismissal', () => {
 
   it('should not call onClose when clicking inside the popup', async () => {
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={SIMPLE_HIGH}
         lowPrice={SIMPLE_LOW}
         shares={SIMPLE_SHARES}
@@ -186,7 +220,7 @@ describe('FMVInfoPopup - Click Outside Dismissal', () => {
 
   it('should not immediately dismiss on the click that opens it', () => {
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={SIMPLE_HIGH}
         lowPrice={SIMPLE_LOW}
         shares={SIMPLE_SHARES}
@@ -211,7 +245,7 @@ describe('FMVInfoPopup - Escape Key Dismissal', () => {
 
   it('should call onClose when Escape key is pressed', () => {
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={SIMPLE_HIGH}
         lowPrice={SIMPLE_LOW}
         shares={SIMPLE_SHARES}
@@ -226,7 +260,7 @@ describe('FMVInfoPopup - Escape Key Dismissal', () => {
 
   it('should not call onClose for other keys', () => {
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={SIMPLE_HIGH}
         lowPrice={SIMPLE_LOW}
         shares={SIMPLE_SHARES}
@@ -252,7 +286,7 @@ describe('FMVInfoPopup - Half-Penny Display', () => {
     const SHARES = 100
 
     render(
-      <FMVInfoPopup
+      <FMVInfoPopupWithAnchor
         highPrice={HIGH}
         lowPrice={LOW}
         shares={SHARES}

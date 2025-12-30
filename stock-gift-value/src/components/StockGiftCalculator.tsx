@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useState, useRef, type JSX } from 'react'
 import { formatCurrency, isValidDate } from '../utils/calculations'
 import { useGiftManagement } from '../hooks/useGiftManagement'
 import { useGiftValueCalculation } from '../hooks/useGiftValueCalculation'
@@ -26,8 +26,18 @@ export function StockGiftCalculator(): JSX.Element {
   const { setInputRef, handleKeyDown } = useKeyboardNavigation()
   const { copyMessage, handleCopy } = useClipboard(isRowEmpty)
 
-  // Track which gift's FMV info popup is open
+  // Track which gift's FMV info popup is open and store button refs
   const [openFMVInfoId, setOpenFMVInfoId] = useState<string | null>(null)
+  const fmvButtonRefs = useRef<Map<string, HTMLButtonElement | null>>(new Map())
+
+  // Get ref for the currently open popup's button
+  const getOpenButtonRef = (): React.RefObject<HTMLButtonElement | null> => {
+    return {
+      current: openFMVInfoId
+        ? (fmvButtonRefs.current.get(openFMVInfoId) ?? null)
+        : null,
+    }
+  }
 
   // Automatically calculate values when inputs change
   useGiftValueCalculation(gifts, updateGift)
@@ -147,6 +157,9 @@ export function StockGiftCalculator(): JSX.Element {
                         {formatCurrency(gift.value)}
                       </span>
                       <button
+                        ref={(el) => {
+                          fmvButtonRefs.current.set(gift.id, el)
+                        }}
                         type="button"
                         className="fmv-info-button"
                         onClick={() => setOpenFMVInfoId(gift.id)}
@@ -160,16 +173,6 @@ export function StockGiftCalculator(): JSX.Element {
                   {!gift.loading && !gift.error && gift.value === undefined && (
                     <span className="placeholder">—</span>
                   )}
-                  {openFMVInfoId === gift.id &&
-                    gift.highPrice !== undefined &&
-                    gift.lowPrice !== undefined && (
-                      <FMVInfoPopup
-                        highPrice={gift.highPrice}
-                        lowPrice={gift.lowPrice}
-                        shares={gift.shares}
-                        onClose={() => setOpenFMVInfoId(null)}
-                      />
-                    )}
                 </td>
                 <td className="actions-cell">
                   {!isRowEmpty(gift) && (
@@ -189,6 +192,22 @@ export function StockGiftCalculator(): JSX.Element {
           </tbody>
         </table>
       </div>
+
+      {/* Render popup outside table to avoid scrollbar issues */}
+      {openFMVInfoId !== null &&
+        (() => {
+          const gift = gifts.find((g) => g.id === openFMVInfoId)
+          return gift?.highPrice !== undefined &&
+            gift?.lowPrice !== undefined ? (
+            <FMVInfoPopup
+              highPrice={gift.highPrice}
+              lowPrice={gift.lowPrice}
+              shares={gift.shares}
+              onClose={() => setOpenFMVInfoId(null)}
+              anchorRef={getOpenButtonRef()}
+            />
+          ) : null
+        })()}
     </div>
   )
 }

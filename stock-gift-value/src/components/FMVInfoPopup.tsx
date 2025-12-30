@@ -1,14 +1,23 @@
-import { useEffect, useRef, type JSX } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react'
+import { createPortal } from 'react-dom'
 import { getFMVCalculationDetails, formatCurrency } from '../utils/calculations'
 
 const DECIMAL_PLACES_TWO = 2
 const DECIMAL_PLACES_THREE = 3
+const POPUP_WIDTH = 280
+const POPUP_MARGIN = 8
 
 export interface FMVInfoPopupProps {
   highPrice: number
   lowPrice: number
   shares: number
   onClose: () => void
+  anchorRef: React.RefObject<HTMLButtonElement | null>
+}
+
+interface PopupPosition {
+  top: number
+  left: number
 }
 
 /**
@@ -19,19 +28,48 @@ function formatDecimal(value: number, decimals: number): string {
 }
 
 /**
+ * Calculate the popup position based on the anchor element
+ */
+function calculatePosition(
+  anchorRef: React.RefObject<HTMLButtonElement | null>
+): PopupPosition {
+  if (!anchorRef.current) {
+    return { top: 0, left: 0 }
+  }
+
+  const rect = anchorRef.current.getBoundingClientRect()
+
+  // Position below the button, aligned to the right edge
+  const top = rect.bottom + POPUP_MARGIN
+  // Align right edge of popup with right edge of button
+  const left = rect.right - POPUP_WIDTH
+
+  return { top, left }
+}
+
+/**
  * Popup component that displays the FMV calculation breakdown
  * Shows high/low prices, average, and final calculation with proper precision
+ * Uses a Portal to render outside the table to avoid scrollbar issues
  */
+/* eslint-disable-next-line max-lines-per-function -- Component with portal, positioning, and event handlers */
 export function FMVInfoPopup({
   highPrice,
   lowPrice,
   shares,
   onClose,
+  anchorRef,
 }: FMVInfoPopupProps): JSX.Element {
   const popupRef = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<PopupPosition>({ top: 0, left: 0 })
 
   // Get all the calculation details
   const details = getFMVCalculationDetails(highPrice, lowPrice, shares)
+
+  // Calculate position on mount and when anchor changes
+  useEffect(() => {
+    setPosition(calculatePosition(anchorRef))
+  }, [anchorRef])
 
   // Handle click outside to close
   useEffect(() => {
@@ -69,12 +107,18 @@ export function FMVInfoPopup({
     }
   }, [onClose])
 
-  return (
+  const popupContent = (
     <div
       ref={popupRef}
       className="fmv-info-popup"
       role="dialog"
       aria-label="Fair Market Value calculation details"
+      style={{
+        position: 'fixed',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        width: `${POPUP_WIDTH}px`,
+      }}
     >
       <div className="fmv-info-header">
         <span className="fmv-info-title">FMV Calculation</span>
@@ -129,4 +173,7 @@ export function FMVInfoPopup({
       </div>
     </div>
   )
+
+  // Render using a portal to place popup outside the table DOM hierarchy
+  return createPortal(popupContent, document.body)
 }
