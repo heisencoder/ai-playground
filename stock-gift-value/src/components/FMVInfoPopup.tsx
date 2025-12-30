@@ -2,8 +2,6 @@ import { useEffect, useRef, useState, type JSX } from 'react'
 import { createPortal } from 'react-dom'
 import { getFMVCalculationDetails, formatCurrency } from '../utils/calculations'
 
-const DECIMAL_PLACES_TWO = 2
-const DECIMAL_PLACES_THREE = 3
 const POPUP_WIDTH = 280
 const POPUP_MARGIN = 8
 
@@ -138,21 +136,22 @@ export function FMVInfoPopup({
         <div className="fmv-calculation-step">
           <span className="fmv-step-label">Day High:</span>
           <span className="fmv-step-value">
-            ${formatDecimal(details.roundedHigh, DECIMAL_PLACES_TWO)}
+            ${formatDecimal(details.roundedHigh, details.priceDecimalPlaces)}
           </span>
         </div>
         <div className="fmv-calculation-step">
           <span className="fmv-step-label">Day Low:</span>
           <span className="fmv-step-value">
-            ${formatDecimal(details.roundedLow, DECIMAL_PLACES_TWO)}
+            ${formatDecimal(details.roundedLow, details.priceDecimalPlaces)}
           </span>
         </div>
         <div className="fmv-calculation-step fmv-step-divider">
           <span className="fmv-step-label">Average:</span>
           <span className="fmv-step-value">
-            (${formatDecimal(details.roundedHigh, DECIMAL_PLACES_TWO)} + $
-            {formatDecimal(details.roundedLow, DECIMAL_PLACES_TWO)}) / 2 = $
-            {formatDecimal(details.averagePrice, DECIMAL_PLACES_THREE)}
+            (${formatDecimal(details.roundedHigh, details.priceDecimalPlaces)} +
+            ${formatDecimal(details.roundedLow, details.priceDecimalPlaces)}) /
+            2 = $
+            {formatDecimal(details.averagePrice, details.averageDecimalPlaces)}
           </span>
         </div>
         <div className="fmv-calculation-step">
@@ -162,9 +161,12 @@ export function FMVInfoPopup({
         <div className="fmv-calculation-step fmv-step-divider">
           <span className="fmv-step-label">Total:</span>
           <span className="fmv-step-value">
-            ${formatDecimal(details.averagePrice, DECIMAL_PLACES_THREE)} &times;{' '}
-            {shares} = $
-            {formatDecimal(details.totalBeforeRounding, DECIMAL_PLACES_THREE)}
+            ${formatDecimal(details.averagePrice, details.averageDecimalPlaces)}{' '}
+            &times; {shares} = $
+            {formatDecimal(
+              details.totalBeforeRounding,
+              details.averageDecimalPlaces
+            )}
           </span>
         </div>
         <div className="fmv-calculation-step fmv-step-result">
