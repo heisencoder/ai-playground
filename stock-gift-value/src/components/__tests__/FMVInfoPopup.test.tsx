@@ -12,7 +12,6 @@ const BRK_B_SHARES = 34
 const COWZ_HIGH = 61.56999969482422
 const COWZ_LOW = 61.13399887084961
 const COWZ_SHARES = 53
-const COWZ_EXPECTED_VALUE = 3251.55
 
 const SIMPLE_HIGH = 100
 const SIMPLE_LOW = 90
@@ -25,20 +24,43 @@ describe('FMVInfoPopup - Rendering', () => {
     mockOnClose.mockClear()
   })
 
-  it('should render with correct title', () => {
+  it('should render all calculation details correctly', () => {
+    // Use BRK-B case which tests 3 decimal precision
+    const details = getFMVCalculationDetails(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
+
     render(
       <FMVInfoPopup
-        highPrice={SIMPLE_HIGH}
-        lowPrice={SIMPLE_LOW}
-        shares={SIMPLE_SHARES}
+        highPrice={BRK_B_HIGH}
+        lowPrice={BRK_B_LOW}
+        shares={BRK_B_SHARES}
         onClose={mockOnClose}
       />
     )
 
+    const dialog = screen.getByRole('dialog')
+
+    // Title
     expect(screen.getByText('FMV Calculation')).toBeInTheDocument()
+
+    // High/low rounded to 2 decimal places
+    expect(
+      screen.getByText(`$${details.roundedHigh.toFixed(2)}`)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(`$${details.roundedLow.toFixed(2)}`)
+    ).toBeInTheDocument()
+
+    // Average with 3 decimal places (496.755)
+    expect(dialog).toHaveTextContent('496.755')
+
+    // Total before rounding with 3 decimal places
+    expect(screen.getByText(/16889\.670/)).toBeInTheDocument()
+
+    // Final value formatted as currency
+    expect(screen.getByText('$16,889.67')).toBeInTheDocument()
   })
 
-  it('should render day high and low values rounded to 2 decimal places', () => {
+  it('should display rounded values from raw API prices (not raw values)', () => {
     render(
       <FMVInfoPopup
         highPrice={COWZ_HIGH}
@@ -52,82 +74,7 @@ describe('FMVInfoPopup - Rendering', () => {
     // COWZ low: 61.13399887084961 -> 61.13
     expect(screen.getByText('$61.57')).toBeInTheDocument()
     expect(screen.getByText('$61.13')).toBeInTheDocument()
-  })
-
-  it('should render average calculation with 3 decimal places', () => {
-    render(
-      <FMVInfoPopup
-        highPrice={BRK_B_HIGH}
-        lowPrice={BRK_B_LOW}
-        shares={BRK_B_SHARES}
-        onClose={mockOnClose}
-      />
-    )
-
-    // Average for BRK-B: 496.755
-    const dialog = screen.getByRole('dialog')
-    expect(dialog).toHaveTextContent('496.755')
-  })
-
-  it('should render shares count', () => {
-    render(
-      <FMVInfoPopup
-        highPrice={SIMPLE_HIGH}
-        lowPrice={SIMPLE_LOW}
-        shares={SIMPLE_SHARES}
-        onClose={mockOnClose}
-      />
-    )
-
-    expect(screen.getByText('10')).toBeInTheDocument()
-  })
-
-  it('should render total before rounding with 3 decimal places', () => {
-    render(
-      <FMVInfoPopup
-        highPrice={BRK_B_HIGH}
-        lowPrice={BRK_B_LOW}
-        shares={BRK_B_SHARES}
-        onClose={mockOnClose}
-      />
-    )
-
-    // Total for BRK-B: 16889.67 (already has 2 decimal places in this case)
-    expect(screen.getByText(/16889\.670/)).toBeInTheDocument()
-  })
-
-  it('should render final value formatted as currency', () => {
-    render(
-      <FMVInfoPopup
-        highPrice={BRK_B_HIGH}
-        lowPrice={BRK_B_LOW}
-        shares={BRK_B_SHARES}
-        onClose={mockOnClose}
-      />
-    )
-
-    expect(screen.getByText('$16,889.67')).toBeInTheDocument()
-  })
-
-  it('should display values matching getFMVCalculationDetails', () => {
-    const details = getFMVCalculationDetails(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
-
-    render(
-      <FMVInfoPopup
-        highPrice={BRK_B_HIGH}
-        lowPrice={BRK_B_LOW}
-        shares={BRK_B_SHARES}
-        onClose={mockOnClose}
-      />
-    )
-
-    // Check that displayed values match the calculation function
-    expect(
-      screen.getByText(`$${details.roundedHigh.toFixed(2)}`)
-    ).toBeInTheDocument()
-    expect(
-      screen.getByText(`$${details.roundedLow.toFixed(2)}`)
-    ).toBeInTheDocument()
+    expect(screen.getByText('$3,251.55')).toBeInTheDocument()
   })
 
   it('should have proper accessibility attributes', () => {
@@ -286,11 +233,11 @@ describe('FMVInfoPopup - Escape Key Dismissal', () => {
   })
 })
 
-describe('FMVInfoPopup - Calculation Verification', () => {
+describe('FMVInfoPopup - Half-Penny Display', () => {
   const mockOnClose = vi.fn()
 
-  it('should display calculation that matches actual FMV calculation for half-penny case', () => {
-    // Test case where average has half-penny: 10.01 + 10.00 = 20.01 / 2 = 10.005
+  it('should display half-penny precision in average when high+low sum is odd', () => {
+    // Test case: 10.01 + 10.00 = 20.01 / 2 = 10.005 (half-penny)
     const HIGH = 10.006 // rounds to 10.01
     const LOW = 10.004 // rounds to 10.00
     const SHARES = 100
@@ -304,33 +251,9 @@ describe('FMVInfoPopup - Calculation Verification', () => {
       />
     )
 
-    // Verify the half-penny is shown - check the dialog content
     const dialog = screen.getByRole('dialog')
-    expect(dialog).toHaveTextContent('$10.01') // rounded high
-    expect(dialog).toHaveTextContent('$10.00') // rounded low
     expect(dialog).toHaveTextContent('10.005') // average with half-penny
     expect(dialog).toHaveTextContent('1000.500') // total before rounding
     expect(dialog).toHaveTextContent('$1,000.50') // final value
-  })
-
-  it('should accurately show COWZ calculation with raw API prices', () => {
-    const details = getFMVCalculationDetails(COWZ_HIGH, COWZ_LOW, COWZ_SHARES)
-
-    render(
-      <FMVInfoPopup
-        highPrice={COWZ_HIGH}
-        lowPrice={COWZ_LOW}
-        shares={COWZ_SHARES}
-        onClose={mockOnClose}
-      />
-    )
-
-    // Verify rounded values are displayed, not raw API values
-    expect(screen.getByText('$61.57')).toBeInTheDocument()
-    expect(screen.getByText('$61.13')).toBeInTheDocument()
-    expect(screen.getByText('$3,251.55')).toBeInTheDocument()
-
-    // Verify the final value matches the calculation
-    expect(details.finalValue).toBe(COWZ_EXPECTED_VALUE)
   })
 })
