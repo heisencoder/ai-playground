@@ -260,7 +260,11 @@ describe('getFMVCalculationDetails', () => {
   })
 
   it('should return correct calculation details for BRK-B case', () => {
-    const details = getFMVCalculationDetails(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
+    const details = getFMVCalculationDetails(
+      BRK_B_HIGH,
+      BRK_B_LOW,
+      BRK_B_SHARES
+    )
 
     expect(details.roundedHigh).toBe(BRK_B_EXPECTED_ROUNDED_HIGH)
     expect(details.roundedLow).toBe(BRK_B_EXPECTED_ROUNDED_LOW)

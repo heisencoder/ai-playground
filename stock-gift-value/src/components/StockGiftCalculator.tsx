@@ -143,7 +143,9 @@ export function StockGiftCalculator(): JSX.Element {
                   {gift.error && <span className="error">{gift.error}</span>}
                   {!gift.loading && !gift.error && gift.value !== undefined && (
                     <span className="value-with-info">
-                      <span className="value">{formatCurrency(gift.value)}</span>
+                      <span className="value">
+                        {formatCurrency(gift.value)}
+                      </span>
                       <button
                         type="button"
                         className="fmv-info-button"

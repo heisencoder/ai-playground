@@ -559,8 +559,9 @@
 .fmv-step-value {
   color: #111827;
   text-align: right;
-  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
-    'Liberation Mono', monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono',
+    monospace;
   font-size: 0.75rem;
   word-break: break-word;
 }

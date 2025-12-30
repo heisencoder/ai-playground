@@ -1,8 +1,5 @@
 import { useEffect, useRef, type JSX } from 'react'
-import {
-  getFMVCalculationDetails,
-  formatCurrency,
-} from '../utils/calculations'
+import { getFMVCalculationDetails, formatCurrency } from '../utils/calculations'
 
 const DECIMAL_PLACES_TWO = 2
 const DECIMAL_PLACES_THREE = 3
@@ -119,7 +116,8 @@ export function FMVInfoPopup({
           <span className="fmv-step-label">Total:</span>
           <span className="fmv-step-value">
             ${formatDecimal(details.averagePrice, DECIMAL_PLACES_THREE)} &times;{' '}
-            {shares} = ${formatDecimal(details.totalBeforeRounding, DECIMAL_PLACES_THREE)}
+            {shares} = $
+            {formatDecimal(details.totalBeforeRounding, DECIMAL_PLACES_THREE)}
           </span>
         </div>
         <div className="fmv-calculation-step fmv-step-result">

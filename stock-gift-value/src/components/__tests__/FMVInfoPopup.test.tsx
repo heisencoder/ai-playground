@@ -29,7 +29,11 @@ describe('FMVInfoPopup - Rendering', () => {
 
   it('should render all calculation details correctly', () => {
     // Use BRK-B case which tests 3 decimal precision
-    const details = getFMVCalculationDetails(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
+    const details = getFMVCalculationDetails(
+      BRK_B_HIGH,
+      BRK_B_LOW,
+      BRK_B_SHARES
+    )
 
     render(
       <FMVInfoPopup
@@ -75,8 +79,12 @@ describe('FMVInfoPopup - Rendering', () => {
 
     // COWZ high: 61.56999969482422 -> 61.57
     // COWZ low: 61.13399887084961 -> 61.13
-    expect(screen.getByText(`$${COWZ_ROUNDED_HIGH.toFixed(2)}`)).toBeInTheDocument()
-    expect(screen.getByText(`$${COWZ_ROUNDED_LOW.toFixed(2)}`)).toBeInTheDocument()
+    expect(
+      screen.getByText(`$${COWZ_ROUNDED_HIGH.toFixed(2)}`)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(`$${COWZ_ROUNDED_LOW.toFixed(2)}`)
+    ).toBeInTheDocument()
     expect(screen.getByText(COWZ_EXPECTED_FMV)).toBeInTheDocument()
   })
 
@@ -93,9 +101,7 @@ describe('FMVInfoPopup - Rendering', () => {
     expect(
       screen.getByRole('dialog', { name: /fair market value calculation/i })
     ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: /close/i })
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument()
   })
 })
 
