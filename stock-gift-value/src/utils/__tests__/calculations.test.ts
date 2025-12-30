@@ -13,10 +13,20 @@ const PRICE_LOW_90 = 90
 const SHARES_10 = 10
 const EXPECTED_VALUE_950 = 950.0
 
+// FMV calculation detail constants for basic case
+const EXPECTED_ROUNDED_HIGH_100 = 100.0
+const EXPECTED_ROUNDED_LOW_90 = 90.0
+const EXPECTED_AVERAGE_95 = 95.0
+
 const BRK_B_HIGH = 500.16
 const BRK_B_LOW = 493.35
 const BRK_B_SHARES = 34
 const BRK_B_EXPECTED_VALUE = 16889.67
+
+// FMV calculation detail constants for BRK-B case
+const BRK_B_EXPECTED_ROUNDED_HIGH = 500.16
+const BRK_B_EXPECTED_ROUNDED_LOW = 493.35
+const BRK_B_EXPECTED_AVERAGE = 496.755
 
 const PRICE_HIGH_123_456 = 123.456
 const PRICE_LOW_123_444 = 123.444
@@ -33,9 +43,19 @@ const COWZ_LOW = 61.13399887084961
 const COWZ_SHARES = 53
 const COWZ_EXPECTED_VALUE = 3251.55
 
+// FMV calculation detail constants for COWZ case
+const COWZ_EXPECTED_ROUNDED_HIGH = 61.57
+const COWZ_EXPECTED_ROUNDED_LOW = 61.13
+const COWZ_EXPECTED_AVERAGE = 61.35
+
 const PRICE_HIGH_10_006 = 10.006
 const PRICE_LOW_10_004 = 10.004
 const EXPECTED_VALUE_1000_5 = 1000.5
+
+// FMV calculation detail constants for half-penny case
+const EXPECTED_ROUNDED_HIGH_10_01 = 10.01
+const EXPECTED_ROUNDED_LOW_10_0 = 10.0
+const EXPECTED_AVERAGE_10_005 = 10.005
 
 const PRICE_HIGH_150_5 = 150.5
 const PRICE_LOW_149_5 = 149.5
@@ -232,20 +252,20 @@ describe('getFMVCalculationDetails', () => {
       SHARES_10
     )
 
-    expect(details.roundedHigh).toBe(100.0)
-    expect(details.roundedLow).toBe(90.0)
-    expect(details.averagePrice).toBe(95.0)
-    expect(details.totalBeforeRounding).toBe(950.0)
-    expect(details.finalValue).toBe(950.0)
+    expect(details.roundedHigh).toBe(EXPECTED_ROUNDED_HIGH_100)
+    expect(details.roundedLow).toBe(EXPECTED_ROUNDED_LOW_90)
+    expect(details.averagePrice).toBe(EXPECTED_AVERAGE_95)
+    expect(details.totalBeforeRounding).toBe(EXPECTED_VALUE_950)
+    expect(details.finalValue).toBe(EXPECTED_VALUE_950)
   })
 
   it('should return correct calculation details for BRK-B case', () => {
     const details = getFMVCalculationDetails(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
 
-    expect(details.roundedHigh).toBe(500.16)
-    expect(details.roundedLow).toBe(493.35)
-    expect(details.averagePrice).toBe(496.755)
-    expect(details.totalBeforeRounding).toBe(16889.67)
+    expect(details.roundedHigh).toBe(BRK_B_EXPECTED_ROUNDED_HIGH)
+    expect(details.roundedLow).toBe(BRK_B_EXPECTED_ROUNDED_LOW)
+    expect(details.averagePrice).toBe(BRK_B_EXPECTED_AVERAGE)
+    expect(details.totalBeforeRounding).toBe(BRK_B_EXPECTED_VALUE)
     expect(details.finalValue).toBe(BRK_B_EXPECTED_VALUE)
   })
 
@@ -253,10 +273,10 @@ describe('getFMVCalculationDetails', () => {
     const details = getFMVCalculationDetails(COWZ_HIGH, COWZ_LOW, COWZ_SHARES)
 
     // Verify rounding to pennies first
-    expect(details.roundedHigh).toBe(61.57)
-    expect(details.roundedLow).toBe(61.13)
-    expect(details.averagePrice).toBe(61.35)
-    expect(details.totalBeforeRounding).toBe(3251.55)
+    expect(details.roundedHigh).toBe(COWZ_EXPECTED_ROUNDED_HIGH)
+    expect(details.roundedLow).toBe(COWZ_EXPECTED_ROUNDED_LOW)
+    expect(details.averagePrice).toBe(COWZ_EXPECTED_AVERAGE)
+    expect(details.totalBeforeRounding).toBe(COWZ_EXPECTED_VALUE)
     expect(details.finalValue).toBe(COWZ_EXPECTED_VALUE)
   })
 
@@ -268,11 +288,11 @@ describe('getFMVCalculationDetails', () => {
       SHARES_100
     )
 
-    expect(details.roundedHigh).toBe(10.01)
-    expect(details.roundedLow).toBe(10.0)
+    expect(details.roundedHigh).toBe(EXPECTED_ROUNDED_HIGH_10_01)
+    expect(details.roundedLow).toBe(EXPECTED_ROUNDED_LOW_10_0)
     // Use toBeCloseTo for floating point comparisons
-    expect(details.averagePrice).toBeCloseTo(10.005, 10)
-    expect(details.totalBeforeRounding).toBe(1000.5)
+    expect(details.averagePrice).toBeCloseTo(EXPECTED_AVERAGE_10_005, 10)
+    expect(details.totalBeforeRounding).toBe(EXPECTED_VALUE_1000_5)
     expect(details.finalValue).toBe(EXPECTED_VALUE_1000_5)
   })
 

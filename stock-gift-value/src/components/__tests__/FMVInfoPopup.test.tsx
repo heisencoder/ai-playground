@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FMVInfoPopup } from '../FMVInfoPopup'
 import { getFMVCalculationDetails } from '../../utils/calculations'
@@ -12,6 +12,7 @@ const BRK_B_SHARES = 34
 const COWZ_HIGH = 61.56999969482422
 const COWZ_LOW = 61.13399887084961
 const COWZ_SHARES = 53
+const COWZ_EXPECTED_VALUE = 3251.55
 
 const SIMPLE_HIGH = 100
 const SIMPLE_LOW = 90
@@ -227,7 +228,7 @@ describe('FMVInfoPopup - Click Outside Dismissal', () => {
     expect(mockOnClose).not.toHaveBeenCalled()
   })
 
-  it('should not immediately dismiss on the click that opens it', async () => {
+  it('should not immediately dismiss on the click that opens it', () => {
     render(
       <FMVInfoPopup
         highPrice={SIMPLE_HIGH}
@@ -238,7 +239,6 @@ describe('FMVInfoPopup - Click Outside Dismissal', () => {
     )
 
     // Before the setTimeout, clicking outside should not trigger close
-    const popup = screen.getByRole('dialog')
     fireEvent.mouseDown(document.body)
 
     // Should not have been called because event listener not added yet
@@ -331,6 +331,6 @@ describe('FMVInfoPopup - Calculation Verification', () => {
     expect(screen.getByText('$3,251.55')).toBeInTheDocument()
 
     // Verify the final value matches the calculation
-    expect(details.finalValue).toBe(3251.55)
+    expect(details.finalValue).toBe(COWZ_EXPECTED_VALUE)
   })
 })

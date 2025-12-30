@@ -1,5 +1,4 @@
-import type React from 'react'
-import { useState } from 'react'
+import { useState, type JSX } from 'react'
 import { formatCurrency, isValidDate } from '../utils/calculations'
 import { useGiftManagement } from '../hooks/useGiftManagement'
 import { useGiftValueCalculation } from '../hooks/useGiftValueCalculation'
@@ -12,7 +11,7 @@ import { DateInput } from './DateInput'
 import { FMVInfoPopup } from './FMVInfoPopup'
 import './StockGiftCalculator.css'
 
-export function StockGiftCalculator(): React.JSX.Element {
+export function StockGiftCalculator(): JSX.Element {
   // Use custom hooks for different concerns
   const {
     gifts,

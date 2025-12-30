@@ -1,5 +1,4 @@
-import type React from 'react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type JSX } from 'react'
 import {
   getFMVCalculationDetails,
   formatCurrency,
@@ -31,7 +30,7 @@ export function FMVInfoPopup({
   lowPrice,
   shares,
   onClose,
-}: FMVInfoPopupProps): React.JSX.Element {
+}: FMVInfoPopupProps): JSX.Element {
   const popupRef = useRef<HTMLDivElement>(null)
 
   // Get all the calculation details
