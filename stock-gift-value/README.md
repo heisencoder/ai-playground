@@ -484,7 +484,7 @@ typescript/stock-gift-value/
 
 ## CI/CD
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs on all pull requests and pushes to main:
+GitHub Actions workflow (`.github/workflows/stock-gift-value-ci.yml`) automatically runs on all pull requests and pushes to main:
 
 **Docker Build Test:**
 1. Builds production Docker image using multi-stage build
@@ -499,6 +499,182 @@ GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs on all p
 4. Code coverage reporting to Codecov
 
 All checks must pass before merging to main. The workflow validates both the application code and the Docker deployment.
+
+## Automated Deployment
+
+The GitHub Actions workflow (`.github/workflows/stock-gift-value-deploy.yml`) automatically deploys to GCP Cloud Run when a new release is created with a tag starting with `stock-gift-value/` (e.g., `stock-gift-value/v1.0.0`).
+
+### Creating a Release
+
+1. Go to GitHub → Releases → "Create a new release"
+2. Create a new tag with the format: `stock-gift-value/v1.0.0`
+3. Fill in the release title and notes
+4. Click "Publish release"
+
+The deployment workflow will automatically build and deploy to Cloud Run.
+
+### Setting Up GitHub Secrets for GCP Deployment
+
+This deployment uses **Workload Identity Federation** for secure authentication without storing long-lived credentials. You need to configure the following GitHub Secrets specific to this app:
+
+| Secret Name | Description |
+|-------------|-------------|
+| `STOCK_GIFT_VALUE_GCP_PROJECT_ID` | Your GCP project ID (e.g., `my-project-123`) |
+| `STOCK_GIFT_VALUE_GCP_SERVICE_ACCOUNT` | Service account email (e.g., `stock-gift-deploy@my-project.iam.gserviceaccount.com`) |
+| `STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Provider resource name |
+| `STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO` | Artifact Registry repository name (e.g., `stock-gift-value`) |
+
+### Step-by-Step GCP Setup
+
+Follow these steps to configure GCP with minimal permissions for deploying only this app:
+
+#### 1. Set Environment Variables
+
+```bash
+# Replace with your values
+export PROJECT_ID="your-gcp-project-id"
+export GITHUB_ORG="your-github-username-or-org"
+export GITHUB_REPO="your-repo-name"
+export REGION="us-central1"
+```
+
+#### 2. Enable Required GCP APIs
+
+```bash
+gcloud services enable \
+  artifactregistry.googleapis.com \
+  run.googleapis.com \
+  iamcredentials.googleapis.com \
+  --project=$PROJECT_ID
+```
+
+#### 3. Create Artifact Registry Repository
+
+```bash
+gcloud artifacts repositories create stock-gift-value \
+  --repository-format=docker \
+  --location=$REGION \
+  --description="Docker images for Stock Gift Value app" \
+  --project=$PROJECT_ID
+```
+
+#### 4. Create a Service Account with Minimal Permissions
+
+```bash
+# Create the service account
+gcloud iam service-accounts create stock-gift-deploy \
+  --display-name="Stock Gift Value Deployer" \
+  --description="Service account for deploying Stock Gift Value app via GitHub Actions" \
+  --project=$PROJECT_ID
+
+# Get the service account email
+export SA_EMAIL="stock-gift-deploy@${PROJECT_ID}.iam.gserviceaccount.com"
+```
+
+#### 5. Grant Minimal Required Permissions
+
+These permissions are scoped to only what's needed for deploying this specific app:
+
+```bash
+# Permission to push images to Artifact Registry (scoped to this repository only)
+gcloud artifacts repositories add-iam-policy-binding stock-gift-value \
+  --location=$REGION \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/artifactregistry.writer" \
+  --project=$PROJECT_ID
+
+# Permission to deploy to Cloud Run (scoped to this service only)
+# First, create the Cloud Run service if it doesn't exist (or grant project-level for initial creation)
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/run.developer"
+
+# Permission to act as the Cloud Run service's runtime service account
+gcloud iam service-accounts add-iam-policy-binding \
+  ${PROJECT_ID}-compute@developer.gserviceaccount.com \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --role="roles/iam.serviceAccountUser" \
+  --project=$PROJECT_ID
+```
+
+#### 6. Set Up Workload Identity Federation
+
+This allows GitHub Actions to authenticate without storing service account keys:
+
+```bash
+# Create a Workload Identity Pool
+gcloud iam workload-identity-pools create "github-actions" \
+  --location="global" \
+  --display-name="GitHub Actions Pool" \
+  --project=$PROJECT_ID
+
+# Create a Workload Identity Provider for GitHub
+gcloud iam workload-identity-pools providers create-oidc "github" \
+  --location="global" \
+  --workload-identity-pool="github-actions" \
+  --display-name="GitHub Provider" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
+  --issuer-uri="https://token.actions.githubusercontent.com" \
+  --project=$PROJECT_ID
+
+# Allow the GitHub repo to impersonate the service account
+gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="principalSet://iam.googleapis.com/projects/$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')/locations/global/workloadIdentityPools/github-actions/attribute.repository/${GITHUB_ORG}/${GITHUB_REPO}" \
+  --project=$PROJECT_ID
+```
+
+#### 7. Get the Workload Identity Provider Resource Name
+
+```bash
+# Get the full provider resource name (you'll need this for the GitHub secret)
+gcloud iam workload-identity-pools providers describe github \
+  --location="global" \
+  --workload-identity-pool="github-actions" \
+  --format="value(name)" \
+  --project=$PROJECT_ID
+```
+
+This will output something like:
+```
+projects/123456789/locations/global/workloadIdentityPools/github-actions/providers/github
+```
+
+#### 8. Configure GitHub Secrets
+
+Go to your GitHub repository → Settings → Secrets and variables → Actions → New repository secret
+
+Add these secrets:
+
+| Secret Name | Value |
+|-------------|-------|
+| `STOCK_GIFT_VALUE_GCP_PROJECT_ID` | `your-gcp-project-id` |
+| `STOCK_GIFT_VALUE_GCP_SERVICE_ACCOUNT` | `stock-gift-deploy@your-gcp-project-id.iam.gserviceaccount.com` |
+| `STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER` | The full provider name from step 7 |
+| `STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO` | `stock-gift-value` |
+
+### Security Notes
+
+- **Workload Identity Federation** is used instead of service account keys. This means no long-lived credentials are stored in GitHub.
+- The service account has **minimal permissions**:
+  - Can only push to the `stock-gift-value` Artifact Registry repository
+  - Can only deploy Cloud Run services (with `run.developer` role)
+  - Cannot access other GCP resources
+- All secret names are prefixed with `STOCK_GIFT_VALUE_` to allow adding other apps to this repo with their own isolated credentials.
+
+### Troubleshooting Deployment
+
+**Permission denied pushing to Artifact Registry:**
+- Verify the service account has `artifactregistry.writer` role on the repository
+- Check that Workload Identity Federation is configured correctly
+
+**Cannot deploy to Cloud Run:**
+- Verify the service account has `run.developer` role
+- Verify the service account has `iam.serviceAccountUser` role on the compute service account
+
+**Workload Identity authentication fails:**
+- Verify the repository name in the IAM binding matches exactly (case-sensitive)
+- Check that the `id-token: write` permission is set in the workflow
 
 ## IRS Guidelines
 
