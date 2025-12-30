@@ -336,10 +336,33 @@ export interface RoundingTestCase {
 }
 
 export const roundingTestCases: RoundingTestCase[] = [
+  // Basic integer rounding
   { value: 1.5, decimals: 0, expected: 2, description: '1.5 rounds up to 2' },
   { value: 2.5, decimals: 0, expected: 3, description: '2.5 rounds up to 3' },
+  { value: 3.5, decimals: 0, expected: 4, description: '3.5 rounds up to 4' },
+  { value: 4.5, decimals: 0, expected: 5, description: '4.5 rounds up to 5' },
   { value: 1.4, decimals: 0, expected: 1, description: '1.4 rounds down to 1' },
   { value: 1.6, decimals: 0, expected: 2, description: '1.6 rounds up to 2' },
+  // Two decimal places
+  {
+    value: 1.125,
+    decimals: 2,
+    expected: 1.13,
+    description: '1.125 rounds up to 1.13',
+  },
+  {
+    value: 1.135,
+    decimals: 2,
+    expected: 1.14,
+    description: '1.135 rounds up to 1.14',
+  },
+  {
+    value: 1.145,
+    decimals: 2,
+    expected: 1.15,
+    description: '1.145 rounds up to 1.15',
+  },
+  // Real-world edge cases
   {
     value: 3229.025,
     decimals: 2,
@@ -358,6 +381,7 @@ export const roundingTestCases: RoundingTestCase[] = [
     expected: 60.52,
     description: '60.515 rounds up to 60.52',
   },
+  // Penny stock precision (4 decimals)
   {
     value: 0.30749,
     decimals: 4,
@@ -369,5 +393,62 @@ export const roundingTestCases: RoundingTestCase[] = [
     decimals: 4,
     expected: 0.3075,
     description: 'Penny stock half up: 0.30745 rounds up to 0.3075',
+  },
+]
+
+/**
+ * Test cases for isPennyStock function
+ */
+export interface PennyStockTestCase {
+  price: number
+  expected: boolean
+  description: string
+}
+
+export const pennyStockDetectionCases: PennyStockTestCase[] = [
+  // Penny stocks (under $1)
+  { price: 0.99, expected: true, description: 'Just under $1 is penny stock' },
+  { price: 0.5, expected: true, description: '$0.50 is penny stock' },
+  { price: 0.01, expected: true, description: '$0.01 is penny stock' },
+  // Non-penny stocks ($1 and above)
+  { price: 1.0, expected: false, description: 'Exactly $1 is not penny stock' },
+  {
+    price: 1.01,
+    expected: false,
+    description: 'Just over $1 is not penny stock',
+  },
+  { price: 100, expected: false, description: '$100 is not penny stock' },
+]
+
+/**
+ * Test cases for formatCurrency function
+ */
+export interface CurrencyFormatTestCase {
+  value: number
+  expected: string
+  description: string
+}
+
+export const currencyFormatCases: CurrencyFormatTestCase[] = [
+  {
+    value: 1234.56,
+    expected: '$1,234.56',
+    description: 'formats with dollar sign and commas',
+  },
+  {
+    value: 1234567.89,
+    expected: '$1,234,567.89',
+    description: 'formats large numbers correctly',
+  },
+  { value: 0.99, expected: '$0.99', description: 'formats small numbers' },
+  {
+    value: 100,
+    expected: '$100.00',
+    description: 'shows two decimal places for whole numbers',
+  },
+  {
+    value: 100.5,
+    expected: '$100.50',
+    description: 'shows trailing zero for one decimal',
   },
 ]
