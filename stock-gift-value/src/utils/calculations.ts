@@ -3,11 +3,62 @@
  * Used both for the final calculation and for displaying the breakdown.
  */
 export interface FMVCalculationDetails {
-  roundedHigh: number // High rounded to nearest cent
-  roundedLow: number // Low rounded to nearest cent
-  averagePrice: number // Average of rounded high and low (may have half-cent)
-  totalBeforeRounding: number // averagePrice * shares (3 decimal places)
+  roundedHigh: number // High rounded to appropriate precision
+  roundedLow: number // Low rounded to appropriate precision
+  averagePrice: number // Average of rounded high and low
+  totalBeforeRounding: number // averagePrice * shares (with extra decimal for display)
   finalValue: number // Final value rounded to cents
+  isPennyStock: boolean // Whether this is a penny stock (trades under $1)
+  priceDecimalPlaces: number // Number of decimal places for high/low display
+  averageDecimalPlaces: number // Number of decimal places for average display
+}
+
+// Decimal place constants
+const PENNY_STOCK_THRESHOLD = 1
+const STANDARD_PRICE_DECIMALS = 2
+const STANDARD_AVERAGE_DECIMALS = 3
+const PENNY_STOCK_PRICE_DECIMALS = 4
+const PENNY_STOCK_AVERAGE_DECIMALS = 5
+
+// Rounding constants
+const ROUNDING_HALF_BOUNDARY = 0.5
+const FLOATING_POINT_TOLERANCE = 1e-9
+
+/**
+ * Round a number using "round half up" behavior with floating-point tolerance.
+ *
+ * Standard Math.round() uses half-up rounding, but floating-point arithmetic
+ * can cause values that should be exactly at the halfway point to be slightly
+ * below it. For example: 60.925 * 53 = 3229.0249999999996 (not exactly 3229.025)
+ * This would incorrectly round down to 3229.02 instead of 3229.03.
+ *
+ * This function adds a small tolerance to handle such floating-point precision
+ * issues, ensuring values very close to the 0.5 boundary round up as expected.
+ *
+ * @param value - The value to round
+ * @param decimals - Number of decimal places
+ * @returns The rounded value
+ */
+export function roundHalfUp(value: number, decimals: number): number {
+  const multiplier = Math.pow(10, decimals)
+  const scaled = value * multiplier
+  // Check if fractional part is at or very close to 0.5 (within floating-point tolerance)
+  // This handles cases like 60.924999999999997 which should be treated as 60.925
+  const fraction = scaled % 1
+  if (fraction >= ROUNDING_HALF_BOUNDARY - FLOATING_POINT_TOLERANCE) {
+    return Math.ceil(scaled) / multiplier
+  }
+  return Math.floor(scaled) / multiplier
+}
+
+/**
+ * Check if a stock is a penny stock (trades under $1).
+ *
+ * @param high - The high price on the donation date
+ * @returns true if the stock is a penny stock
+ */
+export function isPennyStock(high: number): boolean {
+  return high < PENNY_STOCK_THRESHOLD
 }
 
 /**
@@ -17,10 +68,16 @@ export interface FMVCalculationDetails {
  * Per IRS guidelines, the value is the average of the high and low prices
  * on the date of the gift, multiplied by the number of shares.
  *
- * The high and low prices are first rounded to the nearest penny before
- * computing the average. If the sum results in an odd number of pennies,
- * the average will have a half-penny (0.005) which is preserved in the
- * multiplication before final rounding.
+ * For standard stocks:
+ * - High and low are rounded to 2 decimal places (nearest penny)
+ * - Average is calculated with 3 decimal places (may have half-penny)
+ *
+ * For penny stocks (trading under $1):
+ * - High and low are rounded to 4 decimal places
+ * - Average is calculated with 5 decimal places
+ *
+ * The final value is always rounded to the nearest cent using "round half up"
+ * behavior to ensure consistent rounding (0.5 always rounds up).
  *
  * @param high - The high price on the donation date
  * @param low - The low price on the donation date
@@ -32,18 +89,35 @@ export function getFMVCalculationDetails(
   low: number,
   shares: number
 ): FMVCalculationDetails {
-  // Round high and low to nearest penny first
-  const roundedHigh = Math.round(high * 100) / 100
-  const roundedLow = Math.round(low * 100) / 100
+  // Determine if this is a penny stock
+  const pennyStock = isPennyStock(high)
 
-  // Calculate average price (may have half-penny if sum is odd)
-  const averagePrice = (roundedHigh + roundedLow) / 2
+  // Set precision based on stock type
+  const priceDecimals = pennyStock
+    ? PENNY_STOCK_PRICE_DECIMALS
+    : STANDARD_PRICE_DECIMALS
+  const averageDecimals = pennyStock
+    ? PENNY_STOCK_AVERAGE_DECIMALS
+    : STANDARD_AVERAGE_DECIMALS
 
-  // Calculate total value (keep 3 decimal places to show half-cent effect)
-  const totalBeforeRounding = Math.round(averagePrice * shares * 1000) / 1000
+  // Round high and low to appropriate precision
+  const roundedHigh = roundHalfUp(high, priceDecimals)
+  const roundedLow = roundHalfUp(low, priceDecimals)
 
-  // Round to cents (2 decimal places)
-  const finalValue = Math.round(averagePrice * shares * 100) / 100
+  // Calculate average price with appropriate precision
+  const averagePrice = roundHalfUp(
+    (roundedHigh + roundedLow) / 2,
+    averageDecimals
+  )
+
+  // Calculate total value (keep one extra decimal for display)
+  const totalBeforeRounding = roundHalfUp(
+    averagePrice * shares,
+    averageDecimals
+  )
+
+  // Round to cents (2 decimal places) using round half up
+  const finalValue = roundHalfUp(averagePrice * shares, STANDARD_PRICE_DECIMALS)
 
   return {
     roundedHigh,
@@ -51,6 +125,9 @@ export function getFMVCalculationDetails(
     averagePrice,
     totalBeforeRounding,
     finalValue,
+    isPennyStock: pennyStock,
+    priceDecimalPlaces: priceDecimals,
+    averageDecimalPlaces: averageDecimals,
   }
 }
 

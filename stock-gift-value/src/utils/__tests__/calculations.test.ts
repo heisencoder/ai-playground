@@ -5,184 +5,71 @@ import {
   isValidDate,
   isValidTicker,
   getFMVCalculationDetails,
+  roundHalfUp,
+  isPennyStock,
 } from '../calculations'
+import {
+  standardStockTestCases,
+  pennyStockTestCases,
+  allTestCases,
+  roundingTestCases,
+  pennyStockDetectionCases,
+  currencyFormatCases,
+} from './testData'
 
-// Test constants for calculations
-const PRICE_HIGH_100 = 100
-const PRICE_LOW_90 = 90
-const SHARES_10 = 10
-const EXPECTED_VALUE_950 = 950.0
+// Precision constants for toBeCloseTo - describe the precision level, not the value
+const PRECISION_FULL = 10
+const PRECISION_PENNY_STOCK_PRICE = 4
+const PRECISION_PENNY_STOCK_AVERAGE = 5
 
-// FMV calculation detail constants for basic case
-const EXPECTED_ROUNDED_HIGH_100 = 100.0
-const EXPECTED_ROUNDED_LOW_90 = 90.0
-const EXPECTED_AVERAGE_95 = 95.0
+describe('roundHalfUp', () => {
+  it.each(roundingTestCases)(
+    '$description',
+    ({ value, decimals, expected }) => {
+      expect(roundHalfUp(value, decimals)).toBe(expected)
+    }
+  )
+})
 
-const BRK_B_HIGH = 500.16
-const BRK_B_LOW = 493.35
-const BRK_B_SHARES = 34
-const BRK_B_EXPECTED_VALUE = 16889.67
-
-// FMV calculation detail constants for BRK-B case
-const BRK_B_EXPECTED_ROUNDED_HIGH = 500.16
-const BRK_B_EXPECTED_ROUNDED_LOW = 493.35
-const BRK_B_EXPECTED_AVERAGE = 496.755
-
-const PRICE_HIGH_123_456 = 123.456
-const PRICE_LOW_123_444 = 123.444
-const SHARES_100 = 100
-const EXPECTED_VALUE_12345 = 12345.0
-
-const PRICE_HIGH_10_004 = 10.004
-const PRICE_LOW_10_002 = 10.002
-const EXPECTED_VALUE_1000_0 = 1000.0
-
-// COWZ test case - demonstrates rounding high/low to pennies first
-const COWZ_HIGH = 61.56999969482422
-const COWZ_LOW = 61.13399887084961
-const COWZ_SHARES = 53
-const COWZ_EXPECTED_VALUE = 3251.55
-
-// FMV calculation detail constants for COWZ case
-const COWZ_EXPECTED_ROUNDED_HIGH = 61.57
-const COWZ_EXPECTED_ROUNDED_LOW = 61.13
-const COWZ_EXPECTED_AVERAGE = 61.35
-
-const PRICE_HIGH_10_006 = 10.006
-const PRICE_LOW_10_004 = 10.004
-const EXPECTED_VALUE_1000_5 = 1000.5
-
-// FMV calculation detail constants for half-penny case
-const EXPECTED_ROUNDED_HIGH_10_01 = 10.01
-const EXPECTED_ROUNDED_LOW_10_0 = 10.0
-const EXPECTED_AVERAGE_10_005 = 10.005
-
-const PRICE_HIGH_150_5 = 150.5
-const PRICE_LOW_149_5 = 149.5
-const SHARES_1 = 1
-const EXPECTED_VALUE_150 = 150.0
-
-const PRICE_HIGH_1000 = 1000
-const PRICE_LOW_900 = 900
-const SHARES_10000 = 10000
-const EXPECTED_VALUE_9500000 = 9500000.0
-
-const SHARES_10_5 = 10.5
-const EXPECTED_VALUE_997_5 = 997.5
-
-const CURRENCY_1234_56 = 1234.56
-const FORMATTED_1234_56 = '$1,234.56'
-
-const CURRENCY_1234567_89 = 1234567.89
-const FORMATTED_1234567_89 = '$1,234,567.89'
-
-const CURRENCY_0_99 = 0.99
-const FORMATTED_0_99 = '$0.99'
-
-const CURRENCY_100_5 = 100.5
-const FORMATTED_100_50 = '$100.50'
-
-const YEARS_OFFSET_FUTURE = 1
+describe('isPennyStock', () => {
+  it.each(pennyStockDetectionCases)('$description', ({ price, expected }) => {
+    expect(isPennyStock(price)).toBe(expected)
+  })
+})
 
 describe('calculateStockGiftValue', () => {
-  it('should calculate basic stock gift value', () => {
-    const result = calculateStockGiftValue(
-      PRICE_HIGH_100,
-      PRICE_LOW_90,
-      SHARES_10
+  describe('standard stocks', () => {
+    it.each(standardStockTestCases)(
+      '$name: should return $expected.finalValue',
+      ({ input, expected }) => {
+        const result = calculateStockGiftValue(
+          input.high,
+          input.low,
+          input.shares
+        )
+        expect(result).toBe(expected.finalValue)
+      }
     )
-    expect(result).toBe(EXPECTED_VALUE_950)
   })
 
-  it('should calculate BRK-B test case correctly', () => {
-    const result = calculateStockGiftValue(BRK_B_HIGH, BRK_B_LOW, BRK_B_SHARES)
-    expect(result).toBe(BRK_B_EXPECTED_VALUE)
-  })
-
-  it('should maintain fractional cents precision', () => {
-    const result = calculateStockGiftValue(
-      PRICE_HIGH_123_456,
-      PRICE_LOW_123_444,
-      SHARES_100
+  describe('penny stocks', () => {
+    it.each(pennyStockTestCases)(
+      '$name: should return $expected.finalValue',
+      ({ input, expected }) => {
+        const result = calculateStockGiftValue(
+          input.high,
+          input.low,
+          input.shares
+        )
+        expect(result).toBe(expected.finalValue)
+      }
     )
-    expect(result).toBe(EXPECTED_VALUE_12345)
-  })
-
-  it('should round to cents correctly', () => {
-    // With rounding to pennies first: 10.004 -> 10.00, 10.002 -> 10.00
-    // Average = 10.00, total = 10.00 * 100 = 1000.0
-    const result1 = calculateStockGiftValue(
-      PRICE_HIGH_10_004,
-      PRICE_LOW_10_002,
-      SHARES_100
-    )
-    expect(result1).toBe(EXPECTED_VALUE_1000_0)
-
-    // With rounding to pennies first: 10.006 -> 10.01, 10.004 -> 10.00
-    // Average = 10.005, total = 10.005 * 100 = 1000.5
-    const result2 = calculateStockGiftValue(
-      PRICE_HIGH_10_006,
-      PRICE_LOW_10_004,
-      SHARES_100
-    )
-    expect(result2).toBe(EXPECTED_VALUE_1000_5)
-  })
-
-  it('should round high/low prices to pennies before calculating average (COWZ case)', () => {
-    // This tests the fix for the rounding bug where high/low prices should be
-    // rounded to nearest penny before computing the average
-    // high: 61.56999969482422 -> 61.57
-    // low: 61.13399887084961 -> 61.13
-    // average: (61.57 + 61.13) / 2 = 61.35
-    // total: 61.35 * 53 = 3251.55
-    const result = calculateStockGiftValue(COWZ_HIGH, COWZ_LOW, COWZ_SHARES)
-    expect(result).toBe(COWZ_EXPECTED_VALUE)
-  })
-
-  it('should handle single share correctly', () => {
-    const result = calculateStockGiftValue(
-      PRICE_HIGH_150_5,
-      PRICE_LOW_149_5,
-      SHARES_1
-    )
-    expect(result).toBe(EXPECTED_VALUE_150)
-  })
-
-  it('should handle large numbers', () => {
-    const result = calculateStockGiftValue(
-      PRICE_HIGH_1000,
-      PRICE_LOW_900,
-      SHARES_10000
-    )
-    expect(result).toBe(EXPECTED_VALUE_9500000)
-  })
-
-  it('should handle fractional shares', () => {
-    const result = calculateStockGiftValue(
-      PRICE_HIGH_100,
-      PRICE_LOW_90,
-      SHARES_10_5
-    )
-    expect(result).toBe(EXPECTED_VALUE_997_5)
   })
 })
 
 describe('formatCurrency', () => {
-  it('should format currency with dollar sign and commas', () => {
-    expect(formatCurrency(CURRENCY_1234_56)).toBe(FORMATTED_1234_56)
-  })
-
-  it('should format large numbers correctly', () => {
-    expect(formatCurrency(CURRENCY_1234567_89)).toBe(FORMATTED_1234567_89)
-  })
-
-  it('should format small numbers correctly', () => {
-    expect(formatCurrency(CURRENCY_0_99)).toBe(FORMATTED_0_99)
-  })
-
-  it('should always show two decimal places', () => {
-    expect(formatCurrency(SHARES_100)).toBe('$100.00')
-    expect(formatCurrency(CURRENCY_100_5)).toBe(FORMATTED_100_50)
+  it.each(currencyFormatCases)('$description', ({ value, expected }) => {
+    expect(formatCurrency(value)).toBe(expected)
   })
 })
 
@@ -201,7 +88,7 @@ describe('isValidDate', () => {
 
   it('should reject future dates', () => {
     const future = new Date()
-    future.setFullYear(future.getFullYear() + YEARS_OFFSET_FUTURE)
+    future.setFullYear(future.getFullYear() + 1)
     const futureDate = future.toISOString().split('T')[0]
     if (!futureDate) {
       throw new Error('Failed to get future date')
@@ -245,74 +132,72 @@ describe('isValidTicker', () => {
 })
 
 describe('getFMVCalculationDetails', () => {
-  it('should return correct calculation details for basic case', () => {
-    const details = getFMVCalculationDetails(
-      PRICE_HIGH_100,
-      PRICE_LOW_90,
-      SHARES_10
+  describe('standard stocks', () => {
+    it.each(standardStockTestCases)(
+      '$name: should return correct calculation details',
+      ({ input, expected }) => {
+        const details = getFMVCalculationDetails(
+          input.high,
+          input.low,
+          input.shares
+        )
+
+        expect(details.roundedHigh).toBe(expected.roundedHigh)
+        expect(details.roundedLow).toBe(expected.roundedLow)
+        expect(details.averagePrice).toBeCloseTo(
+          expected.averagePrice,
+          PRECISION_FULL
+        )
+        expect(details.finalValue).toBe(expected.finalValue)
+        expect(details.isPennyStock).toBe(expected.isPennyStock)
+        expect(details.priceDecimalPlaces).toBe(expected.priceDecimalPlaces)
+        expect(details.averageDecimalPlaces).toBe(expected.averageDecimalPlaces)
+      }
     )
-
-    expect(details.roundedHigh).toBe(EXPECTED_ROUNDED_HIGH_100)
-    expect(details.roundedLow).toBe(EXPECTED_ROUNDED_LOW_90)
-    expect(details.averagePrice).toBe(EXPECTED_AVERAGE_95)
-    expect(details.totalBeforeRounding).toBe(EXPECTED_VALUE_950)
-    expect(details.finalValue).toBe(EXPECTED_VALUE_950)
   })
 
-  it('should return correct calculation details for BRK-B case', () => {
-    const details = getFMVCalculationDetails(
-      BRK_B_HIGH,
-      BRK_B_LOW,
-      BRK_B_SHARES
+  describe('penny stocks', () => {
+    it.each(pennyStockTestCases)(
+      '$name: should return correct calculation details with higher precision',
+      ({ input, expected }) => {
+        const details = getFMVCalculationDetails(
+          input.high,
+          input.low,
+          input.shares
+        )
+
+        expect(details.roundedHigh).toBeCloseTo(
+          expected.roundedHigh,
+          PRECISION_PENNY_STOCK_PRICE
+        )
+        expect(details.roundedLow).toBeCloseTo(
+          expected.roundedLow,
+          PRECISION_PENNY_STOCK_PRICE
+        )
+        expect(details.averagePrice).toBeCloseTo(
+          expected.averagePrice,
+          PRECISION_PENNY_STOCK_AVERAGE
+        )
+        expect(details.finalValue).toBe(expected.finalValue)
+        expect(details.isPennyStock).toBe(expected.isPennyStock)
+        expect(details.priceDecimalPlaces).toBe(expected.priceDecimalPlaces)
+        expect(details.averageDecimalPlaces).toBe(expected.averageDecimalPlaces)
+      }
     )
-
-    expect(details.roundedHigh).toBe(BRK_B_EXPECTED_ROUNDED_HIGH)
-    expect(details.roundedLow).toBe(BRK_B_EXPECTED_ROUNDED_LOW)
-    expect(details.averagePrice).toBe(BRK_B_EXPECTED_AVERAGE)
-    expect(details.totalBeforeRounding).toBe(BRK_B_EXPECTED_VALUE)
-    expect(details.finalValue).toBe(BRK_B_EXPECTED_VALUE)
   })
 
-  it('should return correct calculation details for COWZ case with rounding', () => {
-    const details = getFMVCalculationDetails(COWZ_HIGH, COWZ_LOW, COWZ_SHARES)
-
-    // Verify rounding to pennies first
-    expect(details.roundedHigh).toBe(COWZ_EXPECTED_ROUNDED_HIGH)
-    expect(details.roundedLow).toBe(COWZ_EXPECTED_ROUNDED_LOW)
-    expect(details.averagePrice).toBe(COWZ_EXPECTED_AVERAGE)
-    expect(details.totalBeforeRounding).toBe(COWZ_EXPECTED_VALUE)
-    expect(details.finalValue).toBe(COWZ_EXPECTED_VALUE)
-  })
-
-  it('should show half-penny effect in average when high+low is odd', () => {
-    // 10.01 + 10.00 = 20.01 / 2 = 10.005 (half-penny)
-    const details = getFMVCalculationDetails(
-      PRICE_HIGH_10_006,
-      PRICE_LOW_10_004,
-      SHARES_100
-    )
-
-    expect(details.roundedHigh).toBe(EXPECTED_ROUNDED_HIGH_10_01)
-    expect(details.roundedLow).toBe(EXPECTED_ROUNDED_LOW_10_0)
-    // Use toBeCloseTo for floating point comparisons
-    expect(details.averagePrice).toBeCloseTo(EXPECTED_AVERAGE_10_005, 10)
-    expect(details.totalBeforeRounding).toBe(EXPECTED_VALUE_1000_5)
-    expect(details.finalValue).toBe(EXPECTED_VALUE_1000_5)
-  })
-
-  it('should match calculateStockGiftValue final result', () => {
-    // Verify that getFMVCalculationDetails.finalValue equals calculateStockGiftValue
-    const testCases = [
-      { high: PRICE_HIGH_100, low: PRICE_LOW_90, shares: SHARES_10 },
-      { high: BRK_B_HIGH, low: BRK_B_LOW, shares: BRK_B_SHARES },
-      { high: COWZ_HIGH, low: COWZ_LOW, shares: COWZ_SHARES },
-      { high: PRICE_HIGH_10_006, low: PRICE_LOW_10_004, shares: SHARES_100 },
-      { high: PRICE_HIGH_150_5, low: PRICE_LOW_149_5, shares: SHARES_1 },
-    ]
-
-    for (const { high, low, shares } of testCases) {
-      const details = getFMVCalculationDetails(high, low, shares)
-      const calculatedValue = calculateStockGiftValue(high, low, shares)
+  it('should match calculateStockGiftValue final result for all cases', () => {
+    for (const { input } of allTestCases) {
+      const details = getFMVCalculationDetails(
+        input.high,
+        input.low,
+        input.shares
+      )
+      const calculatedValue = calculateStockGiftValue(
+        input.high,
+        input.low,
+        input.shares
+      )
       expect(details.finalValue).toBe(calculatedValue)
     }
   })
