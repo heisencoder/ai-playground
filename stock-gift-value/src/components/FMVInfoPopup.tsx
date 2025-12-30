@@ -29,6 +29,7 @@ function formatDecimal(value: number, decimals: number): string {
 
 /**
  * Calculate the popup position based on the anchor element
+ * Uses absolute positioning relative to the document (not viewport)
  */
 function calculatePosition(
   anchorRef: React.RefObject<HTMLButtonElement | null>
@@ -40,9 +41,10 @@ function calculatePosition(
   const rect = anchorRef.current.getBoundingClientRect()
 
   // Position below the button, aligned to the right edge
-  const top = rect.bottom + POPUP_MARGIN
+  // Add scroll offset for absolute positioning relative to document
+  const top = rect.bottom + window.scrollY + POPUP_MARGIN
   // Align right edge of popup with right edge of button
-  const left = rect.right - POPUP_WIDTH
+  const left = rect.right + window.scrollX - POPUP_WIDTH
 
   return { top, left }
 }
@@ -50,7 +52,8 @@ function calculatePosition(
 /**
  * Popup component that displays the FMV calculation breakdown
  * Shows high/low prices, average, and final calculation with proper precision
- * Uses a Portal to render outside the table to avoid scrollbar issues
+ * Uses a Portal to render outside the table, with absolute positioning
+ * so it contributes to the page's scrollable area (not table scrollbars)
  */
 /* eslint-disable-next-line max-lines-per-function -- Component with portal, positioning, and event handlers */
 export function FMVInfoPopup({
@@ -114,7 +117,7 @@ export function FMVInfoPopup({
       role="dialog"
       aria-label="Fair Market Value calculation details"
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top: `${position.top}px`,
         left: `${position.left}px`,
         width: `${POPUP_WIDTH}px`,
@@ -174,6 +177,8 @@ export function FMVInfoPopup({
     </div>
   )
 
-  // Render using a portal to place popup outside the table DOM hierarchy
+  // Render using a portal to document.body with absolute positioning
+  // This keeps it outside the table (no table scrollbars) but contributes
+  // to the page's scrollable area if it extends beyond the viewport
   return createPortal(popupContent, document.body)
 }
