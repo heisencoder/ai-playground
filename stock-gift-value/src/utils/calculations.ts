@@ -25,12 +25,15 @@ const ROUNDING_HALF_BOUNDARY = 0.5
 const FLOATING_POINT_TOLERANCE = 1e-9
 
 /**
- * Round a number using "round half up" behavior.
- * Unlike Math.round() which uses banker's rounding (round half to even),
- * this always rounds 0.5 up to the next integer.
+ * Round a number using "round half up" behavior with floating-point tolerance.
  *
- * Handles floating-point precision issues by using a small tolerance
- * when checking if the fractional part is at the 0.5 boundary.
+ * Standard Math.round() uses half-up rounding, but floating-point arithmetic
+ * can cause values that should be exactly at the halfway point to be slightly
+ * below it. For example: 60.925 * 53 = 3229.0249999999996 (not exactly 3229.025)
+ * This would incorrectly round down to 3229.02 instead of 3229.03.
+ *
+ * This function adds a small tolerance to handle such floating-point precision
+ * issues, ensuring values very close to the 0.5 boundary round up as expected.
  *
  * @param value - The value to round
  * @param decimals - Number of decimal places

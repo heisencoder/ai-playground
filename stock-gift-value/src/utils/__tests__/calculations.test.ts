@@ -84,8 +84,8 @@ describe('roundHalfUp', () => {
     }
   )
 
-  it("should always round 0.5 up (unlike banker's rounding)", () => {
-    // Banker's rounding would round 2.5 to 2, but we want 3
+  it('should round 0.5 up consistently despite floating-point precision', () => {
+    // These verify basic half-up rounding behavior
     expect(roundHalfUp(ROUND_VALUE_2_5, ROUND_DECIMALS_0)).toBe(
       ROUND_EXPECTED_3
     )
