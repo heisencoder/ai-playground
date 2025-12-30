@@ -101,6 +101,8 @@ async function fetchGiftValue(
       loading: false,
       error: undefined,
       cacheKey,
+      highPrice: priceData.high,
+      lowPrice: priceData.low,
     })
   } catch (error) {
     updateGift(gift.id, {

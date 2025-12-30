@@ -33,6 +33,50 @@ export function calculateStockGiftValue(
 }
 
 /**
+ * Get intermediate calculation values for FMV info popup
+ * Returns values with specified precision to show the calculation breakdown
+ *
+ * @param high - The high price on the donation date
+ * @param low - The low price on the donation date
+ * @param shares - The number of shares donated
+ * @returns Object containing all intermediate values and final result
+ */
+export interface FMVCalculationDetails {
+  roundedHigh: number // High rounded to nearest cent
+  roundedLow: number // Low rounded to nearest cent
+  averagePrice: number // Average of rounded high and low (may have half-cent)
+  totalBeforeRounding: number // averagePrice * shares (3 decimal places)
+  finalValue: number // Final value rounded to cents
+}
+
+export function getFMVCalculationDetails(
+  high: number,
+  low: number,
+  shares: number
+): FMVCalculationDetails {
+  // Round high and low to nearest penny first
+  const roundedHigh = Math.round(high * 100) / 100
+  const roundedLow = Math.round(low * 100) / 100
+
+  // Calculate average price (may have half-penny if sum is odd)
+  const averagePrice = (roundedHigh + roundedLow) / 2
+
+  // Calculate total value (keep 3 decimal places to show half-cent effect)
+  const totalBeforeRounding = Math.round(averagePrice * shares * 1000) / 1000
+
+  // Round to cents (2 decimal places)
+  const finalValue = Math.round(averagePrice * shares * 100) / 100
+
+  return {
+    roundedHigh,
+    roundedLow,
+    averagePrice,
+    totalBeforeRounding,
+    finalValue,
+  }
+}
+
+/**
  * Format a value as USD currency
  *
  * @param value - The numeric value to format

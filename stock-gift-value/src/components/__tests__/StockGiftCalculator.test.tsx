@@ -216,3 +216,199 @@ describe('StockGiftCalculator - Error Handling', () => {
     await user.keyboard('{Backspace}10')
   })
 })
+
+describe('StockGiftCalculator - FMV Info Popup', () => {
+  beforeEach(() => {
+    stockPriceCache.clear()
+  })
+
+  it('should show info icon next to calculated value', async () => {
+    const user = userEvent.setup()
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+
+    await user.type(dateInput, '2024-01-01')
+    await user.type(tickerInput, 'AAPL')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('$1,450.00')).toBeInTheDocument()
+      },
+      { timeout: WAITFOR_TIMEOUT }
+    )
+
+    // Info button should be visible
+    expect(
+      screen.getByRole('button', { name: /show fmv calculation/i })
+    ).toBeInTheDocument()
+  })
+
+  it('should open FMV info popup when info icon is clicked', async () => {
+    const user = userEvent.setup()
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+
+    await user.type(dateInput, '2024-01-01')
+    await user.type(tickerInput, 'AAPL')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('$1,450.00')).toBeInTheDocument()
+      },
+      { timeout: WAITFOR_TIMEOUT }
+    )
+
+    // Click the info button
+    const infoButton = screen.getByRole('button', {
+      name: /show fmv calculation/i,
+    })
+    await user.click(infoButton)
+
+    // Popup should appear
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByText('FMV Calculation')).toBeInTheDocument()
+  })
+
+  it('should display correct calculation details in popup', async () => {
+    const user = userEvent.setup()
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+
+    // Use AAPL with mock data: high: 150, low: 140
+    await user.type(dateInput, '2024-01-01')
+    await user.type(tickerInput, 'AAPL')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('$1,450.00')).toBeInTheDocument()
+      },
+      { timeout: WAITFOR_TIMEOUT }
+    )
+
+    // Click the info button
+    const infoButton = screen.getByRole('button', {
+      name: /show fmv calculation/i,
+    })
+    await user.click(infoButton)
+
+    // Verify calculation values (high: 150, low: 140, shares: 10)
+    // Average: (150 + 140) / 2 = 145
+    // Total: 145 * 10 = 1450
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveTextContent('$150.00') // Day high
+    expect(dialog).toHaveTextContent('$140.00') // Day low
+    expect(dialog).toHaveTextContent('145.000') // Average
+    expect(dialog).toHaveTextContent('$1,450.00') // Final value
+  })
+
+  it('should close popup when close button is clicked', async () => {
+    const user = userEvent.setup()
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+
+    await user.type(dateInput, '2024-01-01')
+    await user.type(tickerInput, 'AAPL')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('$1,450.00')).toBeInTheDocument()
+      },
+      { timeout: WAITFOR_TIMEOUT }
+    )
+
+    // Open the popup
+    const infoButton = screen.getByRole('button', {
+      name: /show fmv calculation/i,
+    })
+    await user.click(infoButton)
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    // Close with close button
+    const closeButton = screen.getByRole('button', { name: /close/i })
+    await user.click(closeButton)
+
+    // Popup should be gone
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('should close popup when clicking outside', async () => {
+    const user = userEvent.setup()
+    render(<StockGiftCalculator />)
+
+    const dateInput = screen.getAllByLabelText(/^date$/i)[FIRST_ELEMENT_INDEX]
+    const tickerInput =
+      screen.getAllByLabelText(/^ticker$/i)[FIRST_ELEMENT_INDEX]
+    const sharesInput =
+      screen.getAllByLabelText(/^shares$/i)[FIRST_ELEMENT_INDEX]
+
+    await user.type(dateInput, '2024-01-01')
+    await user.type(tickerInput, 'AAPL')
+    await user.click(sharesInput)
+    await user.keyboard('{Backspace}10')
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('$1,450.00')).toBeInTheDocument()
+      },
+      { timeout: WAITFOR_TIMEOUT }
+    )
+
+    // Open the popup
+    const infoButton = screen.getByRole('button', {
+      name: /show fmv calculation/i,
+    })
+    await user.click(infoButton)
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    // Wait for the click-outside listener to be attached
+    await waitFor(() => {
+      // Click outside (on the table header)
+      const header = screen.getByText(/stock gift value calculator/i)
+      header.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    })
+
+    // Popup should close
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+  })
+
+  it('should not show info icon when no value is calculated', () => {
+    render(<StockGiftCalculator />)
+
+    // No value calculated yet, so no info button
+    expect(
+      screen.queryByRole('button', { name: /show fmv calculation/i })
+    ).not.toBeInTheDocument()
+  })
+})

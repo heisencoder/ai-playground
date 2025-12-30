@@ -1,4 +1,5 @@
 import type React from 'react'
+import { useState } from 'react'
 import { formatCurrency, isValidDate } from '../utils/calculations'
 import { useGiftManagement } from '../hooks/useGiftManagement'
 import { useGiftValueCalculation } from '../hooks/useGiftValueCalculation'
@@ -8,6 +9,7 @@ import { useClipboard } from '../hooks/useClipboard'
 import { StockGiftTableHeader } from './StockGiftTableHeader'
 import { TickerAutocompleteInput } from './TickerAutocompleteInput'
 import { DateInput } from './DateInput'
+import { FMVInfoPopup } from './FMVInfoPopup'
 import './StockGiftCalculator.css'
 
 export function StockGiftCalculator(): React.JSX.Element {
@@ -24,6 +26,9 @@ export function StockGiftCalculator(): React.JSX.Element {
   const { sortGifts, handleSort, getSortIndicator } = useSorting(isRowEmpty)
   const { setInputRef, handleKeyDown } = useKeyboardNavigation()
   const { copyMessage, handleCopy } = useClipboard(isRowEmpty)
+
+  // Track which gift's FMV info popup is open
+  const [openFMVInfoId, setOpenFMVInfoId] = useState<string | null>(null)
 
   // Automatically calculate values when inputs change
   useGiftValueCalculation(gifts, updateGift)
@@ -138,11 +143,32 @@ export function StockGiftCalculator(): React.JSX.Element {
                   {gift.loading && <span className="loading">Loading...</span>}
                   {gift.error && <span className="error">{gift.error}</span>}
                   {!gift.loading && !gift.error && gift.value !== undefined && (
-                    <span className="value">{formatCurrency(gift.value)}</span>
+                    <span className="value-with-info">
+                      <span className="value">{formatCurrency(gift.value)}</span>
+                      <button
+                        type="button"
+                        className="fmv-info-button"
+                        onClick={() => setOpenFMVInfoId(gift.id)}
+                        aria-label="Show FMV calculation details"
+                        title="Show calculation details"
+                      >
+                        <span className="fmv-info-icon">i</span>
+                      </button>
+                    </span>
                   )}
                   {!gift.loading && !gift.error && gift.value === undefined && (
                     <span className="placeholder">—</span>
                   )}
+                  {openFMVInfoId === gift.id &&
+                    gift.highPrice !== undefined &&
+                    gift.lowPrice !== undefined && (
+                      <FMVInfoPopup
+                        highPrice={gift.highPrice}
+                        lowPrice={gift.lowPrice}
+                        shares={gift.shares}
+                        onClose={() => setOpenFMVInfoId(null)}
+                      />
+                    )}
                 </td>
                 <td className="actions-cell">
                   {!isRowEmpty(gift) && (
