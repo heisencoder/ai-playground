@@ -10,6 +10,8 @@ export interface StockGift {
   error?: string | undefined
   cacheKey?: string | undefined // Cache key to track when to recalculate
   tickerInputFocused?: boolean | undefined // Track if ticker field is being edited
+  highPrice?: number | undefined // High price for the day (for FMV info popup)
+  lowPrice?: number | undefined // Low price for the day (for FMV info popup)
 }
 
 // Re-export shared types for convenience

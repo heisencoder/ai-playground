@@ -1,5 +1,19 @@
 /**
- * Calculate the IRS-approved value of a stock gift.
+ * Intermediate calculation values for FMV computation.
+ * Used both for the final calculation and for displaying the breakdown.
+ */
+export interface FMVCalculationDetails {
+  roundedHigh: number // High rounded to nearest cent
+  roundedLow: number // Low rounded to nearest cent
+  averagePrice: number // Average of rounded high and low (may have half-cent)
+  totalBeforeRounding: number // averagePrice * shares (3 decimal places)
+  finalValue: number // Final value rounded to cents
+}
+
+/**
+ * Get intermediate calculation values for FMV computation.
+ * Returns values with specified precision to show the calculation breakdown.
+ *
  * Per IRS guidelines, the value is the average of the high and low prices
  * on the date of the gift, multiplied by the number of shares.
  *
@@ -11,13 +25,13 @@
  * @param high - The high price on the donation date
  * @param low - The low price on the donation date
  * @param shares - The number of shares donated
- * @returns The calculated value rounded to cents (2 decimal places)
+ * @returns Object containing all intermediate values and final result
  */
-export function calculateStockGiftValue(
+export function getFMVCalculationDetails(
   high: number,
   low: number,
   shares: number
-): number {
+): FMVCalculationDetails {
   // Round high and low to nearest penny first
   const roundedHigh = Math.round(high * 100) / 100
   const roundedLow = Math.round(low * 100) / 100
@@ -25,11 +39,36 @@ export function calculateStockGiftValue(
   // Calculate average price (may have half-penny if sum is odd)
   const averagePrice = (roundedHigh + roundedLow) / 2
 
-  // Calculate total value
-  const totalValue = averagePrice * shares
+  // Calculate total value (keep 3 decimal places to show half-cent effect)
+  const totalBeforeRounding = Math.round(averagePrice * shares * 1000) / 1000
 
   // Round to cents (2 decimal places)
-  return Math.round(totalValue * 100) / 100
+  const finalValue = Math.round(averagePrice * shares * 100) / 100
+
+  return {
+    roundedHigh,
+    roundedLow,
+    averagePrice,
+    totalBeforeRounding,
+    finalValue,
+  }
+}
+
+/**
+ * Calculate the IRS-approved value of a stock gift.
+ * This is a convenience wrapper that returns just the final value.
+ *
+ * @param high - The high price on the donation date
+ * @param low - The low price on the donation date
+ * @param shares - The number of shares donated
+ * @returns The calculated value rounded to cents (2 decimal places)
+ */
+export function calculateStockGiftValue(
+  high: number,
+  low: number,
+  shares: number
+): number {
+  return getFMVCalculationDetails(high, low, shares).finalValue
 }
 
 /**
