@@ -12,6 +12,9 @@ const BRK_B_SHARES = 34
 const COWZ_HIGH = 61.56999969482422
 const COWZ_LOW = 61.13399887084961
 const COWZ_SHARES = 53
+const COWZ_ROUNDED_HIGH = 61.57
+const COWZ_ROUNDED_LOW = 61.13
+const COWZ_EXPECTED_FMV = '$3,251.55'
 
 const SIMPLE_HIGH = 100
 const SIMPLE_LOW = 90
@@ -72,9 +75,9 @@ describe('FMVInfoPopup - Rendering', () => {
 
     // COWZ high: 61.56999969482422 -> 61.57
     // COWZ low: 61.13399887084961 -> 61.13
-    expect(screen.getByText('$61.57')).toBeInTheDocument()
-    expect(screen.getByText('$61.13')).toBeInTheDocument()
-    expect(screen.getByText('$3,251.55')).toBeInTheDocument()
+    expect(screen.getByText(`$${COWZ_ROUNDED_HIGH.toFixed(2)}`)).toBeInTheDocument()
+    expect(screen.getByText(`$${COWZ_ROUNDED_LOW.toFixed(2)}`)).toBeInTheDocument()
+    expect(screen.getByText(COWZ_EXPECTED_FMV)).toBeInTheDocument()
   })
 
   it('should have proper accessibility attributes', () => {
