@@ -6,6 +6,7 @@
 import type {
   OrderBookSummary,
   GammaMarket,
+  GammaEvent,
   MidpointResponse,
   SpreadResponse,
 } from '../types/index.js'
@@ -244,5 +245,106 @@ export class PolymarketClient {
    */
   async searchMarkets(query: string): Promise<GammaMarket[]> {
     return this.gammaRequest<GammaMarket[]>('/markets', { _q: query })
+  }
+
+  /**
+   * Fetch an event by its slug
+   * Events are grouped markets (e.g., all teams in a championship)
+   */
+  async getEventBySlug(slug: string): Promise<GammaEvent | null> {
+    const url = new URL(`/events/slug/${slug}`, this.gammaBaseUrl)
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    if (!response.ok) {
+      if (response.status === HTTP_NOT_FOUND) {
+        return null
+      }
+      throw new Error(
+        `Failed to fetch event: ${response.status} ${response.statusText}`
+      )
+    }
+
+    return response.json() as Promise<GammaEvent>
+  }
+
+  /**
+   * Convert an event to a GammaMarket format for analysis
+   * This creates a synthetic market with all event outcomes as tokens
+   */
+  eventToMarket(event: GammaEvent): GammaMarket {
+    // Extract unique outcomes from all markets in the event
+    // Each market in a negRisk event has Yes/No for one outcome
+    const tokens: GammaMarket['tokens'] = []
+
+    for (const market of event.markets) {
+      // Skip closed/resolved markets with no active trading
+      if (market.closed && !market.active) {
+        continue
+      }
+
+      // For multi-outcome events, use the groupItemTitle or parse from question
+      const groupTitle =
+        (market as GammaMarket & { groupItemTitle?: string }).groupItemTitle ||
+        this.extractTeamName(market.question)
+
+      // Get price from outcomePrices if available
+      let price = 0
+      const marketAny = market as GammaMarket & { outcomePrices?: string }
+      if (marketAny.outcomePrices) {
+        try {
+          const prices = JSON.parse(marketAny.outcomePrices)
+          price = parseFloat(prices[0]) || 0
+        } catch {
+          // Use token price if available
+          price = market.tokens?.[0]?.price || 0
+        }
+      }
+
+      // Get the Yes token from this market's tokens
+      const yesToken = market.tokens?.find(
+        (t) => t.outcome === 'Yes' || t.outcome === groupTitle
+      )
+      const tokenId = yesToken?.token_id || market.tokens?.[0]?.token_id || ''
+
+      if (tokenId && groupTitle) {
+        tokens.push({
+          token_id: tokenId,
+          outcome: groupTitle,
+          price: price,
+        })
+      }
+    }
+
+    return {
+      id: parseInt(event.id) || 0,
+      question: event.title,
+      slug: event.slug,
+      conditionId: event.id,
+      active: event.active,
+      closed: event.closed,
+      createdAt: event.markets?.[0]?.createdAt || new Date().toISOString(),
+      endDate: event.endDate,
+      tokens,
+      tags: event.tags,
+    }
+  }
+
+  /**
+   * Extract team name from a question like "Will the Buffalo Bills win Super Bowl 2026?"
+   */
+  private extractTeamName(question: string): string {
+    // Match patterns like "Will the X win" or "Will X win"
+    const match = question.match(/Will (?:the )?(.+?) win/i)
+    if (match && match[1]) {
+      return match[1]
+    }
+    // Fallback: return a truncated question
+    return question.slice(0, 30)
   }
 }

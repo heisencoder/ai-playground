@@ -89,6 +89,7 @@ function printAnalysis(analysis: ArbitrageAnalysis): void {
 
 /**
  * Fetch market data and order books for analysis
+ * Tries to fetch as event first (for multi-outcome markets), falls back to market
  */
 async function fetchMarketData(
   client: PolymarketClient,
@@ -98,19 +99,27 @@ async function fetchMarketData(
 
   const marketsWithOrderBooks: MarketWithOrderBook[] = []
 
-  // Fetch all markets in parallel
-  const marketPromises = slugs.map((slug) => client.getMarketBySlug(slug))
-  const markets = await Promise.all(marketPromises)
-
-  // Filter out null results
+  // Try to fetch each slug as an event first, then as a market
   const validMarkets: GammaMarket[] = []
-  for (let i = 0; i < markets.length; i++) {
-    const market = markets[i]
-    const slug = slugs[i]
-    if (market) {
+  for (const slug of slugs) {
+    // Try event first (for multi-outcome markets like NFL championships)
+    const event = await client.getEventBySlug(slug)
+    if (event) {
+      const market = client.eventToMarket(event)
+      console.log(
+        `  ✓ Found event: ${event.title} (${market.tokens.length} outcomes)`
+      )
       validMarkets.push(market)
-    } else if (slug) {
-      console.warn(`⚠️  Market not found: ${slug}`)
+      continue
+    }
+
+    // Fall back to individual market
+    const market = await client.getMarketBySlug(slug)
+    if (market) {
+      console.log(`  ✓ Found market: ${market.question}`)
+      validMarkets.push(market)
+    } else {
+      console.warn(`  ⚠️  Not found: ${slug}`)
     }
   }
 
