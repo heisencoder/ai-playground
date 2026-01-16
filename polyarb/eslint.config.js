@@ -103,9 +103,9 @@ export default tseslint.config(
     rules: {
       'max-lines-per-function': [
         'error',
-        { max: 300, skipBlankLines: true, skipComments: true },
+        { max: 200, skipBlankLines: true, skipComments: true },
       ],
-      'max-nested-callbacks': ['error', 5],
+      'max-nested-callbacks': ['error', 3],
       'no-magic-numbers': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
     },

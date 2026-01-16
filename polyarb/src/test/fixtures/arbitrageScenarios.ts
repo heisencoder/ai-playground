@@ -296,3 +296,113 @@ export const wideSpreadOrderBooks: Map<string, OrderBookSummary> = new Map([
   ['wide-c', createOrderBookWithPrices('wide-c', 0.205, 0.255)],
   ['wide-d', createOrderBookWithPrices('wide-d', 0.155, 0.205)],
 ])
+
+// ============================================================================
+// Scenario 7: Partial Order Books (Fallback to token.price)
+// Market where some tokens don't have order book data
+// ============================================================================
+
+export const partialOrderBookMarket: GammaMarket = {
+  id: 99009,
+  question: 'Partial Order Book Market - Who wins?',
+  slug: 'partial-order-book-market',
+  conditionId: 'partial-condition',
+  active: true,
+  closed: false,
+  createdAt: '2025-01-01T00:00:00Z',
+  tokens: [
+    { token_id: 'partial-a', outcome: 'Team A', price: 0.4 },
+    { token_id: 'partial-b', outcome: 'Team B', price: 0.3 },
+    { token_id: 'partial-c', outcome: 'Team C', price: 0.2 },
+    { token_id: 'partial-d', outcome: 'Team D', price: 0.1 },
+  ],
+}
+
+// Only provide order books for some tokens - others will use token.price
+export const partialOrderBooks: Map<string, OrderBookSummary> = new Map([
+  ['partial-a', createOrderBookWithPrices('partial-a', 0.39, 0.41)],
+  ['partial-b', createOrderBookWithPrices('partial-b', 0.29, 0.31)],
+  // partial-c and partial-d have no order books - should fall back to token.price
+])
+
+// ============================================================================
+// Scenario 8: Medium Liquidity (100-500 range)
+// Market with medium liquidity to test medium confidence level
+// ============================================================================
+
+function createMediumLiquidityOrderBook(
+  tokenId: string,
+  bestBid: number,
+  bestAsk: number
+): OrderBookSummary {
+  return {
+    market: tokenId,
+    asset_id: tokenId,
+    timestamp: new Date().toISOString(),
+    bids: [
+      { price: bestBid.toFixed(3), size: '200' },
+      { price: (bestBid - 0.01).toFixed(3), size: '150' },
+    ],
+    asks: [
+      { price: bestAsk.toFixed(3), size: '200' },
+      { price: (bestAsk + 0.01).toFixed(3), size: '150' },
+    ],
+    hash: `hash-${tokenId}-medium`,
+  }
+}
+
+export const mediumLiquidityMarket: GammaMarket = {
+  id: 99010,
+  question: 'Medium Liquidity Market - Who wins?',
+  slug: 'medium-liquidity-market',
+  conditionId: 'medium-liq-condition',
+  active: true,
+  closed: false,
+  createdAt: '2025-01-01T00:00:00Z',
+  tokens: [
+    { token_id: 'med-a', outcome: 'Team A', price: 0.28 },
+    { token_id: 'med-b', outcome: 'Team B', price: 0.25 },
+    { token_id: 'med-c', outcome: 'Team C', price: 0.24 },
+    { token_id: 'med-d', outcome: 'Team D', price: 0.18 },
+    // Total: 0.95 (underpriced)
+  ],
+}
+
+export const mediumLiquidityOrderBooks: Map<string, OrderBookSummary> = new Map(
+  [
+    ['med-a', createMediumLiquidityOrderBook('med-a', 0.27, 0.29)],
+    ['med-b', createMediumLiquidityOrderBook('med-b', 0.24, 0.26)],
+    ['med-c', createMediumLiquidityOrderBook('med-c', 0.23, 0.25)],
+    ['med-d', createMediumLiquidityOrderBook('med-d', 0.17, 0.19)],
+  ]
+)
+
+// ============================================================================
+// Scenario 9: Overpriced but Below Threshold
+// Market that is technically overpriced but below min profit threshold
+// ============================================================================
+
+export const minimalOverpricedMarket: GammaMarket = {
+  id: 99011,
+  question: 'Minimal Overpriced Market - Who wins?',
+  slug: 'minimal-overpriced-market',
+  conditionId: 'minimal-over-condition',
+  active: true,
+  closed: false,
+  createdAt: '2025-01-01T00:00:00Z',
+  tokens: [
+    { token_id: 'mover-a', outcome: 'Team A', price: 0.255 },
+    { token_id: 'mover-b', outcome: 'Team B', price: 0.255 },
+    { token_id: 'mover-c', outcome: 'Team C', price: 0.255 },
+    { token_id: 'mover-d', outcome: 'Team D', price: 0.255 },
+    // Total: 1.02 (2% overpriced - below 0.5% threshold after spreads)
+  ],
+}
+
+export const minimalOverpricedOrderBooks: Map<string, OrderBookSummary> =
+  new Map([
+    ['mover-a', createOrderBookWithPrices('mover-a', 0.251, 0.259)],
+    ['mover-b', createOrderBookWithPrices('mover-b', 0.251, 0.259)],
+    ['mover-c', createOrderBookWithPrices('mover-c', 0.251, 0.259)],
+    ['mover-d', createOrderBookWithPrices('mover-d', 0.251, 0.259)],
+  ])
