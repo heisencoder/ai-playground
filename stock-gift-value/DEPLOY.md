@@ -99,8 +99,10 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --role="roles/run.developer"
 
 # Permission to act as the Cloud Run service's runtime service account
+# Note: The default compute SA uses PROJECT_NUMBER (numeric), not PROJECT_ID
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
 gcloud iam service-accounts add-iam-policy-binding \
-  ${PROJECT_ID}-compute@developer.gserviceaccount.com \
+  ${PROJECT_NUMBER}-compute@developer.gserviceaccount.com \
   --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/iam.serviceAccountUser" \
   --project=$PROJECT_ID
