@@ -48,11 +48,14 @@ export REGION="us-central1"
 
 ```bash
 gcloud services enable \
+  compute.googleapis.com \
   artifactregistry.googleapis.com \
   run.googleapis.com \
   iamcredentials.googleapis.com \
   --project=$PROJECT_ID
 ```
+
+> **Note:** Enabling `compute.googleapis.com` creates the default Compute Engine service account, which Cloud Run uses as its runtime identity.
 
 #### 3. Create Artifact Registry Repository
 
