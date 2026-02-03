@@ -156,260 +156,12 @@ npm run quality           # Runs all of the above
 
 ## Deployment
 
-This is a standard Node.js Express app that can be deployed to any platform supporting Node.js 22+. Below are detailed instructions for deploying to **Google Cloud Platform (GCP)**.
+See **[DEPLOY.md](./DEPLOY.md)** for comprehensive deployment documentation, including:
 
-### Option 1: GCP Compute Engine (e2-micro - Free Tier)
-
-Deploy to a small VM instance with full control. The e2-micro instance is part of GCP's free tier (750 hours/month).
-
-#### Prerequisites
-
-1. Install [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
-2. Authenticate: `gcloud auth login`
-3. Set your project: `gcloud config set project YOUR_PROJECT_ID`
-
-#### Deployment Steps
-
-**1. Create an e2-micro VM instance:**
-
-```bash
-gcloud compute instances create stock-gift-app \
-  --zone=us-central1-a \
-  --machine-type=e2-micro \
-  --image-family=cos-stable \
-  --image-project=cos-cloud \
-  --boot-disk-size=10GB \
-  --boot-disk-type=pd-standard \
-  --tags=http-server,https-server
-```
-
-**2. Configure firewall rules to allow HTTP/HTTPS traffic:**
-
-```bash
-gcloud compute firewall-rules create allow-http \
-  --allow tcp:80 \
-  --target-tags http-server
-
-gcloud compute firewall-rules create allow-https \
-  --allow tcp:443 \
-  --target-tags https-server
-
-# Allow the app port (8080)
-gcloud compute firewall-rules create allow-app \
-  --allow tcp:8080 \
-  --target-tags http-server
-```
-
-**3. SSH into your instance:**
-
-```bash
-gcloud compute ssh stock-gift-app --zone=us-central1-a
-```
-
-**4. Install Docker (on Container-Optimized OS, Docker is pre-installed):**
-
-If using a different OS, install Docker:
-```bash
-sudo apt-get update
-sudo apt-get install -y docker.io
-sudo systemctl start docker
-sudo systemctl enable docker
-```
-
-**5. Build and run your Docker container:**
-
-First, copy your code to the VM or clone from git:
-
-```bash
-# Option A: Clone from git repository
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO/typescript/stock-gift-value
-
-# Option B: Copy files from local machine (run on your local machine)
-gcloud compute scp --recurse ./typescript/stock-gift-value stock-gift-app:~/app --zone=us-central1-a
-```
-
-Then build and run:
-
-```bash
-cd ~/app  # or your app directory
-
-# Build the Docker image
-sudo docker build -t stock-gift-app .
-
-# Run the container
-sudo docker run -d \
-  --name stock-gift-app \
-  --restart unless-stopped \
-  -p 8080:8080 \
-  -e PORT=8080 \
-  -e NODE_ENV=production \
-  stock-gift-app
-
-# Check if running
-sudo docker ps
-sudo docker logs stock-gift-app
-```
-
-**6. Access your app:**
-
-Get your VM's external IP:
-```bash
-gcloud compute instances describe stock-gift-app \
-  --zone=us-central1-a \
-  --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
-```
-
-Visit: `http://YOUR_EXTERNAL_IP:8080`
-
-#### Managing the Deployment
-
-**View logs:**
-```bash
-sudo docker logs -f stock-gift-app
-```
-
-**Update the app:**
-```bash
-# Pull latest changes
-git pull
-
-# Rebuild and restart
-sudo docker stop stock-gift-app
-sudo docker rm stock-gift-app
-sudo docker build -t stock-gift-app .
-sudo docker run -d --name stock-gift-app --restart unless-stopped -p 8080:8080 stock-gift-app
-```
-
-**Stop/Start the VM (to save costs):**
-```bash
-# Stop (from local machine)
-gcloud compute instances stop stock-gift-app --zone=us-central1-a
-
-# Start
-gcloud compute instances start stock-gift-app --zone=us-central1-a
-```
-
-### Option 2: GCP Cloud Run (Serverless)
-
-Fully managed serverless option with automatic scaling. Better for variable traffic patterns.
-
-**1. Build and push to Google Container Registry:**
-
-```bash
-# Set your project ID
-export PROJECT_ID=YOUR_PROJECT_ID
-
-# Build and push using Cloud Build
-gcloud builds submit --tag gcr.io/$PROJECT_ID/stock-gift-app
-
-# Or build locally and push
-docker build -t gcr.io/$PROJECT_ID/stock-gift-app .
-docker push gcr.io/$PROJECT_ID/stock-gift-app
-```
-
-**2. Deploy to Cloud Run:**
-
-```bash
-gcloud run deploy stock-gift-app \
-  --image gcr.io/$PROJECT_ID/stock-gift-app \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated \
-  --memory 256Mi \
-  --cpu 1 \
-  --max-instances 5 \
-  --port 8080
-```
-
-**3. Access your app:**
-
-Cloud Run will provide a URL like: `https://stock-gift-app-xxxxx-uc.a.run.app`
-
-**Update the app:**
-```bash
-gcloud builds submit --tag gcr.io/$PROJECT_ID/stock-gift-app
-gcloud run deploy stock-gift-app --image gcr.io/$PROJECT_ID/stock-gift-app --region us-central1
-```
-
-#### Optimizing Cloud Run for Fast Cold Starts
-
-To achieve sub-5 second cold start times, configure the startup probe for faster health check detection:
-
-```bash
-gcloud run services update stock-gift-app \
-  --region=us-central1 \
-  --startup-probe httpGet.path=/health,httpGet.port=8080,initialDelaySeconds=2,periodSeconds=1,timeoutSeconds=1,failureThreshold=3
-```
-
-Or include it during initial deployment:
-
-```bash
-gcloud run deploy stock-gift-app \
-  --image gcr.io/$PROJECT_ID/stock-gift-app \
-  --region us-central1 \
-  --platform managed \
-  --allow-unauthenticated \
-  --memory 256Mi \
-  --cpu 1 \
-  --max-instances 5 \
-  --port 8080 \
-  --startup-probe httpGet.path=/health,httpGet.port=8080,initialDelaySeconds=2,periodSeconds=1,timeoutSeconds=1,failureThreshold=3
-```
-
-**Why this helps:**
-- By default, Cloud Run checks health every 3-5 seconds, adding 4-6 seconds of latency
-- This configuration waits 2 seconds (for container init + Node startup), then checks every second
-- Combined with direct Node invocation in the Dockerfile, cold starts drop from ~10s to ~4-5s
-
-**Performance breakdown:**
-- Container initialization: ~2.6s (unavoidable)
-- Node.js startup: ~1.5s (optimized with direct `node` command vs `npm start`)
-- Health check detection: ~1s (waits 2s, then succeeds on first or second probe)
-- **Total: ~10s → ~4-5s** after optimization
-
-### Option 3: Other Platforms
-
-This app can also deploy to:
-- **AWS** (Elastic Beanstalk, EC2, ECS)
-- **Azure** (App Service, Container Instances)
-- **Railway, Render, Fly.io, Heroku, DigitalOcean**
-
-**General deployment steps:**
-1. Build: `npm run build:all`
-2. Set environment: `NODE_ENV=production PORT=8080`
-3. Start: `npm start`
-
-### Docker Deployment
-
-A production-ready Dockerfile is included with:
-- Multi-stage build for optimal image size
-- Non-root user for security
-- Health checks
-- Alpine Linux base (smaller image)
-- Direct Node.js invocation for fast cold starts (optimized for Cloud Run)
-
-**Local Docker testing:**
-```bash
-# Build the image
-docker build -t stock-gift-app .
-
-# Run the container with port forwarding
-docker run -p 8080:8080 --name stock-gift-app stock-gift-app
-
-# Stop and remove when done
-docker stop stock-gift-app
-docker rm stock-gift-app
-```
-
-Visit: `http://localhost:8080`
-
-**To rebuild after changes:**
-```bash
-docker stop stock-gift-app && docker rm stock-gift-app
-docker build -t stock-gift-app .
-docker run -p 8080:8080 --name stock-gift-app stock-gift-app
-```
+- **Automated deployment** via GitHub Actions (triggered by releases with `stock-gift-value/v*` tags)
+- **GCP setup instructions** for Workload Identity Federation and minimal permissions
+- **Manual deployment options**: GCP Compute Engine, Cloud Run, and other platforms
+- **Docker deployment** and local testing
 
 ## Usage
 
@@ -434,7 +186,7 @@ The calculation: `(500.16 + 493.35) / 2 × 34 = 496.755 × 34 = $16,889.67`
 ## Project Structure
 
 ```
-typescript/stock-gift-value/
+stock-gift-value/
 ├── api/                     # Backend API
 │   ├── handler.ts           # Platform-agnostic business logic
 │   ├── server.ts            # Express server
@@ -450,12 +202,8 @@ typescript/stock-gift-value/
 │   ├── components/          # React components
 │   ├── hooks/               # Custom React hooks
 │   ├── services/            # API client and caching
-│   ├── utils/               # Helper functions
 │   ├── constants/           # Constants
 │   └── test/                # Test configuration
-├── .github/                 # GitHub Actions workflows
-│   └── workflows/
-│       └── ci.yml           # CI/CD pipeline
 ├── dist/                    # Built frontend (gitignored)
 ├── dist-server/             # Built server (gitignored)
 ├── package.json
@@ -484,7 +232,7 @@ typescript/stock-gift-value/
 
 ## CI/CD
 
-GitHub Actions workflow (`.github/workflows/ci.yml`) automatically runs on all pull requests and pushes to main:
+GitHub Actions workflow (`.github/workflows/stock-gift-value-ci.yml`) automatically runs on all pull requests and pushes to main:
 
 **Docker Build Test:**
 1. Builds production Docker image using multi-stage build
