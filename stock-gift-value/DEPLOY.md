@@ -19,12 +19,12 @@ The GitHub Actions workflow (`.github/workflows/stock-gift-value-deploy.yml`) au
 
 The deployment workflow will automatically build and deploy to Cloud Run.
 
-### Setting Up GitHub Secrets for GCP Deployment
+### Setting Up GitHub Actions Variables for GCP Deployment
 
-This deployment uses **Workload Identity Federation** for secure authentication without storing long-lived credentials. You need to configure the following GitHub Secrets specific to this app:
+This deployment uses **Workload Identity Federation** for secure authentication without storing long-lived credentials. You need to configure the following GitHub Actions **Variables** (not Secrets) specific to this app. These values are safe as plaintext variables because none of them are credentials -- the actual security comes from the Workload Identity Federation trust relationship, which only issues credentials to workflows running in your authorized repo.
 
-| Secret Name | Description |
-|-------------|-------------|
+| Variable Name | Description |
+|---------------|-------------|
 | `STOCK_GIFT_VALUE_GCP_PROJECT_ID` | Your GCP project ID (e.g., `my-project-123`) |
 | `STOCK_GIFT_VALUE_GCP_SERVICE_ACCOUNT` | Service account email (e.g., `stock-gift-deploy@my-project.iam.gserviceaccount.com`) |
 | `STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Provider resource name |
@@ -152,14 +152,14 @@ This will output something like:
 projects/123456789/locations/global/workloadIdentityPools/github-actions/providers/github
 ```
 
-#### 8. Configure GitHub Secrets
+#### 8. Configure GitHub Actions Variables
 
-Go to your GitHub repository → Settings → Secrets and variables → Actions → New repository secret
+Go to your GitHub repository → Settings → Secrets and variables → Actions → Variables tab → New repository variable
 
-Add these secrets:
+Add these variables:
 
-| Secret Name | Value |
-|-------------|-------|
+| Variable Name | Value |
+|---------------|-------|
 | `STOCK_GIFT_VALUE_GCP_PROJECT_ID` | `your-gcp-project-id` |
 | `STOCK_GIFT_VALUE_GCP_SERVICE_ACCOUNT` | `stock-gift-deploy@your-gcp-project-id.iam.gserviceaccount.com` |
 | `STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER` | The full provider name from step 7 |
@@ -168,11 +168,12 @@ Add these secrets:
 ### Security Notes
 
 - **Workload Identity Federation** is used instead of service account keys. This means no long-lived credentials are stored in GitHub.
+- **GitHub Actions Variables** (not Secrets) are used for configuration because none of the values are credentials. The security comes from GCP's Workload Identity Federation, which only issues tokens to workflows running in your authorized repository.
 - The service account has **minimal permissions**:
   - Can only push to the `stock-gift-value` Artifact Registry repository
   - Can only deploy Cloud Run services (with `run.developer` role)
   - Cannot access other GCP resources
-- All secret names are prefixed with `STOCK_GIFT_VALUE_` to allow adding other apps to this repo with their own isolated credentials.
+- All variable names are prefixed with `STOCK_GIFT_VALUE_` to allow adding other apps to this repo with their own isolated credentials.
 
 ### Troubleshooting Deployment
 
