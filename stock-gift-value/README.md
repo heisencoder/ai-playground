@@ -186,7 +186,7 @@ The calculation: `(500.16 + 493.35) / 2 × 34 = 496.755 × 34 = $16,889.67`
 ## Project Structure
 
 ```
-typescript/stock-gift-value/
+stock-gift-value/
 ├── api/                     # Backend API
 │   ├── handler.ts           # Platform-agnostic business logic
 │   ├── server.ts            # Express server
@@ -202,12 +202,8 @@ typescript/stock-gift-value/
 │   ├── components/          # React components
 │   ├── hooks/               # Custom React hooks
 │   ├── services/            # API client and caching
-│   ├── utils/               # Helper functions
 │   ├── constants/           # Constants
 │   └── test/                # Test configuration
-├── .github/                 # GitHub Actions workflows
-│   └── workflows/
-│       └── ci.yml           # CI/CD pipeline
 ├── dist/                    # Built frontend (gitignored)
 ├── dist-server/             # Built server (gitignored)
 ├── package.json

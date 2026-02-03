@@ -18,8 +18,6 @@ jobs:
       id-token: write  # Required for Workload Identity Federation
 
     env:
-      # Extract version from tag (e.g., 'stock-gift-value/v1.0.0' -> 'v1.0.0')
-      VERSION: ${{ github.event.release.tag_name }}
       REGION: us-central1
       SERVICE_NAME: stock-gift-value
 
@@ -27,16 +25,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Extract version from tag
-        id: version
+      - name: Extract version and image path
+        id: meta
         run: |
-          # Remove 'stock-gift-value/' prefix from tag
           VERSION="${GITHUB_REF_NAME#stock-gift-value/}"
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ vars.STOCK_GIFT_VALUE_GCP_PROJECT_ID }}/${{ vars.STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
           echo "Deploying version: $VERSION"
+          echo "Image: $IMAGE"
 
       - name: Authenticate to Google Cloud
-        id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -48,21 +47,20 @@ jobs:
           project_id: ${{ vars.STOCK_GIFT_VALUE_GCP_PROJECT_ID }}
 
       - name: Configure Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
       - name: Build Docker image
         working-directory: ./stock-gift-value
         run: |
           docker build \
-            -t ${{ env.REGION }}-docker.pkg.dev/${{ vars.STOCK_GIFT_VALUE_GCP_PROJECT_ID }}/${{ vars.STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:${{ steps.version.outputs.version }} \
-            -t ${{ env.REGION }}-docker.pkg.dev/${{ vars.STOCK_GIFT_VALUE_GCP_PROJECT_ID }}/${{ vars.STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:latest \
+            -t ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }} \
+            -t ${{ steps.meta.outputs.image }}:latest \
             .
 
       - name: Push Docker image
         run: |
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ vars.STOCK_GIFT_VALUE_GCP_PROJECT_ID }}/${{ vars.STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:${{ steps.version.outputs.version }}
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ vars.STOCK_GIFT_VALUE_GCP_PROJECT_ID }}/${{ vars.STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:latest
+          docker push ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+          docker push ${{ steps.meta.outputs.image }}:latest
 
       - name: Deploy to Cloud Run
         id: deploy
@@ -70,7 +68,7 @@ jobs:
         with:
           service: ${{ env.SERVICE_NAME }}
           region: ${{ env.REGION }}
-          image: ${{ env.REGION }}-docker.pkg.dev/${{ vars.STOCK_GIFT_VALUE_GCP_PROJECT_ID }}/${{ vars.STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}:${{ steps.version.outputs.version }}
+          image: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
           flags: |
             --memory=256Mi
             --cpu=1
@@ -81,9 +79,4 @@ jobs:
 
       - name: Show deployment URL
         run: |
-          echo "✅ Deployed successfully!"
-          echo "🌐 URL: ${{ steps.deploy.outputs.url }}"
-          echo ""
-          echo "Version: ${{ steps.version.outputs.version }}"
-          echo "Service: ${{ env.SERVICE_NAME }}"
-          echo "Region: ${{ env.REGION }}"
+          echo "Deployed ${{ steps.meta.outputs.version }} to ${{ steps.deploy.outputs.url }}"

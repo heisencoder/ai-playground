@@ -19,20 +19,9 @@ The GitHub Actions workflow (`.github/workflows/stock-gift-value-deploy.yml`) au
 
 The deployment workflow will automatically build and deploy to Cloud Run.
 
-### Setting Up GitHub Actions Variables for GCP Deployment
+### GCP Setup for GitHub Actions
 
-This deployment uses **Workload Identity Federation** for secure authentication without storing long-lived credentials. You need to configure the following GitHub Actions **Variables** (not Secrets) specific to this app. These values are safe as plaintext variables because none of them are credentials -- the actual security comes from the Workload Identity Federation trust relationship, which only issues credentials to workflows running in your authorized repo.
-
-| Variable Name | Description |
-|---------------|-------------|
-| `STOCK_GIFT_VALUE_GCP_PROJECT_ID` | Your GCP project ID (e.g., `my-project-123`) |
-| `STOCK_GIFT_VALUE_GCP_SERVICE_ACCOUNT` | Service account email (e.g., `stock-gift-deploy@my-project.iam.gserviceaccount.com`) |
-| `STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER` | Workload Identity Provider resource name |
-| `STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO` | Artifact Registry repository name (e.g., `stock-gift-value`) |
-
-### Step-by-Step GCP Setup
-
-Follow these steps to configure GCP with minimal permissions for deploying only this app:
+Follow these steps to configure GCP with minimal permissions for deploying only this app. At the end (step 8), you'll add the resulting values as GitHub Actions Variables.
 
 #### 1. Set Environment Variables
 
@@ -136,10 +125,14 @@ gcloud iam service-accounts add-iam-policy-binding $SA_EMAIL \
   --project=$PROJECT_ID
 ```
 
-#### 7. Get the Workload Identity Provider Resource Name
+#### 7. Configure GitHub Actions Variables
+
+Go to your GitHub repository → Settings → Secrets and variables → Actions → **Variables** tab → New repository variable.
+
+These are stored as plaintext Variables (not Secrets) because none are credentials — the security comes from Workload Identity Federation, which only issues tokens to workflows running in your authorized repository.
 
 ```bash
-# Get the full provider resource name (you'll need this for the GitHub secret)
+# Get the Workload Identity Provider resource name for the variable below
 gcloud iam workload-identity-pools providers describe github \
   --location="global" \
   --workload-identity-pool="github-actions" \
@@ -147,32 +140,19 @@ gcloud iam workload-identity-pools providers describe github \
   --project=$PROJECT_ID
 ```
 
-This will output something like:
-```
-projects/123456789/locations/global/workloadIdentityPools/github-actions/providers/github
-```
-
-#### 8. Configure GitHub Actions Variables
-
-Go to your GitHub repository → Settings → Secrets and variables → Actions → Variables tab → New repository variable
-
 Add these variables:
 
 | Variable Name | Value |
 |---------------|-------|
 | `STOCK_GIFT_VALUE_GCP_PROJECT_ID` | `your-gcp-project-id` |
 | `STOCK_GIFT_VALUE_GCP_SERVICE_ACCOUNT` | `stock-gift-deploy@your-gcp-project-id.iam.gserviceaccount.com` |
-| `STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER` | The full provider name from step 7 |
+| `STOCK_GIFT_VALUE_GCP_WORKLOAD_IDENTITY_PROVIDER` | The provider resource name from the command above |
 | `STOCK_GIFT_VALUE_GCP_ARTIFACT_REPO` | `stock-gift-value` |
 
 ### Security Notes
 
-- **Workload Identity Federation** is used instead of service account keys. This means no long-lived credentials are stored in GitHub.
-- **GitHub Actions Variables** (not Secrets) are used for configuration because none of the values are credentials. The security comes from GCP's Workload Identity Federation, which only issues tokens to workflows running in your authorized repository.
-- The service account has **minimal permissions**:
-  - Can only push to the `stock-gift-value` Artifact Registry repository
-  - Can only deploy Cloud Run services (with `run.developer` role)
-  - Cannot access other GCP resources
+- **No long-lived credentials** are stored in GitHub. Workload Identity Federation issues short-lived tokens only to workflows running in your authorized repository.
+- The service account has **minimal permissions**: Artifact Registry writer (scoped to this repo) and Cloud Run developer. It cannot access other GCP resources.
 - All variable names are prefixed with `STOCK_GIFT_VALUE_` to allow adding other apps to this repo with their own isolated credentials.
 
 ### Troubleshooting Deployment
@@ -369,7 +349,7 @@ gcloud run deploy stock-gift-app --image gcr.io/$PROJECT_ID/stock-gift-app --reg
 
 #### Optimizing Cloud Run for Fast Cold Starts
 
-To achieve sub-5 second cold start times, configure the startup probe for faster health check detection:
+Add a startup probe for faster health check detection (reduces cold starts from ~10s to ~4-5s):
 
 ```bash
 gcloud run services update stock-gift-app \
@@ -377,31 +357,9 @@ gcloud run services update stock-gift-app \
   --startup-probe httpGet.path=/health,httpGet.port=8080,initialDelaySeconds=2,periodSeconds=1,timeoutSeconds=1,failureThreshold=3
 ```
 
-Or include it during initial deployment:
+You can also include `--startup-probe` in the initial `gcloud run deploy` command above. The automated GitHub Actions workflow already includes this.
 
-```bash
-gcloud run deploy stock-gift-app \
-  --image gcr.io/$PROJECT_ID/stock-gift-app \
-  --region us-central1 \
-  --platform managed \
-  --allow-unauthenticated \
-  --memory 256Mi \
-  --cpu 1 \
-  --max-instances 5 \
-  --port 8080 \
-  --startup-probe httpGet.path=/health,httpGet.port=8080,initialDelaySeconds=2,periodSeconds=1,timeoutSeconds=1,failureThreshold=3
-```
-
-**Why this helps:**
-- By default, Cloud Run checks health every 3-5 seconds, adding 4-6 seconds of latency
-- This configuration waits 2 seconds (for container init + Node startup), then checks every second
-- Combined with direct Node invocation in the Dockerfile, cold starts drop from ~10s to ~4-5s
-
-**Performance breakdown:**
-- Container initialization: ~2.6s (unavoidable)
-- Node.js startup: ~1.5s (optimized with direct `node` command vs `npm start`)
-- Health check detection: ~1s (waits 2s, then succeeds on first or second probe)
-- **Total: ~10s → ~4-5s** after optimization
+**Why this helps:** By default, Cloud Run checks health every 3-5 seconds, adding 4-6 seconds of latency. This configuration waits 2 seconds (for container init + Node startup), then checks every second. Combined with direct `node` invocation in the Dockerfile, cold starts drop significantly.
 
 ### Option 3: Other Platforms
 
