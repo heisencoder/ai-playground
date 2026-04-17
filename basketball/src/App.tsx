@@ -30,11 +30,9 @@ function emptyStats(): PlayerStats {
   return { Fouls: 0, Points: 0, Rebounds: 0, Assists: 0 };
 }
 
-function loadState(): StoredState {
-  if (typeof window === 'undefined') return { players: [], nextId: 1 };
+function parseStoredState(raw: string | null): StoredState {
+  if (!raw) return { players: [], nextId: 1 };
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { players: [], nextId: 1 };
     const parsed = JSON.parse(raw) as Partial<StoredState>;
     const players = Array.isArray(parsed.players)
       ? parsed.players.map((p) => ({
@@ -54,22 +52,82 @@ function loadState(): StoredState {
   }
 }
 
+function loadState(): StoredState {
+  if (typeof window === 'undefined') return { players: [], nextId: 1 };
+  try {
+    return parseStoredState(window.localStorage.getItem(STORAGE_KEY));
+  } catch {
+    return { players: [], nextId: 1 };
+  }
+}
+
+function buildTsv(players: Player[]): string {
+  const header = ['Player', ...STATS].join('\t');
+  const rows = players.map((p) =>
+    [p.name, ...STATS.map((s) => p.stats[s])].join('\t'),
+  );
+  return [header, ...rows].join('\n');
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // Fall through to legacy fallback.
+  }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export default function App() {
   const initial = loadState();
   const [players, setPlayers] = useState<Player[]>(initial.players);
   const [nameInput, setNameInput] = useState('');
   const [nextId, setNextId] = useState(initial.nextId);
+  const [copyStatus, setCopyStatus] = useState<'idle' | 'ok' | 'fail'>('idle');
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({ players, nextId }),
-      );
+      const payload = JSON.stringify({ players, nextId });
+      if (window.localStorage.getItem(STORAGE_KEY) !== payload) {
+        window.localStorage.setItem(STORAGE_KEY, payload);
+      }
     } catch {
       // Storage full or disabled; ignore.
     }
   }, [players, nextId]);
+
+  useEffect(() => {
+    function onStorage(e: StorageEvent) {
+      if (e.key !== STORAGE_KEY) return;
+      const next = parseStoredState(e.newValue);
+      setPlayers(next.players);
+      setNextId(next.nextId);
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+
+  useEffect(() => {
+    if (copyStatus === 'idle') return;
+    const t = window.setTimeout(() => setCopyStatus('idle'), 2000);
+    return () => window.clearTimeout(t);
+  }, [copyStatus]);
 
   function addPlayer() {
     const name = nameInput.trim();
@@ -107,8 +165,23 @@ export default function App() {
   }
 
   function resetAll() {
+    if (!window.confirm('Reset all stats to zero? This cannot be undone.')) {
+      return;
+    }
     setPlayers((prev) => prev.map((p) => ({ ...p, stats: emptyStats() })));
   }
+
+  async function handleCopy() {
+    const ok = await copyToClipboard(buildTsv(players));
+    setCopyStatus(ok ? 'ok' : 'fail');
+  }
+
+  const copyLabel =
+    copyStatus === 'ok'
+      ? 'Copied!'
+      : copyStatus === 'fail'
+        ? 'Copy failed'
+        : 'Copy Stats';
 
   return (
     <div className="app">
@@ -127,11 +200,11 @@ export default function App() {
           }}
         />
         <button onClick={addPlayer} disabled={!nameInput.trim()}>
-          Add Player
+          Add
         </button>
         {players.length > 0 && (
           <button className="secondary" onClick={resetAll}>
-            Reset Stats
+            Reset
           </button>
         )}
       </section>
@@ -181,9 +254,16 @@ export default function App() {
               ))}
             </tbody>
           </table>
-          <p className="hint">
-            Tap a cell to +1. Right-click (or long-press) to -1.
-          </p>
+          <div className="footer-row">
+            <button
+              className="copy-btn"
+              onClick={handleCopy}
+              aria-live="polite"
+            >
+              {copyLabel}
+            </button>
+            <p className="hint">Tap a cell to +1. Right-click to -1.</p>
+          </div>
         </div>
       )}
     </div>

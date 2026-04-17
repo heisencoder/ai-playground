@@ -151,11 +151,34 @@ header h1 {
   color: #d33;
 }
 
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.copy-btn {
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+  border: 1px solid #e87722;
+  border-radius: 6px;
+  background: white;
+  color: #e87722;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  background: #fff3ea;
+}
+
 .hint {
-  margin-top: 0.5rem;
+  margin: 0;
   font-size: 0.8rem;
   color: #777;
-  text-align: center;
 }
 
 @media (max-width: 480px) {
@@ -165,6 +188,24 @@ header h1 {
 
   header h1 {
     font-size: 1.25rem;
+  }
+
+  .controls {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+  }
+
+  .controls input {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.95rem;
+  }
+
+  .controls button {
+    padding: 0.55rem 0.65rem;
+    font-size: 0.9rem;
+    flex-shrink: 0;
   }
 
   .grid th,
@@ -189,5 +230,13 @@ header h1 {
   .stat-btn {
     height: 48px;
     font-size: 1.2rem;
+  }
+
+  .footer-row {
+    gap: 0.5rem;
+  }
+
+  .hint {
+    font-size: 0.75rem;
   }
 }
