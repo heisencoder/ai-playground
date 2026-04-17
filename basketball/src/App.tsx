@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 
 const STATS = ['Fouls', 'Points', 'Rebounds', 'Assists'] as const;
@@ -19,14 +19,57 @@ interface Player {
   stats: PlayerStats;
 }
 
+interface StoredState {
+  players: Player[];
+  nextId: number;
+}
+
+const STORAGE_KEY = 'basketball-stats-tracker:v1';
+
 function emptyStats(): PlayerStats {
   return { Fouls: 0, Points: 0, Rebounds: 0, Assists: 0 };
 }
 
+function loadState(): StoredState {
+  if (typeof window === 'undefined') return { players: [], nextId: 1 };
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { players: [], nextId: 1 };
+    const parsed = JSON.parse(raw) as Partial<StoredState>;
+    const players = Array.isArray(parsed.players)
+      ? parsed.players.map((p) => ({
+          id: Number(p.id),
+          name: String(p.name),
+          stats: { ...emptyStats(), ...(p.stats ?? {}) },
+        }))
+      : [];
+    const maxId = players.reduce((m, p) => Math.max(m, p.id), 0);
+    const nextId =
+      typeof parsed.nextId === 'number' && parsed.nextId > maxId
+        ? parsed.nextId
+        : maxId + 1;
+    return { players, nextId };
+  } catch {
+    return { players: [], nextId: 1 };
+  }
+}
+
 export default function App() {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const initial = loadState();
+  const [players, setPlayers] = useState<Player[]>(initial.players);
   const [nameInput, setNameInput] = useState('');
-  const [nextId, setNextId] = useState(1);
+  const [nextId, setNextId] = useState(initial.nextId);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ players, nextId }),
+      );
+    } catch {
+      // Storage full or disabled; ignore.
+    }
+  }, [players, nextId]);
 
   function addPlayer() {
     const name = nameInput.trim();
