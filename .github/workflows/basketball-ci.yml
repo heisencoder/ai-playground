@@ -1,0 +1,49 @@
+name: Basketball CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'basketball/**'
+      - '.github/workflows/basketball-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'basketball/**'
+      - '.github/workflows/basketball-ci.yml'
+
+defaults:
+  run:
+    working-directory: ./basketball
+
+jobs:
+  build:
+    name: Typecheck and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: basketball/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: basketball-dist
+          path: basketball/dist
+          retention-days: 7
