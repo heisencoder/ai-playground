@@ -1,0 +1,82 @@
+name: Basketball Deploy
+
+on:
+  release:
+    types: [published]
+
+# Only run if the release tag starts with 'basketball/'
+# (e.g. basketball/v1.0.0)
+jobs:
+  deploy:
+    name: Deploy to Cloud Run
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name, 'basketball/')
+
+    permissions:
+      contents: read
+      id-token: write  # Required for Workload Identity Federation
+
+    env:
+      REGION: us-central1
+      SERVICE_NAME: basketball
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version and image path
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF_NAME#basketball/}"
+          IMAGE="${{ env.REGION }}-docker.pkg.dev/${{ vars.BASKETBALL_GCP_PROJECT_ID }}/${{ vars.BASKETBALL_GCP_ARTIFACT_REPO }}/${{ env.SERVICE_NAME }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          echo "Deploying version: $VERSION"
+          echo "Image: $IMAGE"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.BASKETBALL_GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.BASKETBALL_GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ vars.BASKETBALL_GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build Docker image
+        working-directory: ./basketball
+        run: |
+          docker build \
+            -t ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }} \
+            -t ${{ steps.meta.outputs.image }}:latest \
+            .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+          docker push ${{ steps.meta.outputs.image }}:latest
+
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE_NAME }}
+          region: ${{ env.REGION }}
+          image: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.version }}
+          flags: |
+            --memory=256Mi
+            --cpu=1
+            --min-instances=0
+            --max-instances=2
+            --port=8080
+            --allow-unauthenticated
+            --startup-probe httpGet.path=/health,httpGet.port=8080,initialDelaySeconds=2,periodSeconds=1,timeoutSeconds=1,failureThreshold=3
+
+      - name: Show deployment URL
+        run: |
+          echo "Deployed ${{ steps.meta.outputs.version }} to ${{ steps.deploy.outputs.url }}"
