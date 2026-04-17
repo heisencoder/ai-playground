@@ -4,6 +4,13 @@ import './App.css';
 const STATS = ['Fouls', 'Points', 'Rebounds', 'Assists'] as const;
 type Stat = (typeof STATS)[number];
 
+const STAT_LABELS: Record<Stat, string> = {
+  Fouls: 'FOUL',
+  Points: 'PTS',
+  Rebounds: 'REB',
+  Assists: 'AST',
+};
+
 type PlayerStats = Record<Stat, number>;
 
 interface Player {
@@ -95,15 +102,23 @@ export default function App() {
               <tr>
                 <th className="player-col">Player</th>
                 {STATS.map((s) => (
-                  <th key={s}>{s}</th>
+                  <th key={s}>{STAT_LABELS[s]}</th>
                 ))}
-                <th aria-label="Remove"></th>
               </tr>
             </thead>
             <tbody>
               {players.map((p) => (
                 <tr key={p.id}>
-                  <td className="player-col">{p.name}</td>
+                  <td className="player-col">
+                    <span className="player-name">{p.name}</span>
+                    <button
+                      className="remove-btn"
+                      onClick={() => removePlayer(p.id)}
+                      aria-label={`Remove ${p.name}`}
+                    >
+                      ×
+                    </button>
+                  </td>
                   {STATS.map((s) => (
                     <td key={s} className="stat-cell">
                       <button
@@ -119,15 +134,6 @@ export default function App() {
                       </button>
                     </td>
                   ))}
-                  <td>
-                    <button
-                      className="remove-btn"
-                      onClick={() => removePlayer(p.id)}
-                      aria-label={`Remove ${p.name}`}
-                    >
-                      ×
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>

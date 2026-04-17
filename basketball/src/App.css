@@ -1,23 +1,24 @@
 .app {
   max-width: 900px;
   margin: 0 auto;
-  padding: 1.5rem 1rem;
+  padding: 1rem 0.75rem;
 }
 
 header h1 {
-  margin: 0 0 1rem;
-  font-size: 1.75rem;
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .controls input {
-  flex: 1 1 180px;
+  flex: 1 1 160px;
+  min-width: 0;
   padding: 0.6rem 0.75rem;
   font-size: 1rem;
   border: 1px solid #ccc;
@@ -25,13 +26,14 @@ header h1 {
 }
 
 .controls button {
-  padding: 0.6rem 1rem;
-  font-size: 1rem;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.95rem;
   border: none;
   border-radius: 6px;
   background: #e87722;
   color: white;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .controls button:disabled {
@@ -50,11 +52,12 @@ header h1 {
 }
 
 .grid-wrapper {
-  overflow-x: auto;
+  width: 100%;
 }
 
 .grid {
   width: 100%;
+  table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   background: white;
@@ -65,7 +68,7 @@ header h1 {
 
 .grid th,
 .grid td {
-  padding: 0.5rem;
+  padding: 0.4rem 0.25rem;
   text-align: center;
   border-bottom: 1px solid #eee;
   border-right: 1px solid #eee;
@@ -76,8 +79,8 @@ header h1 {
   color: white;
   font-weight: 600;
   text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
 }
 
 .grid tbody tr:last-child td {
@@ -92,20 +95,31 @@ header h1 {
 .player-col {
   text-align: left !important;
   font-weight: 600;
-  min-width: 120px;
+  width: 36%;
+  padding-left: 0.5rem !important;
+  padding-right: 0.25rem !important;
+}
+
+.player-name {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: calc(100% - 1.5rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stat-cell {
   padding: 0 !important;
-  width: 72px;
+  width: 16%;
 }
 
 .stat-btn {
   width: 100%;
-  height: 56px;
+  height: 52px;
   border: none;
   background: transparent;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 600;
   cursor: pointer;
   color: #222;
@@ -124,10 +138,13 @@ header h1 {
 .remove-btn {
   background: transparent;
   border: none;
-  font-size: 1.25rem;
-  color: #999;
+  font-size: 1.1rem;
+  color: #bbb;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
+  padding: 0 0.25rem;
+  margin-left: 0.25rem;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 .remove-btn:hover {
@@ -135,8 +152,42 @@ header h1 {
 }
 
 .hint {
-  margin-top: 0.75rem;
-  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
   color: #777;
   text-align: center;
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 0.75rem 0.5rem;
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+  }
+
+  .grid th,
+  .grid td {
+    padding: 0.35rem 0.1rem;
+  }
+
+  .grid th {
+    font-size: 0.65rem;
+  }
+
+  .player-col {
+    width: 32%;
+    padding-left: 0.35rem !important;
+    font-size: 0.9rem;
+  }
+
+  .stat-cell {
+    width: 17%;
+  }
+
+  .stat-btn {
+    height: 48px;
+    font-size: 1.2rem;
+  }
 }
