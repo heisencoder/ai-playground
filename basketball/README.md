@@ -35,8 +35,10 @@ React 18, TypeScript, Vite. No backend — the whole app is static.
 
 ## Deployment
 
-The app is built to be hosted as a static site. See
-[DEPLOY.md](./DEPLOY.md) for step-by-step GitHub Pages instructions
-(the repo includes a workflow that auto-publishes on every push to
-`main`), plus notes on hosting elsewhere (Netlify, Cloudflare Pages,
-S3, etc.).
+The app is built to be hosted as a static site, and this repo
+publishes it to GitHub Pages at
+[`/ai-playground/basketball/`](https://heisencoder.github.io/ai-playground/basketball/)
+alongside a top-level table of contents. See
+[DEPLOY.md](./DEPLOY.md) for the Pages setup, how to add more static
+apps to the same site, and how to host on Netlify / Cloudflare Pages
+/ S3 / Firebase instead.

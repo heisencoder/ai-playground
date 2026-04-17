@@ -1,0 +1,100 @@
+name: Pages Deploy
+
+# Assembles a single GitHub Pages site from:
+#   - site/index.html               -> /             (table of contents)
+#   - basketball/dist/              -> /basketball/  (static SPA)
+#
+# Adding a new static app:
+#   1. Make sure the app's Vite config uses `base: './'` (or another
+#      scheme that produces URL-relative asset paths) so it works
+#      under a subpath.
+#   2. Add a Build step below (npm ci + npm run build inside the app
+#      directory).
+#   3. Add a "cp -r <app>/dist/. _site/<app>/" line to the Assemble
+#      site step.
+#   4. Add a new <li> with a link to ./<app>/ in site/index.html.
+#   5. Add the app's path to the `paths:` filter at the top.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'basketball/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# Allow only one concurrent Pages deployment; let an in-flight run
+# finish rather than canceling it.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build and assemble site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: |
+            basketball/package-lock.json
+
+      # -------- Per-app builds --------
+
+      - name: Build basketball
+        working-directory: ./basketball
+        run: |
+          npm ci
+          npm run build
+
+      # -------- Assemble site --------
+
+      - name: Assemble site
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+
+          # Root: table of contents + any other static assets in site/
+          cp -r site/. _site/
+
+          # Each app lives under its own subpath
+          mkdir -p _site/basketball
+          cp -r basketball/dist/. _site/basketball/
+
+          # (Add more apps here — see comment at top of workflow.)
+
+          echo "Final site layout:"
+          find _site -maxdepth 2 -type d | sort
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
