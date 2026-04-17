@@ -10,7 +10,7 @@ A simple React web app for tracking player statistics during a basketball game.
 - Right-click (or long-press) a cell to decrement (-1).
 - State persists in `localStorage` and syncs across open tabs.
 - Copy the scoreboard as TSV, ready to paste into a spreadsheet.
-- Remove a player with the × button, or reset all stats with one click.
+- Remove a player with the × button, or reset all stats (with a confirm prompt).
 
 ## Getting Started
 
@@ -22,26 +22,21 @@ npm run dev
 
 Open the URL printed by Vite (default `http://localhost:5173`).
 
-## Production-style run
-
-The repo ships with a small Express server that serves the built SPA and
-exposes `/health`. It's used by the Dockerfile and Cloud Run deployment.
+## Build and Preview
 
 ```bash
-npm run build:all
-npm start
-# open http://localhost:8080
+npm run build
+npm run preview   # serves the built dist/ at http://localhost:4173
 ```
-
-During development you can run the server against the last Vite build with
-`npm run dev:server`.
 
 ## Stack
 
-React 18, TypeScript, Vite, Express 5, Docker, GCP Cloud Run.
+React 18, TypeScript, Vite. No backend — the whole app is static.
 
 ## Deployment
 
-See [DEPLOY.md](./DEPLOY.md) for full instructions on deploying to GCP
-Cloud Run (automated via GitHub Actions release tags `basketball/v*`) or
-GCP Compute Engine, plus notes on running on other cloud providers.
+The app is built to be hosted as a static site. See
+[DEPLOY.md](./DEPLOY.md) for step-by-step GitHub Pages instructions
+(the repo includes a workflow that auto-publishes on every push to
+`main`), plus notes on hosting elsewhere (Netlify, Cloudflare Pages,
+S3, etc.).
