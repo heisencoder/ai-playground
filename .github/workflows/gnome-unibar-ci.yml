@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, format, test, coverage
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ['20.x', '22.x']
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: matrix.node-version == '22.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    name: Build extension bundle
+    runs-on: ubuntu-24.04
+    needs: quality
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Build extension bundle
+        run: bash scripts/pack.sh
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: unibar-extension
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
