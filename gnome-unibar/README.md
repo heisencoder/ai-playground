@@ -55,7 +55,7 @@ mocks of the signal-emitting actors.
 
 ## Development
 
-Node.js 20.10+ is required (uses the built-in test runner).
+Node.js 22+ is required (uses the built-in test runner).
 
 ```bash
 npm install            # one-time: install dev dependencies
@@ -96,8 +96,8 @@ Current coverage on the gated module:
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every push and PR to `main` across Node 20
-and 22 on `ubuntu-24.04`:
+`.github/workflows/gnome-unibar-ci.yml` runs on every push and PR to `main` on
+Node 22 on `ubuntu-24.04`:
 
 1. `npm ci`
 2. `npm run lint`
