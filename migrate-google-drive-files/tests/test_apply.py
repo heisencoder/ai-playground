@@ -140,7 +140,7 @@ def test_render_comment_format():
 def test_replicate_comments_survives_unsupported_file(fake):
     class Broken(type(fake)):
         def list_comments(self, file_id):
-            raise RuntimeError("comments not supported")
+            raise DriveError("comments not supported", status=400)
 
     broken = Broken()
     result = replicate_comments(broken, "a", "b")

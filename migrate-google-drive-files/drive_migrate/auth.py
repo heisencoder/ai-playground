@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from google.auth.exceptions import GoogleAuthError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -37,7 +38,7 @@ def build_service(
         if creds and creds.expired and creds.refresh_token:
             try:
                 creds.refresh(Request())
-            except Exception as exc:  # noqa: BLE001
+            except GoogleAuthError as exc:
                 log.warning("token refresh failed (%s); re-authorising", exc)
                 creds = None
         if not creds or not creds.valid:

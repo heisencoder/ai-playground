@@ -8,6 +8,7 @@ resolution and duplicate detection, but writes are replaced with placeholder IDs
 from __future__ import annotations
 
 import logging
+import sqlite3
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
@@ -121,7 +122,10 @@ class Applier:
                 stats.failed += 1
                 stats.errors.append(f"{item.path}: {exc}")
                 self._record(source_id, FAILED, error=str(exc))
-            except Exception as exc:  # noqa: BLE001
+            except (OSError, sqlite3.Error) as exc:
+                # Keep going on infrastructure failures (disk, network stack, DB)
+                # so one bad item does not abort a long migration. Logic errors
+                # are deliberately left to propagate.
                 log.exception("FAIL   %s", item.path)
                 stats.failed += 1
                 stats.errors.append(f"{item.path}: {exc}")

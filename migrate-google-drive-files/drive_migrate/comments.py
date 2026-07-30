@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from drive_migrate.drive import DriveClient
+from drive_migrate.drive import DriveClient, DriveError
 
 log = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ def replicate_comments(
     """Copy all non-deleted comment threads from source_id onto dest_id."""
     try:
         threads = [c for c in client.list_comments(source_id) if not c.get("deleted")]
-    except Exception as exc:  # noqa: BLE001 - comments unsupported for some types
+    except DriveError as exc:  # comments are unsupported for some file types
         return CommentResult(0, 0, [f"list_comments failed: {exc}"])
 
     result = CommentResult(total=len(threads), copied=0, errors=[])
@@ -80,7 +80,7 @@ def replicate_comments(
                     action="resolve",
                 )
             result.copied += 1
-        except Exception as exc:  # noqa: BLE001
+        except DriveError as exc:
             result.errors.append(f"comment {thread.get('id')}: {exc}")
             log.warning("failed to replicate comment on %s: %s", dest_id, exc)
     return result

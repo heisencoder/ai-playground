@@ -248,11 +248,13 @@ class DriveClient:
         )
 
 
-def _http_error_reason(err: Any) -> str | None:
+def _http_error_reason(err: HttpError) -> str | None:
+    # error_details may be absent, not a list of dicts, or otherwise malformed
+    # depending on the API response and googleapiclient version.
     try:
         details = err.error_details
-        if isinstance(details, list) and details:
+        if isinstance(details, list) and details and isinstance(details[0], dict):
             return details[0].get("reason")
-    except Exception:  # noqa: BLE001
+    except (AttributeError, KeyError, IndexError, TypeError):
         pass
     return None
