@@ -20,7 +20,7 @@ from pathlib import Path
 
 from drive_migrate.apply import Applier
 from drive_migrate.auth import build_service, default_credentials_path, default_token_path
-from drive_migrate.drive import FOLDER_MIME, DriveClient
+from drive_migrate.drive import FOLDER_MIME, DriveClient, DriveError
 from drive_migrate.plan import build_plan
 from drive_migrate.report import summary, write_csv
 from drive_migrate.scan import scan
@@ -302,7 +302,28 @@ def main(argv: list[str] | None = None) -> int:
         if not hasattr(args, attr):
             setattr(args, attr, default)
     Path(args.db).parent.mkdir(parents=True, exist_ok=True)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except DriveError as err:
+        # Expected API failures (a bad ID, no access) should read as an error
+        # message, not a stack trace. Use -v to see the full response.
+        log.debug("Drive API error", exc_info=err)
+        print(f"\nDrive API error {err.status or '?'} ({err.reason or 'error'}).", file=sys.stderr)
+        if err.status == 404:
+            print(
+                "The source or destination could not be found. Check the ID "
+                "(copy it from the folder URL after '/folders/'), or use "
+                "--source-name / --dest-drive-name instead, and confirm you "
+                "authenticated as an account that can see it.",
+                file=sys.stderr,
+            )
+        elif err.status == 403:
+            print(
+                "Access was denied. Confirm the authenticated account has access "
+                "to this item.",
+                file=sys.stderr,
+            )
+        return 1
 
 
 if __name__ == "__main__":
