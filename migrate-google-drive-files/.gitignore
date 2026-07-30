@@ -1,0 +1,15 @@
+# OAuth secrets and local state — NEVER commit these
+credentials.json
+token.json
+.migrate/
+*.sqlite
+
+# Migration output
+migration-report.csv
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/

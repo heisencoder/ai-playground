@@ -38,12 +38,12 @@ def write_csv(state: State, out_path: Path | str) -> Path:
 
 
 def _fmt_bytes(n: int | None) -> str:
-    n = n or 0
+    size = float(n or 0)
     for unit in ("B", "KB", "MB", "GB"):
-        if n < 1024 or unit == "GB":
-            return f"{n:,.1f} {unit}" if unit != "B" else f"{n:,} B"
-        n /= 1024
-    return str(n)
+        if size < 1024 or unit == "GB":
+            return f"{size:,.1f} {unit}" if unit != "B" else f"{int(size):,} B"
+        size /= 1024
+    return str(size)
 
 
 def summary(state: State) -> str:

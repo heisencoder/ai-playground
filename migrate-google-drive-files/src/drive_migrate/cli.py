@@ -26,7 +26,6 @@ from .report import summary, write_csv
 from .scan import scan
 from .state import State
 
-
 log = logging.getLogger("drive_migrate")
 
 
@@ -40,6 +39,8 @@ def resolve_source(client: DriveClient, state: State, args) -> str:
     if cached and not args.source_name:
         return cached
     name = args.source_name
+    if not name:
+        raise SystemExit("Specify the source folder with --source-name (or --source-id).")
     matches = client.find_my_drive_folder(name)
     if not matches:
         raise SystemExit(f"No folder named {name!r} found. Pass --source-id instead.")
@@ -60,7 +61,12 @@ def resolve_dest(client: DriveClient, state: State, args, execute: bool = False)
     if args.dest_drive_id:
         drive = client.get_drive(args.dest_drive_id)
     else:
-        drive = client.find_drive_by_name(args.dest_drive_name
+        if not args.dest_drive_name:
+            raise SystemExit(
+                "Specify the destination shared drive with --dest-drive-name "
+                "(or --dest-drive-id)."
+            )
+        drive = client.find_drive_by_name(args.dest_drive_name)
         if not drive:
             raise SystemExit(
                 f"Shared drive {args.dest_drive_name!r} not visible to this "

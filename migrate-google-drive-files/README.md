@@ -50,8 +50,9 @@ same file ID, so the source folder stays as an audit trail.
 1. **Shared drive membership.** A manager of the Shared Drive must add
    your email as **Content manager** or **Manager**. Contributor
    is not enough to create the folder structure reliably.
-2. **Workspace admin settings.** A consumer Gmail account is external to
-   uuchurchofboulder.org, so the church's Workspace admin needs to permit:
+2. **Workspace admin settings.** If you are signing in with a consumer Gmail
+   account, it is external to the destination's Workspace domain, so that
+   organization's Workspace admin needs to permit:
    - external (non-domain) members on shared drives, and
    - members moving content *into* shared drives (this lives under Drive and
      Docs → Sharing settings; the exact label has changed across Admin console
@@ -59,9 +60,9 @@ same file ID, so the source folder stays as an audit trail.
 
    `preflight` reports `canAddChildren` for the drive, and `apply --execute` on a
    small subtree will surface any remaining block as a `403`.
-3. **Storage.** Files moved or copied into the shared drive consume the church's
-   Workspace storage pool, not yours. `scan` prints total bytes by owner so you
-   can check the size before committing.
+3. **Storage.** Files moved or copied into the shared drive consume the
+   destination organization's Workspace storage pool, not yours. `scan` prints
+   total bytes by owner so you can check the size before committing.
 
 ## Setup
 
@@ -69,7 +70,7 @@ same file ID, so the source folder stays as an audit trail.
 
 The script authenticates as you, so it needs its own OAuth client:
 
-1. <https://console.cloud.google.com/> → create a project (e.g. `uucb-migration`)
+1. <https://console.cloud.google.com/> → create a project (e.g. `drive-migration`)
 2. Enable the **Google Drive API**.
 3. OAuth consent screen → **External**, publishing status **Testing**, and add
    your email as a test user.
@@ -165,9 +166,9 @@ uv run ty check src
 ```
 
 `tests/conftest.py` implements `FakeDriveClient`, an in-memory Drive with the
-same method surface as the real client, holding a small tree that mirrors the
-real situation: files you own, files owned by a departed treasurer, a file with
-copying disabled, a Google Map, a shortcut, and comment threads including a
+same method surface as the real client, holding a small tree that mirrors a
+realistic situation: files you own, files owned by someone who has left, a file
+with copying disabled, a Google Map, a shortcut, and comment threads including a
 resolved one. The tests cover the classification table, dry-run isolation,
 comment replication, idempotent re-runs, and per-item failure isolation.
 

@@ -228,7 +228,7 @@ class Applier:
 def _provenance(item) -> str:
     today = datetime.now(UTC).date().isoformat()
     parts = [
-        f"Copied into the UUCB Finance shared drive on {today}.",
+        f"Copied into the destination shared drive on {today}.",
         f"Original owner: {item.owner_name or ''} <{item.owner_email or 'unknown'}>.",
         f"Original created: {(item.created_time or '')[:10]}; "
         f"last modified: {(item.modified_time or '')[:10]}.",

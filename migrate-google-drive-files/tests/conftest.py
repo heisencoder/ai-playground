@@ -129,7 +129,7 @@ class FakeDriveClient:
 
     def about(self):
         self.call_count += 1
-        return {"emailAddress": self.me, "displayName": "Matthew Ball"}
+        return {"emailAddress": self.me, "displayName": "Test User"}
 
     def get_file(self, file_id):
         self.call_count += 1
@@ -230,8 +230,8 @@ def fake() -> FakeDriveClient:
 
 @pytest.fixture
 def tree(fake: FakeDriveClient):
-    """A miniature 'Old UUCB FInance' with a realistic mix of ownership."""
-    root = fake.add_folder("Old UUCB FInance", None)
+    """A miniature source tree with a realistic mix of ownership."""
+    root = fake.add_folder("Old Finance Archive", None)
     y2019 = fake.add_folder("2019", root)
     budget = fake.add_folder("Budget", y2019)
 
@@ -246,7 +246,7 @@ def tree(fake: FakeDriveClient):
     fake.add_comment(theirs, "Jane", "Line 14 looks off", replies=["Fixed"], quoted="Total: 41,203")
     fake.add_comment(theirs, "Bob", "Approved", resolved=True)
 
-    drive_id = fake.add_shared_drive("UUCB Finance")
+    drive_id = fake.add_shared_drive("Finance Shared Drive")
     return {
         "root": root,
         "y2019": y2019,
