@@ -4,8 +4,8 @@ version = "0.1.0"
 description = "Migrate a My Drive folder tree into a Google Workspace shared drive."
 requires-python = ">=3.11"
 dependencies = [
-    "google-api-python-client>=2.130",
-    "google-auth-oauthlib>=1.2",
+    "google-api-python-client>=2.198.0",
+    "google-auth-oauthlib>=1.4.0",
 ]
 
 [project.scripts]
@@ -13,9 +13,9 @@ drive-migrate = "drive_migrate.cli:main"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.0",
-    "ruff>=0.6",
-    "ty>=0.0.1a1",
+    "pytest>=9.1.1",
+    "ruff>=0.16.1",
+    "ty>=0.0.65",
 ]
 
 [build-system]

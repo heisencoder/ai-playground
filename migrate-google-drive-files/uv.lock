@@ -271,15 +271,15 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "google-api-python-client", specifier = ">=2.130" },
-    { name = "google-auth-oauthlib", specifier = ">=1.2" },
+    { name = "google-api-python-client", specifier = ">=2.198.0" },
+    { name = "google-auth-oauthlib", specifier = ">=1.4.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "ruff", specifier = ">=0.6" },
-    { name = "ty", specifier = ">=0.0.1a1" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "ruff", specifier = ">=0.16.1" },
+    { name = "ty", specifier = ">=0.0.65" },
 ]
 
 [[package]]
