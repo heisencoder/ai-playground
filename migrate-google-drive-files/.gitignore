@@ -1,4 +1,6 @@
-# OAuth secrets and local state — NEVER commit these
+# OAuth secrets and local state — NEVER commit these. By default the secrets
+# live outside the repo (see auth.py); these entries are defense-in-depth against
+# --credentials / --token / --db overrides that point back into the working tree.
 credentials.json
 token*.json
 .migrate/

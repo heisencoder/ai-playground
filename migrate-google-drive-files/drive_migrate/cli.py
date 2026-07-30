@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 from drive_migrate.apply import Applier
-from drive_migrate.auth import build_service
+from drive_migrate.auth import build_service, default_credentials_path, default_token_path
 from drive_migrate.drive import FOLDER_MIME, DriveClient
 from drive_migrate.plan import build_plan
 from drive_migrate.report import summary, write_csv
@@ -231,8 +231,16 @@ def cmd_report(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="drive-migrate", description=__doc__)
     p.add_argument("--db", default=".migrate/state.sqlite")
-    p.add_argument("--credentials", default="credentials.json")
-    p.add_argument("--token", default=".migrate/token.json")
+    p.add_argument(
+        "--credentials",
+        default=str(default_credentials_path()),
+        help="OAuth client secrets file (kept outside the repo; see README step 1)",
+    )
+    p.add_argument(
+        "--token",
+        default=str(default_token_path()),
+        help="where to cache the OAuth token (a private per-user file outside the repo)",
+    )
     p.add_argument("--account", help="expected Google account")
     p.add_argument("--source-id")
     p.add_argument("--source-name")

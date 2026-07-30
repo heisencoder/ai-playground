@@ -9,11 +9,19 @@ read files created by other people.
 
 The two scopes are cached in separate token files (token.json and
 token.readonly.json), so the read-only path never reuses a write-capable token.
+
+Neither secret is stored in the git working tree, so tools operating on the
+repository cannot read or leak them. By default the OAuth client secrets live in
+the user config directory (see default_credentials_path) and the short-lived
+tokens live in a private per-user directory in the system temp location (see
+default_token_path); both are locked to the owner.
 """
 
 from __future__ import annotations
 
 import logging
+import os
+import tempfile
 from pathlib import Path
 from typing import cast
 
@@ -31,19 +39,52 @@ READONLY_SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 log = logging.getLogger(__name__)
 
 
+def default_credentials_path() -> Path:
+    """Default OAuth client-secrets location, in the user config dir (not the repo)."""
+    config_home = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
+    return Path(config_home) / "drive-migrate" / "credentials.json"
+
+
+def default_token_path() -> Path:
+    """Default OAuth token location: a private per-user file in the system temp dir.
+
+    Deliberately outside the git working tree so tools operating on the repository
+    cannot read or leak the token. Tokens are short-lived and refreshable, so a
+    temp-dir location (which may be cleared on reboot, forcing a harmless re-auth)
+    is appropriate.
+    """
+    base = Path(tempfile.gettempdir())
+    suffix = f"-{os.getuid()}" if hasattr(os, "getuid") else ""
+    return base / f"drive-migrate{suffix}" / "token.json"
+
+
+def _ensure_private_dir(path: Path) -> None:
+    """Create `path` if needed and lock it to the owner (mode 0700).
+
+    OAuth tokens are secrets, so their directory must not be readable by other
+    users. The mode is enforced even when the directory already exists, so a token
+    written into a pre-existing, loosely-permissioned directory is still private.
+    """
+    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        path.chmod(0o700)
+    except OSError as exc:  # e.g. the directory is owned by another user
+        raise SystemExit(f"Cannot secure token directory {path}: {exc}") from exc
+
+
 def build_service(
-    credentials_path: Path | str = "credentials.json",
-    token_path: Path | str = ".migrate/token.json",
+    credentials_path: Path | str | None = None,
+    token_path: Path | str | None = None,
     login_hint: str | None = None,
     read_only: bool = False,
 ) -> DriveService:
     scopes = READONLY_SCOPES if read_only else READWRITE_SCOPES
-    credentials_path = Path(credentials_path)
-    token_path = Path(token_path)
+    credentials_path = Path(credentials_path) if credentials_path else default_credentials_path()
+    token_path = Path(token_path) if token_path else default_token_path()
     if read_only:
         # Cache the limited token separately so it never shadows the write token.
         token_path = token_path.with_name(f"{token_path.stem}.readonly{token_path.suffix}")
-    token_path.parent.mkdir(parents=True, exist_ok=True)
+    _ensure_private_dir(token_path.parent)
 
     creds = None
     if token_path.exists():
