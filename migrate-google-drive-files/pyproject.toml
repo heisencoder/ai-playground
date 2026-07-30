@@ -2,7 +2,7 @@
 name = "drive-migrate"
 version = "0.1.0"
 description = "Migrate a My Drive folder tree into a Google Workspace shared drive."
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "google-api-python-client>=2.198.0",
     "google-auth-oauthlib>=1.4.0",
