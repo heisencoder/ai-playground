@@ -1,8 +1,14 @@
 """OAuth installed-app flow.
 
-Uses the full https://www.googleapis.com/auth/drive scope. Narrower scopes are
-not sufficient: drive.file only grants access to files this app created, and the
-migration must read files created by dozens of other people.
+Read-only phases (preflight/scan/plan and any dry-run apply) authenticate with
+the read-only https://www.googleapis.com/auth/drive.readonly scope, so they
+physically cannot modify Drive. Only apply --execute (and preflight --roundtrip)
+request the full https://www.googleapis.com/auth/drive scope. drive.file is not
+usable: it only grants access to files this app created, and the migration must
+read files created by other people.
+
+The two scopes are cached in separate token files (token.json and
+token.readonly.json), so the read-only path never reuses a write-capable token.
 """
 
 from __future__ import annotations
@@ -17,7 +23,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-SCOPES = ["https://www.googleapis.com/auth/drive"]
+READWRITE_SCOPES = ["https://www.googleapis.com/auth/drive"]
+READONLY_SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
 
 log = logging.getLogger(__name__)
 
@@ -26,14 +33,19 @@ def build_service(
     credentials_path: Path | str = "credentials.json",
     token_path: Path | str = ".migrate/token.json",
     login_hint: str | None = None,
+    read_only: bool = False,
 ) -> Any:  # googleapiclient's Resource is dynamically built and untyped
+    scopes = READONLY_SCOPES if read_only else READWRITE_SCOPES
     credentials_path = Path(credentials_path)
     token_path = Path(token_path)
+    if read_only:
+        # Cache the limited token separately so it never shadows the write token.
+        token_path = token_path.with_name(f"{token_path.stem}.readonly{token_path.suffix}")
     token_path.parent.mkdir(parents=True, exist_ok=True)
 
     creds = None
     if token_path.exists():
-        creds = Credentials.from_authorized_user_file(str(token_path), SCOPES)
+        creds = Credentials.from_authorized_user_file(str(token_path), scopes)
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -47,10 +59,11 @@ def build_service(
                 raise SystemExit(
                     f"Missing OAuth client file at {credentials_path}. See README step 1."
                 )
-            flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file(str(credentials_path), scopes)
             kwargs = {"login_hint": login_hint} if login_hint else {}
             creds = flow.run_local_server(port=0, prompt="consent", **kwargs)
         token_path.write_text(creds.to_json())
         token_path.chmod(0o600)
 
+    log.info("authorised as %s (%s)", token_path.name, "read-only" if read_only else "read/write")
     return build("drive", "v3", credentials=creds, cache_discovery=False)

@@ -80,7 +80,7 @@ pytest. Keep new Drive interactions behind `DriveClient` so they stay testable.
 
 ## Do not commit
 
-Secrets and local state (`credentials.json`, `token.json`, `.migrate/`,
+Secrets and local state (`credentials.json`, `token*.json`, `.migrate/`,
 `*.sqlite`) are git-ignored — keep them that way. Nothing user-specific
 (personal emails, org names, drive names) belongs in the code or docs; the tool
 is generic and configured entirely via CLI flags.

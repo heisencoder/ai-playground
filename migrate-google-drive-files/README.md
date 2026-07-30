@@ -77,9 +77,17 @@ The script authenticates as you, so it needs its own OAuth client:
 4. Credentials → Create credentials → **OAuth client ID** → **Desktop app**.
 5. Download the JSON, save it next to this README as `credentials.json`.
 
-The scope requested is full `drive`. Narrower scopes do not work: `drive.file`
-only sees files this app itself created, and the migration must read files
-created by other people.
+**Scopes.** The read-only phases (`preflight`, `scan`, `plan`, and any dry-run
+`apply`) authenticate with the read-only `drive.readonly` scope, cached in
+`.migrate/token.readonly.json`, so they physically cannot modify Drive. Only
+`apply --execute` (and `preflight --roundtrip`) request the full `drive` scope,
+cached separately in `.migrate/token.json`; the first such run prompts for that
+broader consent. `drive.file` is not usable — it only sees files this app itself
+created, and the migration must read files owned by other people.
+
+As a second layer, `DriveClient` refuses at send time any request outside a
+hard-coded allow-list of the exact operations each mode needs, so a coding bug
+cannot reach a delete, empty-trash, or other unexpected call (see `drive.py`).
 
 In Testing mode the refresh token expires after 7 days. If a later run asks you
 to sign in again, that is why — nothing is lost, the state database is on disk.

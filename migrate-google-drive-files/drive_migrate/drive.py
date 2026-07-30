@@ -42,6 +42,31 @@ COMMENT_FIELDS = (
 RETRYABLE_STATUSES = {403, 429, 500, 502, 503, 504}
 RETRYABLE_403_REASONS = {"rateLimitExceeded", "userRateLimitExceeded", "sharingRateLimitExceeded"}
 
+# Allow-list of Drive RPC method IDs (the discovery `id`, e.g. "drive.files.list")
+# this client is permitted to call, split by side effect. Every request is checked
+# against these in _exec before it is sent, so a coding bug cannot reach an
+# operation the tool is not supposed to perform. Notably, nothing here deletes or
+# trashes: drive.files.delete and drive.files.emptyTrash are absent by design.
+READ_METHOD_IDS = frozenset(
+    {
+        "drive.about.get",
+        "drive.files.get",
+        "drive.files.list",
+        "drive.drives.get",
+        "drive.drives.list",
+        "drive.comments.list",
+    }
+)
+WRITE_METHOD_IDS = frozenset(
+    {
+        "drive.files.create",
+        "drive.files.copy",
+        "drive.files.update",
+        "drive.comments.create",
+        "drive.replies.create",
+    }
+)
+
 
 class DriveError(RuntimeError):
     """Non-retryable Drive API failure, carrying the HTTP status."""
@@ -50,6 +75,16 @@ class DriveError(RuntimeError):
         super().__init__(message)
         self.status = status
         self.reason = reason
+
+
+class DisallowedOperationError(RuntimeError):
+    """A Drive request was blocked by the client-side operation allow-list.
+
+    Raised before the request is sent, either because the client is read-only
+    and the request would write, or because the operation is not on the
+    read/write allow-list at all (e.g. a delete or empty-trash call). It is not
+    a DriveError, so it is never caught as a per-item failure — it aborts loudly.
+    """
 
 
 def escape_query_value(value: str) -> str:
@@ -62,20 +97,35 @@ class DriveClient:
     def __init__(
         self,
         service: Any,
+        read_only: bool = False,
         max_attempts: int = 6,
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         self._svc = service
+        self.read_only = read_only
         self._max_attempts = max_attempts
         self._sleep = sleep
         self.call_count = 0
 
     # -- transport ---------------------------------------------------------
 
+    def _ensure_allowed(self, request: Any) -> None:
+        """Refuse any request outside this client's operation allow-list."""
+        method_id = getattr(request, "methodId", None)
+        if method_id in READ_METHOD_IDS:
+            return
+        if not self.read_only and method_id in WRITE_METHOD_IDS:
+            return
+        mode = "read-only" if self.read_only else "read/write"
+        raise DisallowedOperationError(
+            f"Drive operation {method_id!r} is not permitted in {mode} mode"
+        )
+
     def _exec(self, request: Any) -> Any:
         last: Exception | None = None
         for attempt in range(self._max_attempts):
             try:
+                self._ensure_allowed(request)
                 self.call_count += 1
                 return request.execute()
             except HttpError as err:  # pragma: no cover - exercised via fakes

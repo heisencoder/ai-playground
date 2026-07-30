@@ -92,9 +92,11 @@ def resolve_dest(
     return folder_id, drive_id
 
 
-def connect(args: argparse.Namespace) -> tuple[DriveClient, State]:
-    service = build_service(args.credentials, args.token, login_hint=args.account)
-    client = DriveClient(service)
+def connect(args: argparse.Namespace, *, read_only: bool) -> tuple[DriveClient, State]:
+    service = build_service(
+        args.credentials, args.token, login_hint=args.account, read_only=read_only
+    )
+    client = DriveClient(service, read_only=read_only)
     state = State(args.db)
     return client, state
 
@@ -103,7 +105,9 @@ def connect(args: argparse.Namespace) -> tuple[DriveClient, State]:
 
 
 def cmd_preflight(args: argparse.Namespace) -> int:
-    client, state = connect(args)
+    # --roundtrip and --execute both write to the destination; everything else
+    # preflight does is read-only.
+    client, state = connect(args, read_only=not (args.roundtrip or args.execute))
     user = client.about()
     print(f"Authenticated as: {user['emailAddress']} ({user.get('displayName', '')})")
     if args.account and user["emailAddress"].lower() != args.account.lower():
@@ -145,7 +149,7 @@ def cmd_preflight(args: argparse.Namespace) -> int:
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
-    client, state = connect(args)
+    client, state = connect(args, read_only=True)
     source_id = resolve_source(client, state, args)
     state.set_meta("source_root_id", source_id)
     n = scan(client, state, source_id, max_depth=args.max_depth)
@@ -155,7 +159,7 @@ def cmd_scan(args: argparse.Namespace) -> int:
 
 
 def cmd_plan(args: argparse.Namespace) -> int:
-    _, state = connect(args) if args.online else (None, State(args.db))
+    _, state = connect(args, read_only=True) if args.online else (None, State(args.db))
     if state.count_items() == 0:
         raise SystemExit("Inventory is empty. Run `drive-migrate scan` first.")
     counts = build_plan(state, path_prefix=args.subtree)
@@ -165,7 +169,8 @@ def cmd_plan(args: argparse.Namespace) -> int:
 
 
 def cmd_apply(args: argparse.Namespace) -> int:
-    client, state = connect(args)
+    # A dry run only reads; --execute is what needs write access.
+    client, state = connect(args, read_only=not args.execute)
     source_id = resolve_source(client, state, args)
     dest_folder_id, drive_id = resolve_dest(client, state, args, execute=args.execute)
 

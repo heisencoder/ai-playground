@@ -1,6 +1,6 @@
 # OAuth secrets and local state — NEVER commit these
 credentials.json
-token.json
+token*.json
 .migrate/
 *.sqlite
 
