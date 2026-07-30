@@ -75,15 +75,31 @@ The script authenticates as you, so it needs its own OAuth client:
 3. OAuth consent screen → **External**, publishing status **Testing**, and add
    your email as a test user.
 4. Credentials → Create credentials → **OAuth client ID** → **Desktop app**.
-5. Download the JSON, save it next to this README as `credentials.json`.
+5. Download the JSON. Save it **outside the repository** so tools working on the
+   checkout can't read it — the default location is
+   `~/.config/drive-migrate/credentials.json`:
+
+   ```bash
+   mkdir -p ~/.config/drive-migrate
+   mv ~/Downloads/client_secret_*.json ~/.config/drive-migrate/credentials.json
+   ```
+
+   Use `--credentials <path>` to point somewhere else.
 
 **Scopes.** The read-only phases (`preflight`, `scan`, `plan`, and any dry-run
-`apply`) authenticate with the read-only `drive.readonly` scope, cached in
-`.migrate/token.readonly.json`, so they physically cannot modify Drive. Only
+`apply`) authenticate with the read-only `drive.readonly` scope, cached in a
+`token.readonly.json` file, so they physically cannot modify Drive. Only
 `apply --execute` (and `preflight --roundtrip`) request the full `drive` scope,
-cached separately in `.migrate/token.json`; the first such run prompts for that
-broader consent. `drive.file` is not usable — it only sees files this app itself
-created, and the migration must read files owned by other people.
+cached separately in `token.json`; the first such run prompts for that broader
+consent. `drive.file` is not usable — it only sees files this app itself created,
+and the migration must read files owned by other people.
+
+**Where secrets live.** Neither secret is written into the git working tree, so a
+tool operating on the checkout cannot read or leak them. The OAuth client file
+defaults to `~/.config/drive-migrate/credentials.json`, and the cached tokens
+default to a private, per-user directory in the system temp location (e.g.
+`/tmp/drive-migrate-$UID/`, created mode `0700` with each token file mode
+`0600`). Override with `--credentials` / `--token`.
 
 As a second layer, `DriveClient` refuses at send time any request outside a
 hard-coded allow-list of the exact operations each mode needs, so a coding bug
@@ -168,9 +184,9 @@ sqlite3 .migrate/state.sqlite \
 ## Testing
 
 ```bash
-uv run pytest          # 17 tests, no network
+uv run pytest          # offline; no network, no real Drive
 uv run ruff check .
-uv run ty check src
+uv run ty check drive_migrate tests
 ```
 
 `tests/conftest.py` implements `FakeDriveClient`, an in-memory Drive with the
@@ -178,7 +194,8 @@ same method surface as the real client, holding a small tree that mirrors a
 realistic situation: files you own, files owned by someone who has left, a file
 with copying disabled, a Google Map, a shortcut, and comment threads including a
 resolved one. The tests cover the classification table, dry-run isolation,
-comment replication, idempotent re-runs, and per-item failure isolation.
+comment replication, idempotent re-runs, per-item failure isolation, the
+client-side operation allow-list, and that secrets stay outside the repo.
 
 ---
 
@@ -197,7 +214,7 @@ only moves between accounts inside one organisation.
 ## Layout
 
 ```
-src/drive_migrate/
+drive_migrate/
   auth.py       OAuth installed-app flow
   drive.py      Drive v3 wrapper: retries, paging, field selection
   scan.py       phase 1 — recursive inventory (read-only)

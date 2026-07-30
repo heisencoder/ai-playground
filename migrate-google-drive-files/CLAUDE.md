@@ -17,7 +17,7 @@ uv run drive-migrate --help
 ## Quality gate — run before every commit and push
 
 All four must pass. CI (`.github/workflows/migrate-google-drive-files-ci.yml`)
-runs exactly these on Python 3.11 and 3.12, so run them locally first.
+runs exactly these on Python 3.12, so run them locally first.
 
 ```bash
 uv run pytest                       # tests (offline; no network, no real Drive)
@@ -84,7 +84,12 @@ pytest. Keep new Drive interactions behind `DriveClient` so they stay testable.
 
 ## Do not commit
 
-Secrets and local state (`credentials.json`, `token*.json`, `.migrate/`,
-`*.sqlite`) are git-ignored — keep them that way. Nothing user-specific
-(personal emails, org names, drive names) belongs in the code or docs; the tool
-is generic and configured entirely via CLI flags.
+By default no OAuth secret is written into the repository: tokens live in a
+private per-user directory in the system temp location and the client-secrets
+file defaults to `~/.config/drive-migrate/credentials.json` (see `auth.py`). The
+state database does default to `.migrate/state.sqlite` inside the checkout and is
+git-ignored. `.gitignore` lists `credentials.json`, `token*.json`, `.migrate/`,
+and `*.sqlite`; keep them ignored — the secret entries also guard against
+`--credentials`/`--token` overrides that point back into the repo. Nothing
+user-specific (personal emails, org names, drive names) belongs in the code or
+docs; the tool is generic and configured entirely via CLI flags.
