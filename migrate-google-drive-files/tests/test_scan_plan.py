@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from drive_migrate.plan import build_plan, classify
 from drive_migrate.scan import scan
-from drive_migrate.state import COPY, CREATE_FOLDER, MOVE, SHORTCUT, SKIP
+from drive_migrate.state import COPY, CREATE_FOLDER, MOVE, SHORTCUT, SKIP, State
+from tests.conftest import FakeDriveClient
 
 
-def test_scan_records_paths_and_depths(fake, state, tree):
+def test_scan_records_paths_and_depths(
+    fake: FakeDriveClient, state: State, tree: dict[str, str]
+) -> None:
     n = scan(fake, state, tree["root"])
     paths = {i.path: i for i in state.iter_items()}
     assert n == len(paths)
@@ -16,13 +19,13 @@ def test_scan_records_paths_and_depths(fake, state, tree):
     assert paths["2019/Budget/Treasurer report 2019"].owner_email == "former.treasurer@example.org"
 
 
-def test_scan_is_idempotent(fake, state, tree):
+def test_scan_is_idempotent(fake: FakeDriveClient, state: State, tree: dict[str, str]) -> None:
     first = scan(fake, state, tree["root"])
     second = scan(fake, state, tree["root"])
     assert first == second == state.count_items()
 
 
-def test_subtree_filter(fake, state, tree):
+def test_subtree_filter(fake: FakeDriveClient, state: State, tree: dict[str, str]) -> None:
     scan(fake, state, tree["root"])
     subset = state.iter_items("2019/Budget")
     assert {i.name for i in subset} == {
@@ -33,7 +36,7 @@ def test_subtree_filter(fake, state, tree):
     }
 
 
-def test_classification(fake, state, tree):
+def test_classification(fake: FakeDriveClient, state: State, tree: dict[str, str]) -> None:
     scan(fake, state, tree["root"])
     by_path = {i.path: i for i in state.iter_items()}
     assert classify(by_path["2019"])[0] == CREATE_FOLDER
@@ -44,7 +47,7 @@ def test_classification(fake, state, tree):
     assert classify(by_path["Link to policy"])[0] == SHORTCUT
 
 
-def test_owned_but_unmovable_falls_back_to_copy(fake, state):
+def test_owned_but_unmovable_falls_back_to_copy(fake: FakeDriveClient, state: State) -> None:
     root = fake.add_folder("root", None)
     fake.add("Stuck", root, can_move_out=False)
     scan(fake, state, root)
@@ -54,7 +57,7 @@ def test_owned_but_unmovable_falls_back_to_copy(fake, state):
     assert "canMoveItemOutOfDrive" in reason
 
 
-def test_build_plan_counts(fake, state, tree):
+def test_build_plan_counts(fake: FakeDriveClient, state: State, tree: dict[str, str]) -> None:
     scan(fake, state, tree["root"])
     counts = build_plan(state)
     assert counts[CREATE_FOLDER] == 2

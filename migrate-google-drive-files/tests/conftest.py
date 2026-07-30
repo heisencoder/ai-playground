@@ -3,19 +3,32 @@
 from __future__ import annotations
 
 import itertools
+from collections.abc import Iterable, Iterator
+from pathlib import Path
+from typing import TypedDict, Unpack
 
 import pytest
 
-from drive_migrate.drive import FOLDER_MIME, SHORTCUT_MIME, DriveError
+from drive_migrate.drive import FOLDER_MIME, SHORTCUT_MIME, DriveClient, DriveError
 from drive_migrate.state import State
 
 ME = "test.user@example.com"
 
 
-class FakeDriveClient:
+class _AddKwargs(TypedDict, total=False):
+    """Optional keyword arguments forwarded from ``add_folder`` to ``add``."""
+
+    owner: str
+    can_copy: bool
+    can_move_out: bool | None
+    file_id: str | None
+    target: str | None
+
+
+class FakeDriveClient(DriveClient):
     """Implements the DriveClient method surface against dicts."""
 
-    def __init__(self, me: str = ME):
+    def __init__(self, me: str = ME) -> None:
         self.me = me
         self.files: dict[str, dict] = {}
         self.comments: dict[str, list[dict]] = {}
@@ -25,7 +38,7 @@ class FakeDriveClient:
 
     # -- fixture construction ---------------------------------------------
 
-    def _new_id(self, prefix="f") -> str:
+    def _new_id(self, prefix: str = "f") -> str:
         return f"{prefix}{next(self._ids)}"
 
     def add(
@@ -64,7 +77,7 @@ class FakeDriveClient:
             self.files[fid]["shortcutDetails"] = {"targetId": target}
         return fid
 
-    def add_folder(self, name: str, parent: str | None, **kw) -> str:
+    def add_folder(self, name: str, parent: str | None, **kw: Unpack[_AddKwargs]) -> str:
         return self.add(name, parent, mime=FOLDER_MIME, **kw)
 
     def add_shared_drive(self, name: str, can_add: bool = True) -> str:
@@ -99,8 +112,8 @@ class FakeDriveClient:
         file_id: str,
         author: str,
         content: str,
-        replies=(),
-        resolved=False,
+        replies: Iterable[str] = (),
+        resolved: bool = False,
         quoted: str | None = None,
     ) -> None:
         self.comments.setdefault(file_id, []).append(
@@ -127,47 +140,64 @@ class FakeDriveClient:
 
     # -- DriveClient surface ----------------------------------------------
 
-    def about(self):
+    def about(self) -> dict:
         self.call_count += 1
         return {"emailAddress": self.me, "displayName": "Test User"}
 
-    def get_file(self, file_id):
+    def get_file(self, file_id: str) -> dict:
         self.call_count += 1
         if file_id not in self.files:
             raise DriveError("not found", status=404)
         return self.files[file_id]
 
-    def get_drive(self, drive_id):
+    def get_drive(self, drive_id: str) -> dict:
         return self.drives[drive_id]
 
-    def find_drive_by_name(self, name):
+    def find_drive_by_name(self, name: str) -> dict | None:
         return next((d for d in self.drives.values() if d["name"] == name), None)
 
-    def find_my_drive_folder(self, name):
+    def find_my_drive_folder(self, name: str) -> list[dict]:
         return [
             f
             for f in self.files.values()
             if f["name"] == name and f["mimeType"] == FOLDER_MIME and not f["trashed"]
         ]
 
-    def list_children(self, folder_id, drive_id=None):
+    def list_children(  # ty: ignore[invalid-method-override]
+        self, folder_id: str, drive_id: str | None = None
+    ) -> list[dict]:
+        # The real client streams an Iterator; returning a materialised list is a
+        # safe substitution here because every caller only iterates the result.
         self.call_count += 1
         kids = [
             f for f in self.files.values() if folder_id in f.get("parents", []) and not f["trashed"]
         ]
         return sorted(kids, key=lambda f: (f["mimeType"] != FOLDER_MIME, f["name"]))
 
-    def find_child(self, parent_id, name, mime_type=None, drive_id=None):
+    def find_child(
+        self,
+        parent_id: str,
+        name: str,
+        mime_type: str | None = None,
+        drive_id: str | None = None,
+    ) -> dict | None:
         for f in self.list_children(parent_id):
             if f["name"] == name and (mime_type is None or f["mimeType"] == mime_type):
                 return f
         return None
 
-    def create_folder(self, name, parent_id):
+    def create_folder(self, name: str, parent_id: str) -> dict:
         self.call_count += 1
         return self.files[self.add_folder(name, parent_id)]
 
-    def copy_file(self, file_id, name, parent_id, description=None, app_properties=None):
+    def copy_file(
+        self,
+        file_id: str,
+        name: str,
+        parent_id: str,
+        description: str | None = None,
+        app_properties: dict[str, str] | None = None,
+    ) -> dict:
         self.call_count += 1
         src = self.files[file_id]
         if not src["capabilities"]["canCopy"]:
@@ -177,7 +207,7 @@ class FakeDriveClient:
         self.files[new_id]["appProperties"] = app_properties or {}
         return self.files[new_id]
 
-    def move_file(self, file_id, add_parent, remove_parent):
+    def move_file(self, file_id: str, add_parent: str, remove_parent: str) -> dict:
         self.call_count += 1
         f = self.files[file_id]
         if not f["capabilities"]["canMoveItemOutOfDrive"]:
@@ -187,15 +217,15 @@ class FakeDriveClient:
         f["parents"] = [p for p in f["parents"] if p != remove_parent] + [add_parent]
         return f
 
-    def create_shortcut(self, name, parent_id, target_id):
+    def create_shortcut(self, name: str, parent_id: str, target_id: str) -> dict:
         self.call_count += 1
         return self.files[self.add(name, parent_id, mime=SHORTCUT_MIME, target=target_id)]
 
-    def list_comments(self, file_id):
+    def list_comments(self, file_id: str) -> list[dict]:
         self.call_count += 1
         return [dict(c) for c in self.comments.get(file_id, [])]
 
-    def create_comment(self, file_id, content):
+    def create_comment(self, file_id: str, content: str) -> dict:
         self.call_count += 1
         cid = self._new_id("nc")
         self.comments.setdefault(file_id, []).append(
@@ -203,7 +233,9 @@ class FakeDriveClient:
         )
         return {"id": cid}
 
-    def create_reply(self, file_id, comment_id, content, action=None):
+    def create_reply(
+        self, file_id: str, comment_id: str, content: str, action: str | None = None
+    ) -> dict:
         self.call_count += 1
         for c in self.comments.get(file_id, []):
             if c["id"] == comment_id:
@@ -217,7 +249,7 @@ class FakeDriveClient:
 
 
 @pytest.fixture
-def state(tmp_path) -> State:
+def state(tmp_path: Path) -> Iterator[State]:
     s = State(tmp_path / "state.sqlite")
     yield s
     s.close()
@@ -229,7 +261,7 @@ def fake() -> FakeDriveClient:
 
 
 @pytest.fixture
-def tree(fake: FakeDriveClient):
+def tree(fake: FakeDriveClient) -> dict[str, str]:
     """A miniature source tree with a realistic mix of ownership."""
     root = fake.add_folder("Old Finance Archive", None)
     y2019 = fake.add_folder("2019", root)

@@ -30,7 +30,25 @@ line-length = 100
 src = [".", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
+select = [
+    "E", "W", "F", "I", "N", "UP", "ANN", "B", "C4", "DTZ",
+    "G", "ISC", "LOG", "PIE", "PT", "RSE", "RET", "SIM", "TID",
+    "ARG", "PTH", "RUF",
+]
+ignore = [
+    # `Any` is genuinely required for the untyped googleapiclient service/resource
+    # objects (DriveClient.__init__(service), _exec(request)); annotating them as
+    # anything narrower would be dishonest.
+    "ANN401",
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.per-file-ignores]
+# pytest fixtures are consumed for their side effects, so fixtures such as
+# `fake`, `state` and `tree` fire ARG when a test does not reference them directly.
+"tests/*" = ["ARG"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

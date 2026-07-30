@@ -32,7 +32,7 @@ log = logging.getLogger("drive_migrate")
 # -- resolution ------------------------------------------------------------
 
 
-def resolve_source(client: DriveClient, state: State, args) -> str:
+def resolve_source(client: DriveClient, state: State, args: argparse.Namespace) -> str:
     if args.source_id:
         return args.source_id
     cached = state.get_meta("source_root_id")
@@ -50,7 +50,9 @@ def resolve_source(client: DriveClient, state: State, args) -> str:
     return matches[0]["id"]
 
 
-def resolve_dest(client: DriveClient, state: State, args, execute: bool = False) -> tuple[str, str]:
+def resolve_dest(
+    client: DriveClient, state: State, args: argparse.Namespace, execute: bool = False
+) -> tuple[str, str]:
     """Return (dest_folder_id, drive_id)."""
     if args.dest_folder_id and args.dest_drive_id:
         return args.dest_folder_id, args.dest_drive_id
@@ -91,7 +93,7 @@ def resolve_dest(client: DriveClient, state: State, args, execute: bool = False)
     return folder_id, drive_id
 
 
-def connect(args) -> tuple[DriveClient, State]:
+def connect(args: argparse.Namespace) -> tuple[DriveClient, State]:
     service = build_service(args.credentials, args.token, login_hint=args.account)
     client = DriveClient(service)
     state = State(args.db)
@@ -101,7 +103,7 @@ def connect(args) -> tuple[DriveClient, State]:
 # -- commands --------------------------------------------------------------
 
 
-def cmd_preflight(args) -> int:
+def cmd_preflight(args: argparse.Namespace) -> int:
     client, state = connect(args)
     user = client.about()
     print(f"Authenticated as: {user['emailAddress']} ({user.get('displayName', '')})")
@@ -143,7 +145,7 @@ def cmd_preflight(args) -> int:
     return 0
 
 
-def cmd_scan(args) -> int:
+def cmd_scan(args: argparse.Namespace) -> int:
     client, state = connect(args)
     source_id = resolve_source(client, state, args)
     state.set_meta("source_root_id", source_id)
@@ -153,7 +155,7 @@ def cmd_scan(args) -> int:
     return 0
 
 
-def cmd_plan(args) -> int:
+def cmd_plan(args: argparse.Namespace) -> int:
     _, state = connect(args) if args.online else (None, State(args.db))
     if state.count_items() == 0:
         raise SystemExit("Inventory is empty. Run `drive-migrate scan` first.")
@@ -163,7 +165,7 @@ def cmd_plan(args) -> int:
     return 0
 
 
-def cmd_apply(args) -> int:
+def cmd_apply(args: argparse.Namespace) -> int:
     client, state = connect(args)
     source_id = resolve_source(client, state, args)
     dest_folder_id, drive_id = resolve_dest(client, state, args, execute=args.execute)
@@ -209,7 +211,7 @@ def cmd_apply(args) -> int:
     return 1 if stats.failed else 0
 
 
-def cmd_report(args) -> int:
+def cmd_report(args: argparse.Namespace) -> int:
     state = State(args.db)
     out = write_csv(state, args.out)
     print(summary(state))

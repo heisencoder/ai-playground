@@ -11,6 +11,7 @@ import logging
 import sqlite3
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from typing import TypedDict, Unpack
 
 from drive_migrate.comments import replicate_comments
 from drive_migrate.drive import FOLDER_MIME, DriveClient, DriveError
@@ -24,12 +25,21 @@ from drive_migrate.state import (
     SHORTCUT,
     SKIP,
     SKIPPED,
+    Item,
     State,
 )
 
 log = logging.getLogger(__name__)
 
 DRY_PREFIX = "dryrun:"
+
+
+class _MarkKwargs(TypedDict, total=False):
+    """Optional keyword arguments forwarded from ``Applier._record`` to ``State.mark``."""
+
+    error: str | None
+    comments_total: int | None
+    comments_copied: int | None
 
 
 @dataclass
@@ -57,7 +67,7 @@ class Applier:
         execute: bool = False,
         copy_comments: bool = True,
         allow_duplicates: bool = False,
-    ):
+    ) -> None:
         self.client = client
         self.state = state
         self.source_root_id = source_root_id
@@ -75,13 +85,17 @@ class Applier:
             return self.dest_root_id
         return self.state.dest_id_of(source_id) or self._dry_ids.get(source_id)
 
-    def _record(self, source_id: str, status: str, dest_id: str | None = None, **kw) -> None:
+    def _record(
+        self, source_id: str, status: str, dest_id: str | None = None, **kw: Unpack[_MarkKwargs]
+    ) -> None:
         if self.execute:
             self.state.mark(source_id, status, dest_id=dest_id, **kw)
         elif dest_id:
             self._dry_ids[source_id] = dest_id
 
-    def _existing_child(self, parent_id: str, name: str, mime_type: str | None = None):
+    def _existing_child(
+        self, parent_id: str, name: str, mime_type: str | None = None
+    ) -> dict | None:
         if parent_id.startswith(DRY_PREFIX):
             return None  # parent does not exist yet in a dry run
         return self.client.find_child(parent_id, name, mime_type, drive_id=self.dest_drive_id)
@@ -133,7 +147,7 @@ class Applier:
 
         return stats
 
-    def _apply_one(self, action: str, item, dest_parent: str, stats: ApplyStats) -> None:
+    def _apply_one(self, action: str, item: Item, dest_parent: str, stats: ApplyStats) -> None:
         if action == CREATE_FOLDER:
             existing = self._existing_child(dest_parent, item.name, FOLDER_MIME)
             if existing:
@@ -169,6 +183,9 @@ class Applier:
                 stats.moved += 1
                 self._record(item.id, DONE, dest_id=item.id)
                 return
+            # A MOVE is only planned for owned, movable files, which the scanner
+            # always records with a concrete parent.
+            assert item.parent_id is not None
             moved = self.client.move_file(item.id, dest_parent, item.parent_id)
             log.info("MOVE   %s", item.path)
             stats.moved += 1
@@ -229,13 +246,15 @@ class Applier:
         raise ValueError(f"unknown action {action}")
 
 
-def _provenance(item) -> str:
+def _provenance(item: Item) -> str:
     today = datetime.now(UTC).date().isoformat()
     parts = [
         f"Copied into the destination shared drive on {today}.",
         f"Original owner: {item.owner_name or ''} <{item.owner_email or 'unknown'}>.",
-        f"Original created: {(item.created_time or '')[:10]}; "
-        f"last modified: {(item.modified_time or '')[:10]}.",
+        (
+            f"Original created: {(item.created_time or '')[:10]}; "
+            f"last modified: {(item.modified_time or '')[:10]}."
+        ),
     ]
     if item.web_view_link:
         parts.append(f"Original file: {item.web_view_link}")

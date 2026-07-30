@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import random
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from typing import Any
 
 from googleapiclient.errors import HttpError
@@ -46,7 +46,9 @@ RETRYABLE_403_REASONS = {"rateLimitExceeded", "userRateLimitExceeded", "sharingR
 class DriveError(RuntimeError):
     """Non-retryable Drive API failure, carrying the HTTP status."""
 
-    def __init__(self, message: str, status: int | None = None, reason: str | None = None):
+    def __init__(
+        self, message: str, status: int | None = None, reason: str | None = None
+    ) -> None:
         super().__init__(message)
         self.status = status
         self.reason = reason
@@ -59,7 +61,12 @@ def escape_query_value(value: str) -> str:
 class DriveClient:
     """Wraps a googleapiclient Drive v3 resource."""
 
-    def __init__(self, service: Any, max_attempts: int = 6, sleep=time.sleep):
+    def __init__(
+        self,
+        service: Any,
+        max_attempts: int = 6,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
         self._svc = service
         self._max_attempts = max_attempts
         self._sleep = sleep

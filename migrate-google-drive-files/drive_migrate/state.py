@@ -11,6 +11,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
@@ -101,7 +102,7 @@ def _now() -> str:
 
 
 class State:
-    def __init__(self, path: Path | str):
+    def __init__(self, path: Path | str) -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.db = sqlite3.connect(self.path)
@@ -114,7 +115,7 @@ class State:
 
     # -- meta --------------------------------------------------------------
 
-    def set_meta(self, key: str, value) -> None:
+    def set_meta(self, key: str, value: Any) -> None:
         self.db.execute(
             "INSERT INTO meta(key,value) VALUES(?,?) "
             "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -122,7 +123,7 @@ class State:
         )
         self.db.commit()
 
-    def get_meta(self, key: str, default=None):
+    def get_meta(self, key: str, default: Any = None) -> Any:
         row = self.db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
         return json.loads(row["value"]) if row else default
 
@@ -231,7 +232,7 @@ class State:
 
     def planned(
         self, path_prefix: str | None = None, statuses: tuple[str, ...] = (PENDING, BLOCKED, FAILED)
-    ):
+    ) -> list[sqlite3.Row]:
         """Actions joined to items, ordered so parents are handled before children."""
         sql = (
             "SELECT a.*, i.path, i.depth, i.is_folder FROM actions a "

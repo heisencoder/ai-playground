@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 from google.auth.exceptions import GoogleAuthError
 from google.auth.transport.requests import Request
@@ -25,7 +26,7 @@ def build_service(
     credentials_path: Path | str = "credentials.json",
     token_path: Path | str = ".migrate/token.json",
     login_hint: str | None = None,
-):
+) -> Any:  # googleapiclient's Resource is dynamically built and untyped
     credentials_path = Path(credentials_path)
     token_path = Path(token_path)
     token_path.parent.mkdir(parents=True, exist_ok=True)
