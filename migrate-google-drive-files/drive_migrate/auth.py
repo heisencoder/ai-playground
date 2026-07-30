@@ -15,13 +15,15 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import cast
 
 from google.auth.exceptions import GoogleAuthError
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+
+from drive_migrate.drive import DriveService
 
 READWRITE_SCOPES = ["https://www.googleapis.com/auth/drive"]
 READONLY_SCOPES = ["https://www.googleapis.com/auth/drive.readonly"]
@@ -34,7 +36,7 @@ def build_service(
     token_path: Path | str = ".migrate/token.json",
     login_hint: str | None = None,
     read_only: bool = False,
-) -> Any:  # googleapiclient's Resource is dynamically built and untyped
+) -> DriveService:
     scopes = READONLY_SCOPES if read_only else READWRITE_SCOPES
     credentials_path = Path(credentials_path)
     token_path = Path(token_path)
@@ -66,4 +68,6 @@ def build_service(
         token_path.chmod(0o600)
 
     log.info("authorised as %s (%s)", token_path.name, "read-only" if read_only else "read/write")
-    return build("drive", "v3", credentials=creds, cache_discovery=False)
+    # googleapiclient's dynamically-built resource is the one untyped boundary; the
+    # cast confines it here so the rest of the codebase stays fully typed.
+    return cast("DriveService", build("drive", "v3", credentials=creds, cache_discovery=False))

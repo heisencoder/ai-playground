@@ -10,11 +10,51 @@ import logging
 import random
 import time
 from collections.abc import Callable, Iterator
-from typing import Any
+from typing import Protocol
 
 from googleapiclient.errors import HttpError
 
 log = logging.getLogger(__name__)
+
+# JSON-encodable values that appear in Drive query parameters and request bodies.
+# Kept as small aliases so the wrapper methods below stay precisely typed instead
+# of falling back to Any.
+type QueryValue = str | int | bool | None
+type BodyValue = str | list[str] | dict[str, str]
+
+
+# googleapiclient builds its service and request objects dynamically from the API
+# discovery document, so its own `Resource`/`HttpRequest` types expose none of the
+# methods used below. These Protocols name just the surface DriveClient touches,
+# which keeps every call precisely typed instead of falling back to Any. The one
+# concrete googleapiclient object enters through a single cast in auth.build_service.
+class DriveRequest(Protocol):
+    """A googleapiclient request: it carries its discovery id and can be executed."""
+
+    methodId: str | None  # noqa: N815 - mirrors googleapiclient's attribute name
+
+    def execute(self) -> dict: ...
+
+
+class DriveResource(Protocol):
+    """A Drive collection (files(), drives(), ...) whose methods build requests."""
+
+    def get(self, **kwargs: object) -> DriveRequest: ...
+    def list(self, **kwargs: object) -> DriveRequest: ...
+    def create(self, **kwargs: object) -> DriveRequest: ...
+    def copy(self, **kwargs: object) -> DriveRequest: ...
+    def update(self, **kwargs: object) -> DriveRequest: ...
+
+
+class DriveService(Protocol):
+    """The Drive v3 resource surface DriveClient uses (built by auth.build_service)."""
+
+    def about(self) -> DriveResource: ...
+    def files(self) -> DriveResource: ...
+    def drives(self) -> DriveResource: ...
+    def comments(self) -> DriveResource: ...
+    def replies(self) -> DriveResource: ...
+
 
 FOLDER_MIME = "application/vnd.google-apps.folder"
 SHORTCUT_MIME = "application/vnd.google-apps.shortcut"
@@ -96,7 +136,7 @@ class DriveClient:
 
     def __init__(
         self,
-        service: Any,
+        service: DriveService,
         read_only: bool = False,
         max_attempts: int = 6,
         sleep: Callable[[float], None] = time.sleep,
@@ -109,7 +149,7 @@ class DriveClient:
 
     # -- transport ---------------------------------------------------------
 
-    def _ensure_allowed(self, request: Any) -> None:
+    def _ensure_allowed(self, request: DriveRequest) -> None:
         """Refuse any request outside this client's operation allow-list."""
         method_id = getattr(request, "methodId", None)
         if method_id in READ_METHOD_IDS:
@@ -121,7 +161,7 @@ class DriveClient:
             f"Drive operation {method_id!r} is not permitted in {mode} mode"
         )
 
-    def _exec(self, request: Any) -> Any:
+    def _exec(self, request: DriveRequest) -> dict:
         last: Exception | None = None
         for attempt in range(self._max_attempts):
             try:
@@ -200,7 +240,7 @@ class DriveClient:
     def _query(self, q: str, drive_id: str | None = None) -> Iterator[dict]:
         page = None
         while True:
-            kwargs: dict[str, Any] = {
+            kwargs: dict[str, QueryValue] = {
                 "q": q,
                 "pageSize": 200,
                 "pageToken": page,
@@ -234,7 +274,7 @@ class DriveClient:
         description: str | None = None,
         app_properties: dict[str, str] | None = None,
     ) -> dict:
-        body: dict[str, Any] = {"name": name, "parents": [parent_id]}
+        body: dict[str, BodyValue] = {"name": name, "parents": [parent_id]}
         if description:
             body["description"] = description
         if app_properties:
@@ -295,7 +335,7 @@ class DriveClient:
     def create_reply(
         self, file_id: str, comment_id: str, content: str, action: str | None = None
     ) -> dict:
-        body: dict[str, Any] = {"content": content}
+        body: dict[str, str] = {"content": content}
         if action:
             body["action"] = action
         return self._exec(

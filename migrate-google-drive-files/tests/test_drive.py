@@ -2,20 +2,31 @@
 
 from __future__ import annotations
 
-from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
-from drive_migrate.drive import DisallowedOperationError, DriveClient
+from drive_migrate.drive import DisallowedOperationError, DriveClient, DriveService
 
 
-def _request(method_id: str | None) -> SimpleNamespace:
-    """A stand-in for a googleapiclient HttpRequest (carries methodId + execute)."""
-    return SimpleNamespace(methodId=method_id, execute=lambda: {"ok": True})
+class _FakeRequest:
+    """A stand-in for a googleapiclient request (carries methodId + execute)."""
+
+    def __init__(self, method_id: str | None) -> None:
+        # Attribute name mirrors googleapiclient's request.methodId.
+        self.methodId = method_id
+
+    def execute(self) -> dict:
+        return {"ok": True}
+
+
+def _request(method_id: str | None) -> _FakeRequest:
+    return _FakeRequest(method_id)
 
 
 def _client(read_only: bool) -> DriveClient:
-    return DriveClient(service=object(), read_only=read_only)
+    # _exec/_ensure_allowed never touch the service, so a cast placeholder suffices.
+    return DriveClient(service=cast("DriveService", object()), read_only=read_only)
 
 
 def test_read_method_allowed_in_readonly() -> None:

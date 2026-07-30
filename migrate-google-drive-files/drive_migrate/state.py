@@ -11,7 +11,11 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+
+# A value round-tripped through the meta table as JSON. Recursive because JSON
+# containers nest arbitrarily; kept as an alias so set_meta/get_meta stay typed
+# without falling back to Any.
+type JsonValue = str | int | float | bool | list["JsonValue"] | dict[str, "JsonValue"] | None
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
@@ -115,7 +119,7 @@ class State:
 
     # -- meta --------------------------------------------------------------
 
-    def set_meta(self, key: str, value: Any) -> None:
+    def set_meta(self, key: str, value: JsonValue) -> None:
         self.db.execute(
             "INSERT INTO meta(key,value) VALUES(?,?) "
             "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -123,7 +127,7 @@ class State:
         )
         self.db.commit()
 
-    def get_meta(self, key: str, default: Any = None) -> Any:
+    def get_meta(self, key: str, default: JsonValue = None) -> JsonValue:
         row = self.db.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
         return json.loads(row["value"]) if row else default
 

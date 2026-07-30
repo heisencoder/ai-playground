@@ -49,9 +49,13 @@ These are enforced by the tools above; keep them true so CI stays green.
   errors propagate.
 - **Type everything.** Every function and method parameter and return value is
   annotated, in package and tests. Use modern syntax (`str | None`,
-  `list[dict]`) with `from __future__ import annotations`. `typing.Any` is
-  reserved for genuinely untyped third-party surfaces (the `googleapiclient`
-  service/resource) and is the only reason `ANN401` is ignored.
+  `list[dict]`) with `from __future__ import annotations`.
+- **No `typing.Any`.** It is banned by ruff (`flake8-tidy-imports` banned-api),
+  so it cannot come back. Use a precise type instead. For an untyped third-party
+  surface, name its real class (`googleapiclient`'s `Resource` for the service,
+  `HttpRequest` for a request). When the precise type is verbose, define a small
+  type alias (as with `state.JsonValue` for the JSON meta store and
+  `drive.QueryValue`/`drive.BodyValue` for Drive request payloads).
 - **Fix, don't suppress.** Prefer fixing a finding over silencing it. If a rule
   genuinely does not apply, use a narrowly-scoped, commented `# noqa: <CODE>`
   or `# ty: ignore[<code>]` explaining why — never a blanket file-level

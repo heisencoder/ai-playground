@@ -36,7 +36,7 @@ def resolve_source(client: DriveClient, state: State, args: argparse.Namespace) 
     if args.source_id:
         return args.source_id
     cached = state.get_meta("source_root_id")
-    if cached and not args.source_name:
+    if isinstance(cached, str) and not args.source_name:
         return cached
     name = args.source_name
     if not name:
@@ -57,8 +57,10 @@ def resolve_dest(
     if args.dest_folder_id and args.dest_drive_id:
         return args.dest_folder_id, args.dest_drive_id
     cached = state.get_meta("dest")
-    if cached and not (args.dest_drive_name or args.dest_folder_id):
-        return cached["folder_id"], cached["drive_id"]
+    if isinstance(cached, dict) and not (args.dest_drive_name or args.dest_folder_id):
+        folder_id, drive_id = cached["folder_id"], cached["drive_id"]
+        if isinstance(folder_id, str) and isinstance(drive_id, str):
+            return folder_id, drive_id
 
     if args.dest_drive_id:
         drive = client.get_drive(args.dest_drive_id)
