@@ -72,8 +72,13 @@ The script authenticates as you, so it needs its own OAuth client:
 
 1. <https://console.cloud.google.com/> → create a project (e.g. `drive-migration`)
 2. Enable the **Google Drive API**.
-3. OAuth consent screen → **External**, publishing status **Testing**, and add
-   your email as a test user.
+3. **OAuth consent screen** → User type **External**, publishing status
+   **Testing**. Under **Test users** (in the newer console this lives under
+   **Google Auth Platform → Audience**), add the Google account you will sign in
+   with. If you are the project owner, Google may refuse to add your own address
+   as *"ineligible"* — that is expected and fine: owners and editors of the
+   project already have access in Testing mode, so you do not need to add
+   yourself.
 4. Credentials → Create credentials → **OAuth client ID** → **Desktop app**.
 5. Download the JSON. Save it **outside the repository** so tools working on the
    checkout can't read it — the default location is
@@ -85,6 +90,15 @@ The script authenticates as you, so it needs its own OAuth client:
    ```
 
    Use `--credentials <path>` to point somewhere else.
+
+**First sign-in can lag.** A newly created OAuth client and consent screen take
+a few minutes to go live. If your first `preflight` opens a browser that says
+*"Access blocked: … has not completed the Google verification process"* with
+*"Error 403: access_denied"*, it usually just means the client has not propagated
+yet — wait about 5 minutes and run `preflight` again. If it persists, confirm you
+signed in with the account that owns the project, and that `credentials.json` was
+downloaded from the same project whose consent screen you configured (its
+`project_id` field should match the project you edited).
 
 **Scopes.** The read-only phases (`preflight`, `scan`, `plan`, and any dry-run
 `apply`) authenticate with the read-only `drive.readonly` scope, cached in a
