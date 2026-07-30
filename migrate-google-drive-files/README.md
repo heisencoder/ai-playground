@@ -134,8 +134,13 @@ uv run drive-migrate --help
 ## Workflow
 
 ```bash
-# 0. Confirm identity, membership, and that the names resolve.
-uv run drive-migrate preflight
+# 0. Confirm identity, membership, and that the names resolve. Name the source
+#    folder and the destination shared drive on this first run; both are cached
+#    in the state DB, so the later commands don't need them again. (Shared
+#    options go *after* the subcommand.)
+uv run drive-migrate preflight \
+  --source-name "Source Folder Name" \
+  --dest-drive-name "Shared Drive Name"
 
 # Optionally prove writes actually work before touching real data:
 uv run drive-migrate preflight --roundtrip

@@ -229,45 +229,54 @@ def cmd_report(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="drive-migrate", description=__doc__)
-    p.add_argument("--db", default=".migrate/state.sqlite")
-    p.add_argument(
+    # Options shared by every command live on this parent parser, so they are
+    # accepted after the subcommand (e.g. `drive-migrate scan --source-name X`),
+    # matching the usual `tool subcommand --flags` convention.
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--db", default=".migrate/state.sqlite")
+    common.add_argument(
         "--credentials",
         default=str(default_credentials_path()),
         help="OAuth client secrets file (kept outside the repo; see README step 1)",
     )
-    p.add_argument(
+    common.add_argument(
         "--token",
         default=str(default_token_path()),
         help="where to cache the OAuth token (a private per-user file outside the repo)",
     )
-    p.add_argument("--account", help="expected Google account")
-    p.add_argument("--source-id")
-    p.add_argument("--source-name")
-    p.add_argument("--dest-drive-name")
-    p.add_argument("--dest-drive-id")
-    p.add_argument("--dest-folder-id")
-    p.add_argument("--dest-path", help="subfolder path inside the shared drive")
-    p.add_argument("-v", "--verbose", action="store_true")
+    common.add_argument("--account", help="expected Google account")
+    common.add_argument("--source-id")
+    common.add_argument("--source-name")
+    common.add_argument("--dest-drive-name")
+    common.add_argument("--dest-drive-id")
+    common.add_argument("--dest-folder-id")
+    common.add_argument("--dest-path", help="subfolder path inside the shared drive")
+    common.add_argument("-v", "--verbose", action="store_true")
+
+    p = argparse.ArgumentParser(prog="drive-migrate", description=__doc__)
     sub = p.add_subparsers(dest="command", required=True)
 
-    sp = sub.add_parser("preflight", help="verify access and resolve source/destination")
+    sp = sub.add_parser(
+        "preflight", parents=[common], help="verify access and resolve source/destination"
+    )
     sp.add_argument(
         "--roundtrip", action="store_true", help="create a scratch folder as a live test"
     )
     sp.add_argument("--execute", action="store_true", help="allow creating --dest-path folders")
     sp.set_defaults(func=cmd_preflight)
 
-    sp = sub.add_parser("scan", help="inventory the source tree (read-only)")
+    sp = sub.add_parser("scan", parents=[common], help="inventory the source tree (read-only)")
     sp.add_argument("--max-depth", type=int)
     sp.set_defaults(func=cmd_scan)
 
-    sp = sub.add_parser("plan", help="classify every item into an action")
+    sp = sub.add_parser("plan", parents=[common], help="classify every item into an action")
     sp.add_argument("--subtree", help="limit to a relative path under the source root")
     sp.add_argument("--online", action="store_true", help="authenticate (not required)")
     sp.set_defaults(func=cmd_plan, online=False)
 
-    sp = sub.add_parser("apply", help="execute the plan (dry run unless --execute)")
+    sp = sub.add_parser(
+        "apply", parents=[common], help="execute the plan (dry run unless --execute)"
+    )
     sp.add_argument("--execute", action="store_true")
     sp.add_argument("--yes", action="store_true", help="skip the confirmation prompt")
     sp.add_argument("--subtree")
@@ -276,7 +285,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--allow-duplicates", action="store_true")
     sp.set_defaults(func=cmd_apply)
 
-    sp = sub.add_parser("report", help="write a CSV manifest")
+    sp = sub.add_parser("report", parents=[common], help="write a CSV manifest")
     sp.add_argument("--out", default="migration-report.csv")
     sp.set_defaults(func=cmd_report)
     return p
