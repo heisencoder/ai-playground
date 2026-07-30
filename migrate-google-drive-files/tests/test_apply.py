@@ -18,9 +18,7 @@ def _prepare(fake: FakeDriveClient, state: State, tree: dict[str, str]) -> None:
     build_plan(state)
 
 
-def _applier(
-    fake: FakeDriveClient, state: State, tree: dict[str, str], **kw: bool
-) -> Applier:
+def _applier(fake: FakeDriveClient, state: State, tree: dict[str, str], **kw: bool) -> Applier:
     return Applier(
         client=fake,
         state=state,

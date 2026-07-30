@@ -46,9 +46,7 @@ RETRYABLE_403_REASONS = {"rateLimitExceeded", "userRateLimitExceeded", "sharingR
 class DriveError(RuntimeError):
     """Non-retryable Drive API failure, carrying the HTTP status."""
 
-    def __init__(
-        self, message: str, status: int | None = None, reason: str | None = None
-    ) -> None:
+    def __init__(self, message: str, status: int | None = None, reason: str | None = None) -> None:
         super().__init__(message)
         self.status = status
         self.reason = reason

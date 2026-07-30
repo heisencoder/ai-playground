@@ -65,8 +65,7 @@ def resolve_dest(
     else:
         if not args.dest_drive_name:
             raise SystemExit(
-                "Specify the destination shared drive with --dest-drive-name "
-                "(or --dest-drive-id)."
+                "Specify the destination shared drive with --dest-drive-name (or --dest-drive-id)."
             )
         drive = client.find_drive_by_name(args.dest_drive_name)
         if not drive:
