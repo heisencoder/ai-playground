@@ -10,6 +10,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 log = logging.getLogger(__name__)
@@ -20,11 +25,6 @@ def build_service(
     token_path: Path | str = ".migrate/token.json",
     login_hint: str | None = None,
 ):
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
-    from googleapiclient.discovery import build
-
     credentials_path = Path(credentials_path)
     token_path = Path(token_path)
     token_path.parent.mkdir(parents=True, exist_ok=True)

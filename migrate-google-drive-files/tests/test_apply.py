@@ -4,6 +4,7 @@ import copy
 
 from drive_migrate.apply import Applier
 from drive_migrate.comments import render_comment, replicate_comments
+from drive_migrate.drive import DriveError
 from drive_migrate.plan import build_plan
 from drive_migrate.scan import scan
 from drive_migrate.state import DONE, PENDING
@@ -104,8 +105,6 @@ def test_failure_is_recorded_and_does_not_abort(fake, state, tree, monkeypatch):
     _prepare(fake, state, tree)
 
     def boom(*a, **k):
-        from drive_migrate.drive import DriveError
-
         raise DriveError("storageQuotaExceeded", status=403, reason="storageQuotaExceeded")
 
     monkeypatch.setattr(fake, "copy_file", boom)

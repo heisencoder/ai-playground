@@ -18,13 +18,13 @@ import logging
 import sys
 from pathlib import Path
 
-from .apply import Applier
-from .auth import build_service
-from .drive import FOLDER_MIME, DriveClient
-from .plan import build_plan
-from .report import summary, write_csv
-from .scan import scan
-from .state import State
+from drive_migrate.apply import Applier
+from drive_migrate.auth import build_service
+from drive_migrate.drive import FOLDER_MIME, DriveClient
+from drive_migrate.plan import build_plan
+from drive_migrate.report import summary, write_csv
+from drive_migrate.scan import scan
+from drive_migrate.state import State
 
 log = logging.getLogger("drive_migrate")
 

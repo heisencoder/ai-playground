@@ -5,7 +5,7 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-from .state import State
+from drive_migrate.state import State
 
 CSV_COLUMNS = [
     "path",

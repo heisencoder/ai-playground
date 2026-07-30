@@ -12,6 +12,8 @@ import time
 from collections.abc import Iterator
 from typing import Any
 
+from googleapiclient.errors import HttpError
+
 log = logging.getLogger(__name__)
 
 FOLDER_MIME = "application/vnd.google-apps.folder"
@@ -66,8 +68,6 @@ class DriveClient:
     # -- transport ---------------------------------------------------------
 
     def _exec(self, request: Any) -> Any:
-        from googleapiclient.errors import HttpError
-
         last: Exception | None = None
         for attempt in range(self._max_attempts):
             try:

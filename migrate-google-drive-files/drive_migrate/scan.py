@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import logging
 
-from .drive import FOLDER_MIME, SHORTCUT_MIME, DriveClient
-from .state import Item, State
+from drive_migrate.drive import FOLDER_MIME, SHORTCUT_MIME, DriveClient
+from drive_migrate.state import Item, State
 
 log = logging.getLogger(__name__)
 

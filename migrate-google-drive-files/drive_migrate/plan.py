@@ -19,8 +19,8 @@ files individually is slower but deterministic and resumable.
 
 from __future__ import annotations
 
-from .drive import FOLDER_MIME, SHORTCUT_MIME, UNCOPYABLE_MIMES
-from .state import COPY, CREATE_FOLDER, MOVE, SHORTCUT, SKIP, Item, State
+from drive_migrate.drive import FOLDER_MIME, SHORTCUT_MIME, UNCOPYABLE_MIMES
+from drive_migrate.state import COPY, CREATE_FOLDER, MOVE, SHORTCUT, SKIP, Item, State
 
 
 def classify(item: Item) -> tuple[str, str]:

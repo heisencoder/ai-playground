@@ -11,9 +11,9 @@ import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
-from .comments import replicate_comments
-from .drive import FOLDER_MIME, DriveClient, DriveError
-from .state import (
+from drive_migrate.comments import replicate_comments
+from drive_migrate.drive import FOLDER_MIME, DriveClient, DriveError
+from drive_migrate.state import (
     BLOCKED,
     COPY,
     CREATE_FOLDER,

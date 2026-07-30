@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from .drive import DriveClient
+from drive_migrate.drive import DriveClient
 
 log = logging.getLogger(__name__)
 
