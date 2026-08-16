@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
 import { useTickerAutocomplete } from '../useTickerAutocomplete'
 import { server } from '../../test/mocks/server'
@@ -238,7 +238,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for debounce and fetch
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -259,7 +259,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load (need 2+ suggestions for this test)
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(1)
       },
@@ -294,7 +294,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load (need 2+ suggestions for this test)
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(1)
       },
@@ -341,7 +341,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -377,7 +377,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -405,7 +405,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -435,7 +435,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -466,7 +466,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -493,7 +493,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
