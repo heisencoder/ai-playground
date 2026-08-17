@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { renderHook, act } from '@testing-library/react'
+import { renderHook, act, waitFor } from '@testing-library/react'
+import { http, HttpResponse } from 'msw'
 import { useTickerAutocomplete } from '../useTickerAutocomplete'
 import { server } from '../../test/mocks/server'
+
+// Debounce inside the hook is 300ms; wait past it to prove the timer is gone.
+const DEBOUNCE_ELAPSED_MS = 400
 
 /* eslint-disable max-lines-per-function -- Test file with comprehensive test coverage */
 describe('useTickerAutocomplete', () => {
@@ -234,7 +238,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for debounce and fetch
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -255,7 +259,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load (need 2+ suggestions for this test)
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(1)
       },
@@ -290,7 +294,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load (need 2+ suggestions for this test)
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(1)
       },
@@ -337,7 +341,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -373,7 +377,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -401,7 +405,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -431,7 +435,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -462,7 +466,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -489,7 +493,7 @@ describe('useTickerAutocomplete', () => {
     })
 
     // Wait for suggestions to load
-    await vi.waitFor(
+    await waitFor(
       () => {
         expect(result.current.suggestions.length).toBeGreaterThan(0)
       },
@@ -514,5 +518,35 @@ describe('useTickerAutocomplete', () => {
 
     // Should stay at last index
     expect(result.current.selectedIndex).toBe(lastIndex)
+  })
+
+  it('should cancel a pending debounced search when unmounted', async () => {
+    let requestCount = 0
+    server.use(
+      http.get('*/api/ticker-search', () => {
+        requestCount += 1
+        return HttpResponse.json([
+          { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ' },
+        ])
+      })
+    )
+
+    const onSelect = vi.fn()
+    const { result, unmount } = renderHook(() =>
+      useTickerAutocomplete(onSelect)
+    )
+
+    act(() => {
+      result.current.setFocused(true)
+      result.current.searchTickers('AAPL')
+    })
+
+    // Unmount while the debounce timer is still pending.
+    unmount()
+
+    // Wait well past the debounce window; the timer must never fire.
+    await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_ELAPSED_MS))
+
+    expect(requestCount).toBe(0)
   })
 })

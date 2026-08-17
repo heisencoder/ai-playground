@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { StockGift } from '../types'
 import { fetchStockPrice } from '../services/stockApi'
 import {
@@ -155,10 +155,31 @@ export function useGiftValueCalculation(
   gifts: StockGift[],
   updateGift: (id: string, updates: Partial<StockGift>) => void
 ): void {
+  // Each update re-runs the effect below with a fresh `gifts` array, so an
+  // in-flight fetch routinely outlives the effect run that started it. Only
+  // unmounting makes its result unwanted, so track that rather than cancelling
+  // per effect run.
+  const isMountedRef = useRef(true)
+
   useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    // Writing state once the component is gone leaks and, under test, trips
+    // React's "update ... was not wrapped in act(...)" warning.
+    const updateIfMounted = (id: string, updates: Partial<StockGift>): void => {
+      if (isMountedRef.current) {
+        updateGift(id, updates)
+      }
+    }
+
     const calculateValues = async (): Promise<void> => {
       const calculations = gifts.map((gift) =>
-        processGiftCalculation(gift, updateGift)
+        processGiftCalculation(gift, updateIfMounted)
       )
       await Promise.all(calculations)
     }
