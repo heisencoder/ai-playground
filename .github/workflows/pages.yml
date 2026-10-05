@@ -3,6 +3,7 @@ name: Pages Deploy
 # Assembles a single GitHub Pages site from:
 #   - site/index.html               -> /             (table of contents)
 #   - basketball/dist/              -> /basketball/  (static SPA)
+#   - qrcode/dist/                  -> /qrcode/      (static SPA)
 #
 # Adding a new static app:
 #   1. Make sure the app's Vite config uses `base: './'` (or another
@@ -21,6 +22,7 @@ on:
     paths:
       - 'site/**'
       - 'basketball/**'
+      - 'qrcode/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -50,11 +52,18 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             basketball/package-lock.json
+            qrcode/package-lock.json
 
       # -------- Per-app builds --------
 
       - name: Build basketball
         working-directory: ./basketball
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build qrcode
+        working-directory: ./qrcode
         run: |
           npm ci
           npm run build
@@ -73,6 +82,9 @@ jobs:
           # Each app lives under its own subpath
           mkdir -p _site/basketball
           cp -r basketball/dist/. _site/basketball/
+
+          mkdir -p _site/qrcode
+          cp -r qrcode/dist/. _site/qrcode/
 
           # (Add more apps here — see comment at top of workflow.)
 
