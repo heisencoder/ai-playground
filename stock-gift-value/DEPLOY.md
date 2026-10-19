@@ -238,10 +238,10 @@ First, copy your code to the VM or clone from git:
 ```bash
 # Option A: Clone from git repository
 git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO/typescript/stock-gift-value
+cd YOUR_REPO/stock-gift-value
 
 # Option B: Copy files from local machine (run on your local machine)
-gcloud compute scp --recurse ./typescript/stock-gift-value stock-gift-app:~/app --zone=us-central1-a
+gcloud compute scp --recurse ./stock-gift-value stock-gift-app:~/app --zone=us-central1-a
 ```
 
 Then build and run:

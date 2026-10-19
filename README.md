@@ -8,6 +8,14 @@ This repo is a set of projects that are created by AI engines (usually Claude Co
 
 - **[Stock Gift Value Calculator](stock-gift-value/)** - A React web application that calculates the IRS-approved donated value of stock gifts. Features a full-stack Express backend with Yahoo Finance API integration, comprehensive testing, and CI/CD.
 
+- **[Basketball Stats Tracker](basketball/)** - A React web app for tracking player statistics (fouls, points, rebounds, assists) during a basketball game. Deployed as a static site on GitHub Pages.
+
+- **[QR Code Generator](qrcode/)** - A React web app that turns any URL or text into a QR code, live as you type. Deployed as a static site on GitHub Pages.
+
+- **[Probability and Statistics Study Guide](stats-study-guide/)** - A study guide for a college probability and statistics final exam, with definitions, concepts, and practice problems.
+
+- **[GitHub Pages Site](site/)** - The table-of-contents page for the combined GitHub Pages site that hosts the static apps (assembled by `.github/workflows/pages.yml`).
+
 - **[Heisencoder Blog](blog/)** - Blogger to GitHub Pages migration project. Contains documentation, conversion scripts, and two deployable blog versions (minimal and full-featured) with 40 posts from 2007-2012.
 
 ## Organization
