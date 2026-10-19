@@ -134,6 +134,25 @@ cd /home/user/ai-playground/typescript/stock-gift-value && npm test
 - Check that handlers match the API endpoints being called
 - Verify `setupServer` is properly initialized in test setup
 
+### React act() Warnings Fail CI but Not Locally
+
+**Problem:** CI fails with `React Warning detected: Warning: An update to <Component> inside a test was not wrapped in act(...)` (reported as an unhandled rejection), while all tests pass and the run is green locally.
+
+**Solution:** Find the warnings locally by bypassing Vitest's console interception, then wrap the offending call in `act()`:
+```bash
+cd /home/user/ai-playground/typescript/stock-gift-value && npx vitest run --disableConsoleIntercept 2>&1 | grep 'not wrapped in act'
+```
+```tsx
+// ❌ Bad: native focus/blur fire React onFocus/onBlur handlers outside act()
+tickerInput.focus()
+// ✅ Good
+act(() => tickerInput.focus())
+```
+
+**Root cause:** `vite.config.ts`'s `onConsoleLog` hook turns React warnings into errors, but in some local environments Vitest's console interception drops test output entirely, so the hook never runs and the warnings are invisible. Separately, React only warns when an update lands outside `act()`: user-event and `waitFor` turn act warnings off while they run, so whether an async update warns can depend on timing.
+
+**When this happens:** Calling `element.focus()` / `element.blur()` directly in tests, or after a Vitest upgrade that changes how reliably console output reaches `onConsoleLog`.
+
 ---
 
 ## Build Issues
