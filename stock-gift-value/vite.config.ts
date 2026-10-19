@@ -20,14 +20,8 @@ export default defineConfig({
     pool: 'threads',
     testTimeout: 10000, // 10 seconds per test
     hookTimeout: 10000, // 10 seconds for hooks
-    // Fail tests on console warnings/errors (turn warnings into errors)
-    onConsoleLog(log, type) {
-      if (type === 'stderr' && log.includes('Warning:')) {
-        // Treat React warnings as test failures
-        throw new Error(`React Warning detected: ${log}`)
-      }
-      return false // Allow other console logs
-    },
+    // React warnings (e.g. updates outside act()) fail the test that caused
+    // them; see failOnReactWarnings in src/test/setup.ts
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

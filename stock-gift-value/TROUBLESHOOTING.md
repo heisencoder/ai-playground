@@ -20,7 +20,7 @@ This file documents common issues encountered during development and their solut
 
 **Solution:** Install dependencies first
 ```bash
-cd /home/user/ai-playground/typescript/stock-gift-value && npm ci
+cd <repo>/stock-gift-value && npm ci
 ```
 
 **When this happens:**
@@ -42,7 +42,7 @@ error TS2580: Cannot find name 'process'
 
 **Solution:** Ensure dependencies are installed
 ```bash
-cd /home/user/ai-playground/typescript/stock-gift-value && npm ci
+cd <repo>/stock-gift-value && npm ci
 ```
 
 **Root cause:** node_modules or @types packages are missing
@@ -123,7 +123,7 @@ app.use((_req, res) => {
 
 **Solution:** Run the full test suite before pushing
 ```bash
-cd /home/user/ai-playground/typescript/stock-gift-value && npm test
+cd <repo>/stock-gift-value && npm test
 ```
 
 ### MSW (Mock Service Worker) Issues
@@ -134,14 +134,11 @@ cd /home/user/ai-playground/typescript/stock-gift-value && npm test
 - Check that handlers match the API endpoints being called
 - Verify `setupServer` is properly initialized in test setup
 
-### React act() Warnings Fail CI but Not Locally
+### React act() Warnings Fail a Test
 
-**Problem:** CI fails with `React Warning detected: Warning: An update to <Component> inside a test was not wrapped in act(...)` (reported as an unhandled rejection), while all tests pass and the run is green locally.
+**Problem:** A test fails in its `afterEach` with `React warning detected: Warning: An update to <Component> inside a test was not wrapped in act(...)`, even though its assertions pass.
 
-**Solution:** Find the warnings locally by bypassing Vitest's console interception, then wrap the offending call in `act()`:
-```bash
-cd /home/user/ai-playground/typescript/stock-gift-value && npx vitest run --disableConsoleIntercept 2>&1 | grep 'not wrapped in act'
-```
+**Solution:** The failing test is the one that caused the warning. Wrap the offending call in `act()`, or drive the interaction through `userEvent`:
 ```tsx
 // ❌ Bad: native focus/blur fire React onFocus/onBlur handlers outside act()
 tickerInput.focus()
@@ -149,9 +146,11 @@ tickerInput.focus()
 act(() => tickerInput.focus())
 ```
 
-**Root cause:** `vite.config.ts`'s `onConsoleLog` hook turns React warnings into errors, but in some local environments Vitest's console interception drops test output entirely, so the hook never runs and the warnings are invisible. Separately, React only warns when an update lands outside `act()`: user-event and `waitFor` turn act warnings off while they run, so whether an async update warns can depend on timing.
+**Root cause:** `src/test/setup.ts` records React warnings logged during a test and fails that test. React only warns when a state update lands outside `act()`. user-event and `waitFor` switch act warnings off while they run, so an async update (e.g. a fetch resolving) may warn only when it lands between awaited calls, which can depend on machine speed.
 
-**When this happens:** Calling `element.focus()` / `element.blur()` directly in tests, or after a Vitest upgrade that changes how reliably console output reaches `onConsoleLog`.
+**When this happens:** Calling `element.focus()` / `element.blur()` directly in tests, or leaving async state updates (fetches, timers) un-awaited.
+
+**History:** This check used to be a `vite.config.ts` `onConsoleLog` hook. That hook never ran in environments where Vitest's console interception dropped test output, so warnings that failed CI were invisible locally, and CI blamed whichever test happened to be running. To see raw test console output in such an environment, use `npx vitest run --disableConsoleIntercept`.
 
 ---
 

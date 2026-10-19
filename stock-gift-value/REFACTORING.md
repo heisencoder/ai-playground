@@ -289,7 +289,7 @@ This document outlines the comprehensive refactoring plan to address all strict 
 ### Code Organization Strategy
 
 ```
-typescript/stock-gift-value/
+stock-gift-value/
 ├── api/
 │   ├── constants.ts           (new)
 │   ├── logger.ts              (new)

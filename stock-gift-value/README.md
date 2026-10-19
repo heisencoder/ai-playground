@@ -77,7 +77,7 @@ graph TD
 
 ### Prerequisites
 
-- **Node.js 22+** (required for Vite 7+)
+- **Node.js 22+** (required for Vite 8)
 - **npm 10+**
 
 Install via [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating) (recommended) or download from [nodejs.org](https://nodejs.org/)
@@ -85,7 +85,7 @@ Install via [nvm](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-an
 ### Installation
 
 ```bash
-cd typescript/stock-gift-value
+cd stock-gift-value
 npm install
 ```
 

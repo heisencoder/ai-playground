@@ -167,7 +167,7 @@ graph TB
 ## Project Structure
 
 ```
-typescript/stock-gift-value/
+stock-gift-value/
 ├── api/
 │   ├── handler.ts           # Platform-agnostic API logic
 │   ├── server.ts            # Express server
