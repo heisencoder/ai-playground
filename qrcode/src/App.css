@@ -1,0 +1,193 @@
+.app {
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.app-header h1 {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.lede {
+  margin: 0 0 1.5rem;
+  color: #555;
+}
+
+.card {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  padding: 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.text-input {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.text-input:focus-visible,
+select:focus-visible,
+.download-btn:focus-visible {
+  outline: 2px solid #e87722;
+  outline-offset: 2px;
+}
+
+.options {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.option-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.option-checkbox label {
+  font-size: 0.95rem;
+}
+
+.option-format {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+}
+
+.option-format legend {
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 0 0.3rem;
+}
+
+.option-format label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.option-size {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.option-size label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.option-size select {
+  width: max-content;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  background: white;
+}
+
+.hint {
+  margin: 0;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.preview {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+}
+
+.status {
+  width: 100%;
+}
+
+.placeholder {
+  color: #666;
+  margin: 0;
+}
+
+.error {
+  color: #b3261e;
+  background: #fdecea;
+  border: 1px solid #f5c2bd;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+  margin: 0;
+}
+
+.qr-image,
+.qr-svg {
+  background: white;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.qr-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.download-btn {
+  display: inline-block;
+  background: #e87722;
+  color: white;
+  text-decoration: none;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.download-btn:hover {
+  background: #d56a17;
+}
+
+.download-btn:active {
+  background: #c25f12;
+}
+
+@media (max-width: 480px) {
+  .app {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .option-format {
+    flex-wrap: wrap;
+  }
+
+  .option-size select {
+    width: 100%;
+  }
+}

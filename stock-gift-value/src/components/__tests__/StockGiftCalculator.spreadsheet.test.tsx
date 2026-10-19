@@ -554,7 +554,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     await waitForRowCount(EXPECTED_TWO_ROWS)
 
     const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
-    updatedDateInputs[FIRST_ELEMENT].focus()
+    act(() => updatedDateInputs[FIRST_ELEMENT].focus())
     await user.keyboard('{ArrowDown}')
 
     expect(updatedDateInputs[SECOND_ELEMENT]).toHaveFocus()
@@ -568,7 +568,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     await waitForRowCount(EXPECTED_TWO_ROWS)
 
     const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
-    updatedDateInputs[SECOND_ELEMENT].focus()
+    act(() => updatedDateInputs[SECOND_ELEMENT].focus())
     await user.keyboard('{ArrowUp}')
 
     expect(updatedDateInputs[FIRST_ELEMENT]).toHaveFocus()
@@ -581,7 +581,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     const dateInput = screen.getByLabelText(/^date$/i)
     const tickerInput = screen.getByLabelText(/^ticker$/i)
 
-    dateInput.focus()
+    act(() => dateInput.focus())
     await user.keyboard('{ArrowRight}')
 
     expect(tickerInput).toHaveFocus()
@@ -594,7 +594,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     const dateInput = screen.getByLabelText(/^date$/i)
     const tickerInput = screen.getByLabelText(/^ticker$/i)
 
-    tickerInput.focus()
+    act(() => tickerInput.focus())
     await user.keyboard('{ArrowLeft}')
 
     expect(dateInput).toHaveFocus()
@@ -607,7 +607,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     const tickerInput = screen.getByLabelText(/^ticker$/i)
     const sharesInput = screen.getByLabelText(/^shares$/i)
 
-    tickerInput.focus()
+    act(() => tickerInput.focus())
     await user.keyboard('{ArrowRight}')
 
     expect(sharesInput).toHaveFocus()
@@ -620,7 +620,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     const dateInput = screen.getByLabelText(/^date$/i)
     const tickerInput = screen.getByLabelText(/^ticker$/i)
 
-    dateInput.focus()
+    act(() => dateInput.focus())
     await user.keyboard('{Tab}')
 
     expect(tickerInput).toHaveFocus()
@@ -633,7 +633,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     const tickerInput = screen.getByLabelText(/^ticker$/i)
     const sharesInput = screen.getByLabelText(/^shares$/i)
 
-    sharesInput.focus()
+    act(() => sharesInput.focus())
     await user.keyboard('{Shift>}{Tab}{/Shift}')
 
     expect(tickerInput).toHaveFocus()
@@ -647,7 +647,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     await createRowWithDate(user, '2024-01-01')
     await waitForRowCount(EXPECTED_TWO_ROWS)
 
-    sharesInput.focus()
+    act(() => sharesInput.focus())
     await user.keyboard('{ArrowRight}')
 
     const activeElement = document.activeElement
@@ -662,7 +662,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     await waitForRowCount(EXPECTED_TWO_ROWS)
 
     const updatedDateInputs = screen.getAllByLabelText(/^date$/i)
-    updatedDateInputs[FIRST_ELEMENT].focus()
+    act(() => updatedDateInputs[FIRST_ELEMENT].focus())
     await user.keyboard('{Enter}')
 
     expect(updatedDateInputs[SECOND_ELEMENT]).toHaveFocus()
@@ -673,7 +673,7 @@ describe('StockGiftCalculator - Keyboard Navigation', () => {
     const user = userEvent.setup()
 
     const dateInput = screen.getByLabelText(/^date$/i)
-    dateInput.focus()
+    act(() => dateInput.focus())
 
     await user.keyboard('{ArrowUp}')
     expect(dateInput).toHaveFocus()
@@ -702,7 +702,7 @@ describe('StockGiftCalculator - Improved Tabbing Flow', () => {
     expect(dateInput).toHaveValue('01/15/2024')
 
     // Blur to parse the date
-    dateInput.blur()
+    act(() => dateInput.blur())
 
     // After blur, should be converted to locale format (MM/DD/YYYY)
     await waitFor(() => {
@@ -717,7 +717,7 @@ describe('StockGiftCalculator - Improved Tabbing Flow', () => {
     const dateInput = screen.getByLabelText(/^date$/i)
     const tickerInput = screen.getByLabelText(/^ticker$/i)
 
-    dateInput.focus()
+    act(() => dateInput.focus())
     await user.keyboard('{Tab}')
 
     expect(tickerInput).toHaveFocus()
@@ -761,7 +761,7 @@ describe('StockGiftCalculator - Improved Tabbing Flow', () => {
 
     // Focus on shares field of first row
     const sharesInputs = screen.getAllByLabelText(/^shares$/i)
-    sharesInputs[FIRST_ELEMENT].focus()
+    act(() => sharesInputs[FIRST_ELEMENT].focus())
 
     // Tab should skip delete button and go to next row's date field
     await user.keyboard('{Tab}')
