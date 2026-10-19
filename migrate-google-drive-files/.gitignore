@@ -1,0 +1,17 @@
+# OAuth secrets and local state — NEVER commit these. By default the secrets
+# live outside the repo (see auth.py); these entries are defense-in-depth against
+# --credentials / --token / --db overrides that point back into the working tree.
+credentials.json
+token*.json
+.migrate/
+*.sqlite
+
+# Migration output
+migration-report.csv
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
