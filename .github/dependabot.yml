@@ -1,0 +1,47 @@
+# Dependabot version updates: checked monthly.
+# https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+#
+# Minor and patch updates are grouped into one PR per project per month.
+# Major updates still get their own PRs, since those may need code changes.
+# Security updates for a project are grouped into a single PR as well.
+#
+# When adding a new npm project, add its folder to `directories` below.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directories:
+      - /basketball
+      - /qrcode
+      - /stock-gift-value
+    schedule:
+      interval: monthly
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        update-types:
+          - minor
+          - patch
+      security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker
+    directory: /stock-gift-value
+    schedule:
+      interval: monthly
+    ignore:
+      # Keep the image on Node 22 to match .nvmrc and the CI workflows;
+      # move all of them to a new Node major together, by hand.
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
