@@ -1,0 +1,6 @@
+node_modules
+coverage
+.clasp.json
+.clasprc.json
+*.local
+.DS_Store
