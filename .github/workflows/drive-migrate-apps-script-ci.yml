@@ -1,0 +1,60 @@
+name: Drive Migrate (Apps Script) CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'drive-migrate-apps-script/**'
+      - '.github/workflows/drive-migrate-apps-script-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'drive-migrate-apps-script/**'
+      - '.github/workflows/drive-migrate-apps-script-ci.yml'
+
+defaults:
+  run:
+    working-directory: ./drive-migrate-apps-script
+
+jobs:
+  quality:
+    name: Format, Lint, Typecheck, Build, Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: drive-migrate-apps-script/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Check that dist/ matches the sources
+        run: npm run build:check
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Upload Apps Script bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: drive-migrate-apps-script
+          path: |
+            drive-migrate-apps-script/dist/Code.js
+            drive-migrate-apps-script/dist/appsscript.json
+          retention-days: 30

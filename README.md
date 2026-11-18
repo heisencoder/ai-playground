@@ -10,6 +10,8 @@ This repo is a set of projects that are created by AI engines (usually Claude Co
 
 - **[Heisencoder Blog](blog/)** - Blogger to GitHub Pages migration project. Contains documentation, conversion scripts, and two deployable blog versions (minimal and full-featured) with 40 posts from 2007-2012.
 
+- **[Drive Migration (Apps Script)](drive-migrate-apps-script/)** - A Google Sheets-bound Apps Script tool, written in TypeScript, that migrates a My Drive folder into a shared drive with dry runs, restartable progress, and preservation of revision history and comments where Drive allows.
+
 ## Organization
 
 Each top-level folder represents a project. Projects are organized by name rather than by programming language.
