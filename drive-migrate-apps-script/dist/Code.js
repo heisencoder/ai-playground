@@ -61,7 +61,10 @@ var DriveMigrate = (() => {
     }
   };
   function errorMessage(error) {
-    return error instanceof Error ? error.message : String(error);
+    if (typeof error === "object" && error !== null && "message" in error) {
+      return String(error.message);
+    }
+    return String(error);
   }
 
   // src/core/comments.ts
@@ -90,9 +93,6 @@ var DriveMigrate = (() => {
   function renderReply(reply) {
     return render(reply, REPLY_BANNER);
   }
-  function isRepost(comment) {
-    return (comment.content ?? "").startsWith(COMMENT_BANNER);
-  }
   function live(comments) {
     return comments.filter((comment) => comment.deleted !== true);
   }
@@ -114,14 +114,33 @@ var DriveMigrate = (() => {
       );
     }
   }
-  function readThreads(drive, sourceId, destId, outcome) {
+  function sortDestination(source, existing) {
+    const renders = new Set(source.map(renderComment));
+    const reposts = /* @__PURE__ */ new Map();
+    let native = 0;
+    for (const comment of existing) {
+      const text = comment.content ?? "";
+      if (renders.has(text)) {
+        reposts.set(text, [...reposts.get(text) ?? [], comment]);
+      } else {
+        native += 1;
+      }
+    }
+    return { reposts, native };
+  }
+  function readThreads(drive, sourceId, destId, nativeExpected, outcome) {
     try {
-      const threads = live(drive.listComments(sourceId));
-      outcome.total = threads.length;
-      return {
-        threads,
-        existing: threads.length === 0 ? [] : live(drive.listComments(destId))
-      };
+      const source = live(drive.listComments(sourceId));
+      outcome.total = source.length;
+      if (source.length === 0) {
+        return { source, reposts: /* @__PURE__ */ new Map(), native: 0 };
+      }
+      let sorted = sortDestination(source, live(drive.listComments(destId)));
+      const openThreads = source.some((thread) => thread.resolved !== true);
+      if (nativeExpected && openThreads && sorted.native === 0) {
+        sorted = sortDestination(source, live(drive.listComments(destId)));
+      }
+      return { source, ...sorted };
     } catch (error) {
       if (!(error instanceof DriveError)) {
         throw error;
@@ -130,7 +149,7 @@ var DriveMigrate = (() => {
       return null;
     }
   }
-  function carryComments(drive, sourceId, destId, shouldStop) {
+  function carryComments(drive, sourceId, destId, nativeExpected, shouldStop) {
     const outcome = {
       total: 0,
       native: 0,
@@ -138,24 +157,21 @@ var DriveMigrate = (() => {
       errors: [],
       complete: true
     };
-    const read = readThreads(drive, sourceId, destId, outcome);
-    if (read === null || read.threads.length === 0) {
+    const threads = readThreads(drive, sourceId, destId, nativeExpected, outcome);
+    if (threads === null || threads.source.length === 0) {
       return outcome;
     }
-    const { threads, existing } = read;
-    outcome.native = existing.filter((comment) => !isRepost(comment)).length;
-    const postedByText = new Map(
-      existing.map((comment) => [comment.content ?? "", comment])
-    );
-    const candidates = outcome.native > 0 ? threads.filter((thread) => thread.resolved === true) : threads;
+    outcome.native = threads.native;
+    const candidates = threads.native > 0 ? threads.source.filter((thread) => thread.resolved === true) : threads.source;
     for (const thread of candidates) {
       if (shouldStop()) {
         outcome.complete = false;
         break;
       }
       const text = renderComment(thread);
+      const posted = threads.reposts.get(text)?.shift();
       try {
-        repostThread(drive, destId, thread, text, postedByText.get(text));
+        repostThread(drive, destId, thread, text, posted);
         outcome.reposted += 1;
       } catch (error) {
         if (!(error instanceof DriveError)) {
@@ -166,6 +182,11 @@ var DriveMigrate = (() => {
     }
     return outcome;
   }
+  var NATIVE_COMMENT_MIMES = /* @__PURE__ */ new Set([
+    "application/vnd.google-apps.document",
+    "application/vnd.google-apps.spreadsheet",
+    "application/vnd.google-apps.presentation"
+  ]);
   function describeComments(outcome) {
     if (outcome.total === 0 && outcome.errors.length === 0) {
       return "no comments";
@@ -508,6 +529,9 @@ var DriveMigrate = (() => {
     }
     return "";
   }
+  function replanned(status) {
+    return status === "IN_PROGRESS" || status === "FAILED" ? "IN_PROGRESS" : "PENDING";
+  }
   function emptyCounts() {
     return {
       total: 0,
@@ -520,8 +544,7 @@ var DriveMigrate = (() => {
     for (const item of items) {
       if (item.status !== "DONE") {
         const decision = classify(item, config);
-        const keep = item.status === "IN_PROGRESS" || keepStatus && item.status !== "";
-        const status = keep ? item.status : "PENDING";
+        const status = keepStatus ? item.status || "PENDING" : replanned(item.status);
         if (item.action !== decision.action || item.reason !== decision.reason || item.status !== status) {
           item.action = decision.action;
           item.reason = decision.reason;
@@ -543,7 +566,16 @@ var DriveMigrate = (() => {
   var EXECUTE_BATCH = 10;
   var DRY_RUN_BATCH = 200;
   var HTTP_FORBIDDEN = 403;
+  var HTTP_NOT_FOUND = 404;
   var DATE_LENGTH2 = 10;
+  var NOT_A_REFUSAL = /* @__PURE__ */ new Set([
+    "rateLimitExceeded",
+    "userRateLimitExceeded",
+    "sharingRateLimitExceeded",
+    "teamDrivesParentLimit",
+    "teamDriveFileLimitExceeded",
+    "storageQuotaExceeded"
+  ]);
   var KIND_STATUS = {
     folderCreated: "DONE",
     folderAdopted: "DONE",
@@ -642,6 +674,9 @@ var DriveMigrate = (() => {
       /** Every source ID and every destination ID this migration knows about. */
       this.ownIds = /* @__PURE__ */ new Set();
       this.childrenCache = /* @__PURE__ */ new Map();
+      /** Destination folders this run created or found in a fresh listing. */
+      this.trusted = /* @__PURE__ */ new Set();
+      this.folderProblems = /* @__PURE__ */ new Map();
       this.counts = emptyCounts2();
       this.dry = mode === "DRY_RUN";
       for (const item of items) {
@@ -663,7 +698,9 @@ var DriveMigrate = (() => {
         }
         const batch = todo.slice(start, start + batchSize);
         const recovering = new Set(
-          batch.filter((item) => item.status === "IN_PROGRESS")
+          batch.filter(
+            (item) => item.status === "IN_PROGRESS" || item.status === "FAILED"
+          )
         );
         if (!this.dry) {
           this.markInProgress(batch);
@@ -732,6 +769,9 @@ var DriveMigrate = (() => {
           this.ownIds.add(destId);
         }
       }
+      if (isFolder(item) && destId !== "") {
+        this.trusted.add(destId);
+      }
       if (outcome.kind === "failed") {
         this.deps.store.log("ERROR", `${item.path}: ${outcome.message}`);
       }
@@ -754,12 +794,15 @@ var DriveMigrate = (() => {
           message: item.override === "SKIP" ? "skipped by override" : item.reason
         };
       }
-      const parent = this.destParentOf(item);
-      if ("kind" in parent) {
-        return parent;
+      if (item.scanState === "ERROR") {
+        return {
+          kind: "failed",
+          message: 'its contents could not be listed during the scan; run "Scan and plan" again'
+        };
       }
       try {
-        return this.perform(action, item, parent, recovering);
+        const parent = this.destParentOf(item);
+        return "kind" in parent ? parent : this.perform(action, item, parent, recovering);
       } catch (error) {
         if (!(error instanceof DriveError)) {
           throw error;
@@ -782,7 +825,8 @@ var DriveMigrate = (() => {
      */
     destParentOf(item) {
       if (item.parentId === "") {
-        return { id: this.deps.destRootId, preExisting: true };
+        const problem2 = this.folderProblem(this.deps.destRootId);
+        return problem2 === "" ? { id: this.deps.destRootId, preExisting: true } : { kind: "blocked", message: problem2 };
       }
       const blocked = {
         kind: "blocked",
@@ -801,10 +845,46 @@ var DriveMigrate = (() => {
       if (status !== "DONE" || id === "") {
         return blocked;
       }
+      const problem = this.folderProblem(id);
+      if (problem !== "") {
+        return { kind: "blocked", message: problem };
+      }
       return {
         id,
         preExisting: real ? parent.destPreExisting : parent.dryPreExisting
       };
+    }
+    /**
+     * Checks, once per run, that a destination folder recorded by an earlier run
+     * is still there. Someone may have trashed it since, and a file moved into a
+     * trashed folder would be deleted along with it.
+     */
+    folderProblem(folderId) {
+      if (this.isVirtual(folderId) || this.trusted.has(folderId)) {
+        return "";
+      }
+      let problem = this.folderProblems.get(folderId);
+      if (problem === void 0) {
+        problem = this.inspectFolder(folderId);
+        this.folderProblems.set(folderId, problem);
+      }
+      return problem;
+    }
+    inspectFolder(folderId) {
+      const advice = '; run "Scan and plan" again';
+      try {
+        const folder = this.deps.drive.getFile(folderId);
+        if (folder.trashed === true) {
+          return `its destination folder is in the trash${advice}`;
+        }
+        const drive = folder.driveId ?? "";
+        return drive === this.deps.destDriveId ? "" : `its destination folder is not in the destination shared drive${advice}`;
+      } catch (error) {
+        if (error instanceof DriveError && error.status === HTTP_NOT_FOUND) {
+          return `its destination folder no longer exists${advice}`;
+        }
+        throw error;
+      }
     }
     liveStatus(item) {
       return this.dry ? dryStatusOf(item) : item.status;
@@ -815,13 +895,6 @@ var DriveMigrate = (() => {
       }
       if (isFolder(item)) {
         return { kind: "failed", message: `a folder cannot be ${action}` };
-      }
-      if (action === "COPY" && recovering && item.destId !== "") {
-        return this.dry ? {
-          kind: "copied",
-          message: "already copied; would finish carrying comments over",
-          destId: item.destId
-        } : this.finishCopy(item, item.destId);
       }
       const found = this.lookFor(item, parent, recovering);
       if (found !== null) {
@@ -876,11 +949,7 @@ var DriveMigrate = (() => {
       }
       const mine = children.find((child) => sourceIdOf(child) === item.id);
       if (mine !== void 0) {
-        return effectiveAction(item) === "COPY" && !this.dry ? this.finishCopy(item, mine.id) : {
-          kind: effectiveAction(item) === "SHORTCUT" ? "shortcut" : "copied",
-          message: "already in the destination",
-          destId: mine.id
-        };
+        return this.foundOurs(item, mine);
       }
       if (this.deps.config.allowDuplicateNames) {
         return null;
@@ -892,6 +961,21 @@ var DriveMigrate = (() => {
         kind: "skipped",
         message: "a file with the same name is already in the destination folder"
       };
+    }
+    /**
+     * The destination already holds something this tool made from the item. What
+     * it is decides what is left to do, whatever the row's planned action says
+     * (a planned move may have fallen back to a copy).
+     */
+    foundOurs(item, ours) {
+      if (ours.mimeType === SHORTCUT_MIME) {
+        return {
+          kind: "shortcut",
+          message: "already in the destination",
+          destId: ours.id
+        };
+      }
+      return this.dry ? { kind: "copied", message: "already copied", destId: ours.id } : this.finishCopy(item, ours.id);
     }
     // -- actions ---------------------------------------------------------------
     createFolder(item, parent, recovering) {
@@ -942,10 +1026,29 @@ var DriveMigrate = (() => {
           destId: item.id
         };
       }
+      const current = this.deps.drive.getFile(item.id);
+      const parents = current.parents ?? [];
+      if (parents.includes(parent.id)) {
+        return {
+          kind: "moved",
+          message: "already in the destination",
+          destId: item.id
+        };
+      }
+      if (current.trashed === true) {
+        return { kind: "skipped", message: "in the trash since the scan" };
+      }
+      if (!parents.includes(item.parentId)) {
+        return {
+          kind: "failed",
+          message: 'no longer in the folder it was scanned in; run "Scan and plan" again'
+        };
+      }
       try {
-        this.deps.drive.moveFile(item.id, parent.id, item.parentId);
+        this.deps.drive.moveFile(item.id, parent.id, parents);
       } catch (error) {
-        if (!(error instanceof DriveError) || error.status !== HTTP_FORBIDDEN) {
+        const refused = error instanceof DriveError && error.status === HTTP_FORBIDDEN && !NOT_A_REFUSAL.has(error.reason);
+        if (!refused) {
           throw error;
         }
         return this.moveRefused(item, parent, error);
@@ -1000,6 +1103,7 @@ var DriveMigrate = (() => {
           this.deps.drive,
           item.id,
           copyId,
+          NATIVE_COMMENT_MIMES.has(item.mimeType),
           () => this.deps.budget.expired()
         );
         if (!comments.complete) {
@@ -1043,14 +1147,21 @@ var DriveMigrate = (() => {
         destId: created.id
       };
     }
-    /** A shortcut to a file that this migration copied should point at the copy. */
+    /**
+     * What a shortcut should point at. A shortcut to something this migration
+     * copied or recreated (a copied file, a folder) is pointed at the new item,
+     * not at the original left behind in the source.
+     */
     shortcutTarget(item) {
       if (!isShortcut(item)) {
         return item.id;
       }
       const target = this.byId.get(item.shortcutTargetId);
-      const copied = target !== void 0 && effectiveAction(target) === "COPY" && target.status === "DONE" && target.destId !== "";
-      return copied ? target.destId : item.shortcutTargetId;
+      if (this.dry || target?.status !== "DONE" || target.destId === "" || target.destId === target.id) {
+        return item.shortcutTargetId;
+      }
+      const replacement = this.deps.drive.getFile(target.destId);
+      return replacement.mimeType === SHORTCUT_MIME ? item.shortcutTargetId : target.destId;
     }
     say(done, would) {
       return this.dry ? would : done;
@@ -1090,12 +1201,12 @@ var DriveMigrate = (() => {
   };
 
   // src/core/preflight.ts
-  var HTTP_NOT_FOUND = 404;
+  var HTTP_NOT_FOUND2 = 404;
   function fetchFile(drive, id, what, user) {
     try {
       return drive.getFile(id);
     } catch (error) {
-      if (error instanceof DriveError && error.status === HTTP_NOT_FOUND) {
+      if (error instanceof DriveError && error.status === HTTP_NOT_FOUND2) {
         throw new ConfigError(
           `${what} not found. Check the link, and that ${user} has access to it.`
         );
@@ -1187,7 +1298,9 @@ var DriveMigrate = (() => {
       createdTime: file.createdTime ?? "",
       modifiedTime: file.modifiedTime ?? "",
       canCopy: file.capabilities?.canCopy ?? true,
-      canMoveOut: file.capabilities?.canMoveItemOutOfDrive ?? false,
+      // If Drive does not say, assume an owner may move their own file; the
+      // executor copes with being refused.
+      canMoveOut: file.capabilities?.canMoveItemOutOfDrive ?? file.ownedByMe ?? false,
       webViewLink: file.webViewLink ?? ""
     };
   }
@@ -1257,7 +1370,9 @@ var DriveMigrate = (() => {
       }
       const appended = store2.appendItems(fresh);
       queue.push(...appended.filter((item) => isFolder(item)));
-      folder.scanState = "DONE";
+      if (folder.scanState !== "ERROR") {
+        folder.scanState = "DONE";
+      }
       store2.writeItems([folder]);
       result.added += appended.length;
       result.total += appended.length;
@@ -1282,6 +1397,7 @@ var DriveMigrate = (() => {
         throw error;
       }
       result.errors += 1;
+      folder.scanState = "ERROR";
       folder.result = `could not list this folder: ${error.message}`;
       store2.log("ERROR", `${folder.path}: ${folder.result}`);
       return [];
@@ -1388,23 +1504,24 @@ var DriveMigrate = (() => {
       `${String(counts.blocked)} blocked`
     ].join(", ");
   }
-  function scanJob(context) {
-    const { deps, config, budget, fresh } = context;
+  function prepareScan(context) {
+    const { deps, config } = context;
     const { store: store2 } = deps;
-    const drive = deps.makeDrive(true);
-    if (fresh || store2.getMeta("scan") === "") {
-      const resolved = preflight(drive, config);
-      store2.setMeta("user", resolved.userEmail);
-      store2.setMeta("sourceName", resolved.sourceName);
-      store2.setMeta("destRootId", resolved.destRootId);
-      store2.setMeta("destDriveId", resolved.destDriveId);
-      store2.log(
-        "INFO",
-        `Scanning "${resolved.sourceName}" as ${resolved.userEmail}; destination "${resolved.destName}".`
-      );
-      startScan(store2, resolved.source);
-    }
-    const result = continueScan(drive, store2, budget);
+    const resolved = preflight(deps.makeDrive(true), config);
+    store2.setMeta("user", resolved.userEmail);
+    store2.setMeta("sourceName", resolved.sourceName);
+    store2.setMeta("destRootId", resolved.destRootId);
+    store2.setMeta("destDriveId", resolved.destDriveId);
+    store2.log(
+      "INFO",
+      `Scanning "${resolved.sourceName}" as ${resolved.userEmail}; destination "${resolved.destName}".`
+    );
+    startScan(store2, resolved.source);
+  }
+  function scanJob(context) {
+    const { deps, config, budget } = context;
+    const { store: store2 } = deps;
+    const result = continueScan(deps.makeDrive(true), store2, budget);
     if (!result.complete) {
       return {
         complete: false,
@@ -1414,20 +1531,46 @@ var DriveMigrate = (() => {
     const items = store2.readItems();
     const plan = planItems(items, config);
     store2.writeItems(plan.changed);
-    const problems = result.errors === 0 ? "" : ` ${String(result.errors)} folder(s) could not be listed; see the Log sheet.`;
+    const unlisted = items.filter((item) => item.scanState === "ERROR").length;
+    const problems = unlisted === 0 ? "" : ` WARNING: ${String(unlisted)} folder(s) could not be listed, so their contents are missing from the plan; see the Log sheet, then scan again.`;
     return {
       complete: true,
       text: `Scan complete: ${String(items.length)} item(s). Plan: ${describePlan(plan.counts)}.${problems}`
     };
   }
-  function prepareApply(context, mode, items) {
+  function assertSameUser(context) {
+    const { deps } = context;
+    const scannedBy = deps.store.getMeta("user");
+    const current = deps.makeDrive(true).about().emailAddress ?? "";
+    if (scannedBy !== "" && current !== scannedBy) {
+      throw new ConfigError(
+        `This sheet was scanned by ${scannedBy}, but you are ${current === "" ? "someone else" : current}. Ownership decides what can be moved, so either ${scannedBy} runs it or you run "Scan and plan" yourself.`
+      );
+    }
+  }
+  function assertScanned(store2) {
+    if (store2.getMeta("scan") !== "DONE") {
+      throw new ConfigError('Run "Scan and plan" first, and let it finish.');
+    }
+  }
+  function prepareApply(context, mode) {
     const { deps, config } = context;
     const { store: store2 } = deps;
+    assertScanned(store2);
+    const items = store2.readItems();
     const resolved = preflight(deps.makeDrive(true), config);
     const root = items.find((item) => item.parentId === "");
     if (root?.id !== resolved.source.id) {
       throw new ConfigError(
         'The Source folder has changed since the last scan. Run "Scan and plan" again.'
+      );
+    }
+    const started = items.some(
+      (item) => item.destId !== "" && item.status !== "SKIPPED"
+    );
+    if (started && resolved.destRootId !== store2.getMeta("destRootId")) {
+      throw new ConfigError(
+        'The Destination has changed since this migration began, and part of it has already gone to the old one. Put the old Destination back to finish it, or run "Scan and plan" again to start over with what is left.'
       );
     }
     store2.setMeta("destRootId", resolved.destRootId);
@@ -1443,15 +1586,9 @@ var DriveMigrate = (() => {
     store2.flush();
   }
   function applyJob(context, mode) {
-    const { deps, config, budget, fresh } = context;
+    const { deps, config, budget } = context;
     const { store: store2 } = deps;
-    if (store2.getMeta("scan") !== "DONE") {
-      throw new ConfigError('Run "Scan and plan" first, and let it finish.');
-    }
-    const items = store2.readItems();
-    if (fresh) {
-      prepareApply(context, mode, items);
-    }
+    assertScanned(store2);
     const dry = mode === "DRY_RUN";
     const result = apply(
       {
@@ -1464,7 +1601,7 @@ var DriveMigrate = (() => {
         timestamp: () => isoTime(deps.clock)
       },
       mode,
-      items
+      store2.readItems()
     );
     const label = dry ? "Dry run" : "Migration";
     const counts = describeCounts(result.counts);
@@ -1479,23 +1616,37 @@ var DriveMigrate = (() => {
       return "";
     }
     if (report.stopped) {
-      return ' Stopped on request; choose "Continue" to carry on.';
+      return ' Stopped on request; choose "Continue a paused job" to carry on.';
     }
-    return report.continueAutomatically ? " It will continue by itself in about a minute." : ' Choose "Continue" to carry on.';
+    return report.continueAutomatically ? " It will continue by itself in about a minute." : ' Choose "Continue a paused job" to carry on.';
   }
-  function runJob(kind, fresh, deps) {
+  function runJob(kind, start, deps) {
     const { store: store2, clock } = deps;
     const config = parseConfig(store2.readConfigValues());
-    store2.setMeta("stop", "");
-    const budget = new Budget(
-      clock,
-      config.minutesPerRun,
-      () => store2.getMeta("stop") !== ""
-    );
+    const stopRequested = () => store2.getMeta("stop") !== "";
+    if (start !== "TRIGGER") {
+      store2.setMeta("stop", "");
+    }
+    const budget = new Budget(clock, config.minutesPerRun, stopRequested);
+    const fresh = start === "FRESH";
     const context = { deps, config, budget, fresh };
-    store2.setMeta("job", kind);
-    const outcome = kind === "SCAN" ? scanJob(context) : applyJob(context, kind === "DRY_RUN" ? "DRY_RUN" : "EXECUTE");
-    const stopped = !outcome.complete && budget.wasStopped();
+    const mode = kind === "DRY_RUN" ? "DRY_RUN" : "EXECUTE";
+    let outcome;
+    if (start === "TRIGGER" && stopRequested()) {
+      outcome = { complete: false, text: `${kind} is stopped.` };
+    } else {
+      if (fresh && kind === "SCAN") {
+        prepareScan(context);
+      } else {
+        assertSameUser(context);
+        if (fresh) {
+          prepareApply(context, mode);
+        }
+      }
+      store2.setMeta("job", kind);
+      outcome = kind === "SCAN" ? scanJob(context) : applyJob(context, mode);
+    }
+    const stopped = !outcome.complete && stopRequested();
     const report = {
       kind,
       complete: outcome.complete,
@@ -1524,14 +1675,10 @@ var DriveMigrate = (() => {
   var HTTP_OK_MIN = 200;
   var HTTP_OK_MAX = 299;
   var HTTP_FORBIDDEN2 = 403;
-  var HTTP_NOT_FOUND2 = 404;
-  var RETRYABLE_STATUSES = /* @__PURE__ */ new Set([
-    429,
-    500,
-    502,
-    503,
-    504
-  ]);
+  var HTTP_NOT_FOUND3 = 404;
+  var HTTP_TOO_MANY_REQUESTS = 429;
+  var HTTP_SERVER_ERROR = 500;
+  var NO_RESPONSE = 0;
   var RETRYABLE_403_REASONS = /* @__PURE__ */ new Set([
     "rateLimitExceeded",
     "userRateLimitExceeded",
@@ -1609,6 +1756,15 @@ var DriveMigrate = (() => {
       reason
     );
   }
+  function isRetryable(method, status, reason) {
+    if (status === HTTP_TOO_MANY_REQUESTS) {
+      return true;
+    }
+    if (status === HTTP_FORBIDDEN2) {
+      return RETRYABLE_403_REASONS.has(reason);
+    }
+    return method === "GET" && (status === NO_RESPONSE || status >= HTTP_SERVER_ERROR);
+  }
   function escapeQueryValue(value) {
     return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
   }
@@ -1635,7 +1791,7 @@ var DriveMigrate = (() => {
           fields: "id,name,capabilities(canAddChildren)"
         });
       } catch (error) {
-        if (error instanceof DriveError && error.status === HTTP_NOT_FOUND2) {
+        if (error instanceof DriveError && (error.status === HTTP_NOT_FOUND3 || error.status === HTTP_FORBIDDEN2)) {
           return null;
         }
         throw error;
@@ -1693,13 +1849,13 @@ var DriveMigrate = (() => {
         }
       );
     }
-    moveFile(fileId, addParent, removeParent) {
+    moveFile(fileId, addParent, removeParents) {
       return this.call(
         "PATCH",
         `/files/${fileId}`,
         {
           addParents: addParent,
-          removeParents: removeParent,
+          removeParents: removeParents.join(","),
           fields: FILE_FIELDS,
           supportsAllDrives: true
         },
@@ -1773,8 +1929,7 @@ var DriveMigrate = (() => {
           return response.body === "" ? {} : JSON.parse(response.body);
         }
         const error = parseError(response);
-        const retryable = RETRYABLE_STATUSES.has(response.status) || response.status === HTTP_FORBIDDEN2 && RETRYABLE_403_REASONS.has(error.reason);
-        if (!retryable || attempt >= MAX_ATTEMPTS) {
+        if (!isRetryable(method, response.status, error.reason) || attempt >= MAX_ATTEMPTS) {
           throw error;
         }
         const backoff = BASE_DELAY_MS * 2 ** (attempt - 1);
@@ -1788,7 +1943,9 @@ var DriveMigrate = (() => {
     config: "Config",
     items: "Items",
     summary: "Summary",
-    log: "Log"
+    log: "Log",
+    /** Override values set aside while a new scan rebuilds the Items sheet. */
+    overrides: "Overrides (kept)"
   };
   var PLAIN_TEXT = "@";
   var YES = "Yes";
@@ -1898,7 +2055,11 @@ var DriveMigrate = (() => {
     {
       header: "Scan state",
       read: (i) => i.scanState,
-      write: (i, t) => i.scanState = oneOf2(t, ["PENDING", "DONE"])
+      write: (i, t) => i.scanState = oneOf2(t, [
+        "PENDING",
+        "DONE",
+        "ERROR"
+      ])
     },
     {
       header: "Destination ID",
@@ -2044,19 +2205,27 @@ var DriveMigrate = (() => {
       sheet.insertColumnsAfter(maxColumns, columns - maxColumns);
     }
   }
-  function writeBlock(sheet, row, column, values) {
+  function writeBlock(sheet, row, column, values, fresh = true) {
     const width = values[0]?.length ?? 0;
     if (values.length === 0 || width === 0) {
       return;
     }
-    ensureSize(sheet, row + values.length - 1, column + width - 1);
-    sheet.getRange(row, column, values.length, width).setNumberFormat(PLAIN_TEXT).setValues(values);
+    if (fresh) {
+      ensureSize(sheet, row + values.length - 1, column + width - 1);
+    }
+    const range = sheet.getRange(row, column, values.length, width);
+    if (fresh) {
+      range.setNumberFormat(PLAIN_TEXT);
+    }
+    range.setValues(values);
   }
   var SheetStore = class {
     constructor(spreadsheet, now = () => /* @__PURE__ */ new Date()) {
       this.spreadsheet = spreadsheet;
       this.now = now;
       this.pendingLogs = [];
+      /** Overrides set aside by `clearItems`, by file ID; loaded on first use. */
+      this.keptOverrides = null;
     }
     /** Creates any missing sheet and Config row. Existing values are kept. */
     setUp() {
@@ -2067,6 +2236,19 @@ var DriveMigrate = (() => {
       if (log.getLastRow() === 0) {
         writeBlock(log, HEADER_ROW, 1, [["Time", "Level", "Message"]]);
         log.setFrozenRows(HEADER_ROW);
+      }
+    }
+    /** Sets up only if something is missing; cheap enough to call on every run. */
+    ensureReady() {
+      const ready = [
+        SHEET_NAMES.config,
+        SHEET_NAMES.items,
+        SHEET_NAMES.log
+      ].every(
+        (name) => (this.spreadsheet.getSheetByName(name)?.getLastRow() ?? 0) > 0
+      );
+      if (!ready) {
+        this.setUp();
       }
     }
     readConfigValues() {
@@ -2100,9 +2282,11 @@ var DriveMigrate = (() => {
         return [];
       }
       const sheet = this.sheet(SHEET_NAMES.items);
+      const kept = this.overridesKept();
       const firstRow = Math.max(sheet.getLastRow(), HEADER_ROW) + 1;
       const items = newItems.map((item, index) => ({
         ...item,
+        override: oneOf2(kept.get(item.id) ?? item.override, ACTIONS),
         row: firstRow + index
       }));
       writeBlock(
@@ -2113,9 +2297,20 @@ var DriveMigrate = (() => {
       );
       return items;
     }
-    /** Writes the progress columns only; the Override column is never touched. */
+    /**
+     * Writes the progress columns only; the Override column is never touched.
+     *
+     * Row numbers were read at the start of the run, and a person may have
+     * sorted, inserted or deleted rows since. So each row's ID is checked first,
+     * and rows that have moved are found again by ID. Writing progress onto the
+     * wrong file's row would be far worse than the extra read.
+     */
     writeItems(items) {
+      if (items.length === 0) {
+        return;
+      }
       const sheet = this.sheet(SHEET_NAMES.items);
+      this.relocate(sheet, items);
       const sorted = [...items].sort((a, b) => a.row - b.row);
       let run2 = [];
       const writeRun = () => {
@@ -2125,7 +2320,8 @@ var DriveMigrate = (() => {
             sheet,
             first.row,
             PROGRESS_START,
-            run2.map((item) => rowValues(item, PROGRESS_COLUMNS))
+            run2.map((item) => rowValues(item, PROGRESS_COLUMNS)),
+            false
           );
         }
         run2 = [];
@@ -2139,7 +2335,26 @@ var DriveMigrate = (() => {
       }
       writeRun();
     }
+    /**
+     * Remembers Override values by file ID, then empties the inventory. A new
+     * scan gives them back to the same files as it finds them (`appendItems`).
+     */
     clearItems() {
+      const kept = new Map(this.overridesKept());
+      for (const item of this.readItems()) {
+        if (item.override === "") {
+          kept.delete(item.id);
+        } else {
+          kept.set(item.id, item.override);
+        }
+      }
+      const stash = this.sheet(SHEET_NAMES.overrides);
+      stash.clearContents();
+      writeBlock(stash, HEADER_ROW, 1, [
+        ["File ID", "Override"],
+        ...[...kept.entries()].map(([id, override]) => [toCell(id), override])
+      ]);
+      this.keptOverrides = kept;
       const sheet = this.sheet(SHEET_NAMES.items);
       const lastRow = sheet.getLastRow();
       if (lastRow >= FIRST_DATA_ROW) {
@@ -2184,6 +2399,55 @@ var DriveMigrate = (() => {
         );
       }
       SpreadsheetApp.flush();
+    }
+    overridesKept() {
+      if (this.keptOverrides === null) {
+        const stash = this.spreadsheet.getSheetByName(SHEET_NAMES.overrides);
+        this.keptOverrides = new Map(
+          (stash === null ? [] : this.dataRows(stash, 2)).map((row) => [
+            fromCell(row[0]),
+            fromCell(row[1])
+          ])
+        );
+      }
+      return this.keptOverrides;
+    }
+    /** Makes every item's `row` point at the row that holds its ID right now. */
+    relocate(sheet, items) {
+      const rows = items.map((item) => item.row);
+      const first = Math.min(...rows);
+      const last = Math.max(...rows);
+      const inPlace = first >= FIRST_DATA_ROW && last <= sheet.getMaxRows() && this.idsMatch(sheet, items, first, last);
+      if (inPlace) {
+        return;
+      }
+      const rowById = /* @__PURE__ */ new Map();
+      this.readIds(sheet, FIRST_DATA_ROW, sheet.getLastRow()).forEach(
+        (id, index) => {
+          if (id !== "") {
+            rowById.set(id, FIRST_DATA_ROW + index);
+          }
+        }
+      );
+      for (const item of items) {
+        const row = rowById.get(item.id);
+        if (row === void 0) {
+          throw new Error(
+            `The Items row for "${item.path}" has gone. Rows must not be deleted while a job is running; run "Scan and plan" again.`
+          );
+        }
+        item.row = row;
+      }
+    }
+    idsMatch(sheet, items, first, last) {
+      const ids = this.readIds(sheet, first, last);
+      return items.every((item) => ids[item.row - first] === item.id);
+    }
+    readIds(sheet, first, last) {
+      if (last < first) {
+        return [];
+      }
+      return sheet.getRange(first, ID_COLUMN_INDEX + 1, last - first + 1, 1).getValues().map((row) => fromCell(row[0]));
     }
     sheet(name) {
       return this.spreadsheet.getSheetByName(name) ?? this.spreadsheet.insertSheet(name);
@@ -2245,27 +2509,39 @@ var DriveMigrate = (() => {
 
   // src/gas/transport.ts
   var METHODS = { GET: "get", POST: "post", PATCH: "patch" };
+  var TIMEOUT_SECONDS = 120;
   var urlFetchTransport = (request) => {
     const params = {
       method: METHODS[request.method],
       headers: { Authorization: `Bearer ${ScriptApp.getOAuthToken()}` },
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
+      timeoutSeconds: TIMEOUT_SECONDS
     };
     if (request.body !== void 0) {
       params.contentType = "application/json";
       params.payload = request.body;
     }
-    const response = UrlFetchApp.fetch(request.url, params);
-    return {
-      status: response.getResponseCode(),
-      body: response.getContentText()
-    };
+    try {
+      const response = UrlFetchApp.fetch(request.url, params);
+      return {
+        status: response.getResponseCode(),
+        body: response.getContentText()
+      };
+    } catch (error) {
+      const message = errorMessage(error);
+      return {
+        status: NO_RESPONSE,
+        body: JSON.stringify({ error: { message: `No response: ${message}` } })
+      };
+    }
   };
 
   // src/gas/main.ts
   var MENU_TITLE = "Drive migration";
   var TRIGGER_HANDLER = "continueFromTrigger";
   var CONTINUE_DELAY_MS = 6e4;
+  var SAFETY_DELAY_MS = 7 * 6e4;
+  var MAX_STRIKES = 3;
   var LOCK_WAIT_MS = 1e3;
   var TOAST_SECONDS = 15;
   var JOB_NAMES = {
@@ -2280,6 +2556,7 @@ var DriveMigrate = (() => {
     '4. "Dry run" fills the Dry run column with exactly what would happen. Nothing in Drive changes.',
     '5. "Migrate" does it. Long jobs pause and continue by themselves; "Stop" halts them and "Continue" picks up again.',
     "",
+    "Do not sort, insert or delete rows on the Items sheet while a job is running.",
     "Nothing is ever deleted. Moved files keep their ID, revision history and comments. Copies cannot keep revision history."
   ].join("\n");
   function store() {
@@ -2287,11 +2564,8 @@ var DriveMigrate = (() => {
   }
   function tell(message, interactive) {
     if (interactive) {
-      SpreadsheetApp.getUi().alert(
-        MENU_TITLE,
-        message,
-        SpreadsheetApp.getUi().ButtonSet.OK
-      );
+      const ui = SpreadsheetApp.getUi();
+      ui.alert(MENU_TITLE, message, ui.ButtonSet.OK);
     } else {
       SpreadsheetApp.getActiveSpreadsheet().toast(
         message,
@@ -2300,6 +2574,10 @@ var DriveMigrate = (() => {
       );
     }
   }
+  function confirm(message) {
+    const ui = SpreadsheetApp.getUi();
+    return ui.alert(MENU_TITLE, message, ui.ButtonSet.OK_CANCEL) === ui.Button.OK;
+  }
   function deleteContinuations() {
     for (const trigger of ScriptApp.getProjectTriggers()) {
       if (trigger.getHandlerFunction() === TRIGGER_HANDLER) {
@@ -2307,11 +2585,21 @@ var DriveMigrate = (() => {
       }
     }
   }
-  function scheduleContinuation() {
-    ScriptApp.newTrigger(TRIGGER_HANDLER).timeBased().after(CONTINUE_DELAY_MS).create();
+  function scheduleContinuation(delayMs) {
+    ScriptApp.newTrigger(TRIGGER_HANDLER).timeBased().after(delayMs).create();
   }
-  function execute(kind, fresh, sheets) {
-    return runJob(kind, fresh, {
+  function configOrNull(sheets) {
+    try {
+      return parseConfig(sheets.readConfigValues());
+    } catch (error) {
+      if (error instanceof ConfigError) {
+        return null;
+      }
+      throw error;
+    }
+  }
+  function execute(kind, start, sheets) {
+    return runJob(kind, start, {
       store: sheets,
       clock: { now: () => Date.now() },
       makeDrive: (readOnly) => new DriveClient({
@@ -2323,7 +2611,8 @@ var DriveMigrate = (() => {
       })
     });
   }
-  function run(kind, fresh, interactive) {
+  function run(kind, start) {
+    const interactive = start !== "TRIGGER";
     const lock = LockService.getDocumentLock();
     if (!lock.tryLock(LOCK_WAIT_MS)) {
       tell(
@@ -2334,26 +2623,41 @@ var DriveMigrate = (() => {
     }
     const sheets = store();
     try {
+      sheets.ensureReady();
       deleteContinuations();
-      sheets.setUp();
-      const report = execute(kind, fresh, sheets);
-      if (report.continueAutomatically) {
-        scheduleContinuation();
+      if (configOrNull(sheets)?.autoContinue === true) {
+        scheduleContinuation(SAFETY_DELAY_MS);
+      }
+      const strikes = Number(sheets.getMeta("strikes") || "0");
+      sheets.setMeta("strikes", String(strikes + 1));
+      const report = execute(kind, start, sheets);
+      deleteContinuations();
+      if (report.continueAutomatically && sheets.getMeta("stop") === "") {
+        scheduleContinuation(CONTINUE_DELAY_MS);
       }
       tell(report.headline, interactive);
     } catch (error) {
+      deleteContinuations();
       const expected = error instanceof ConfigError;
-      const message = expected ? errorMessage(error) : `${JOB_NAMES[kind]} stopped on an unexpected error: ${errorMessage(error)}. Nothing was lost; choose "Continue" to carry on.`;
+      const next = pausedJob(sheets) === kind ? 'choose "Continue a paused job" to carry on' : "choose it from the menu again";
+      const message = expected ? errorMessage(error) : `${JOB_NAMES[kind]} stopped on an unexpected error: ${errorMessage(error)}. Nothing was lost; ${next}.`;
       sheets.log(expected ? "WARN" : "ERROR", message);
       tell(message, interactive);
     } finally {
+      sheets.setMeta("strikes", "0");
       sheets.flush();
       lock.releaseLock();
     }
   }
-  function pausedJob() {
-    const name = store().getMeta("job");
+  function pausedJob(sheets) {
+    const name = sheets.getMeta("job");
     return JOB_KINDS.find((kind) => kind === name);
+  }
+  function okToStart(kind, sheets) {
+    const paused = pausedJob(sheets);
+    return paused === void 0 || paused === kind || confirm(
+      `A ${JOB_NAMES[paused].toLowerCase()} is paused part-way. Starting a ${JOB_NAMES[kind].toLowerCase()} now means it will not continue by itself. Start anyway?`
+    );
   }
   function onOpen() {
     SpreadsheetApp.getUi().createMenu(MENU_TITLE).addItem("1. Set up sheets", "setUpSheets").addItem("2. Scan and plan", "scanAndPlan").addItem("3. Dry run", "dryRun").addItem("4. Migrate", "migrate").addSeparator().addItem("Continue a paused job", "continueJob").addItem("Stop", "stopJob").addSeparator().addItem("Help", "showHelp").addToUi();
@@ -2368,49 +2672,67 @@ var DriveMigrate = (() => {
     );
   }
   function scanAndPlan() {
-    run("SCAN", true, true);
+    const sheets = store();
+    sheets.ensureReady();
+    if (!okToStart("SCAN", sheets)) {
+      return;
+    }
+    const rescan = sheets.readItems().length === 0 || confirm(
+      "Scanning again rebuilds the Items sheet from what is in Drive now. Your Override values are kept. Progress is not lost: files already moved are no longer in the source, and copies and folders already made are recognised when you migrate. Scan again?"
+    );
+    if (rescan) {
+      run("SCAN", "FRESH");
+    }
   }
   function dryRun() {
-    run("DRY_RUN", true, true);
+    const sheets = store();
+    sheets.ensureReady();
+    if (okToStart("DRY_RUN", sheets)) {
+      run("DRY_RUN", "FRESH");
+    }
   }
   function migrate() {
-    const ui = SpreadsheetApp.getUi();
-    const items = store().readItems();
-    const count = (action) => String(
-      items.filter(
-        (item) => effectiveAction(item) === action && item.status !== "DONE"
-      ).length
-    );
-    const answer = ui.alert(
-      MENU_TITLE,
-      `This will change Google Drive: ${count("MOVE")} file(s) moved, ${count("COPY")} copied, ${count("SHORTCUT")} shortcut(s) and ${count("CREATE_FOLDER")} folder(s) created. Nothing is deleted.
+    const sheets = store();
+    sheets.ensureReady();
+    const filter = configOrNull(sheets)?.pathFilter ?? "";
+    const todo = sheets.readItems().filter((item) => item.status !== "DONE" && inScope(item.path, filter));
+    const count = (action) => String(todo.filter((item) => effectiveAction(item) === action).length);
+    const scope = filter === "" ? "" : ` under "${filter}"`;
+    const question = `This will change Google Drive${scope}: up to ${count("MOVE")} file(s) moved, ${count("COPY")} copied, ${count("SHORTCUT")} shortcut(s) and ${count("CREATE_FOLDER")} folder(s) created. Nothing is deleted.
 
-Moved files leave the source folder for the shared drive, and the shared drive's organisation becomes their owner. Continue?`,
-      ui.ButtonSet.OK_CANCEL
-    );
-    if (answer === ui.Button.OK) {
-      run("EXECUTE", true, true);
+Moved files leave the source folder for the shared drive, and the shared drive's organisation becomes their owner. Continue?`;
+    if (okToStart("EXECUTE", sheets) && confirm(question)) {
+      run("EXECUTE", "FRESH");
     }
   }
   function continueJob() {
-    const kind = pausedJob();
+    const kind = pausedJob(store());
     if (kind === void 0) {
       tell("There is no paused job to continue.", true);
     } else {
-      run(kind, false, true);
+      run(kind, "CONTINUE");
     }
   }
   function continueFromTrigger() {
-    const kind = pausedJob();
-    if (kind === void 0) {
+    const sheets = store();
+    const kind = pausedJob(sheets);
+    const strikes = Number(sheets.getMeta("strikes") || "0");
+    if (kind === void 0 || sheets.getMeta("stop") !== "") {
       deleteContinuations();
+    } else if (strikes >= MAX_STRIKES) {
+      deleteContinuations();
+      sheets.log(
+        "ERROR",
+        `${JOB_NAMES[kind]} was cut off ${String(strikes)} times in a row, so it has stopped continuing by itself. Choose "Continue a paused job" to try again.`
+      );
+      sheets.flush();
     } else {
-      run(kind, false, false);
+      run(kind, "TRIGGER");
     }
   }
   function stopJob() {
-    deleteContinuations();
     store().setMeta("stop", "1");
+    deleteContinuations();
     tell(
       'Stopping. A run that is in progress finishes its current file first. Choose "Continue a paused job" to carry on later.',
       true

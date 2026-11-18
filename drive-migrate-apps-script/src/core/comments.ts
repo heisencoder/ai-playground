@@ -67,10 +67,6 @@ export function renderReply(reply: DriveReply): string {
   return render(reply, REPLY_BANNER)
 }
 
-function isRepost(comment: DriveComment): boolean {
-  return (comment.content ?? '').startsWith(COMMENT_BANNER)
-}
-
 function live(comments: DriveComment[]): DriveComment[] {
   return comments.filter((comment) => comment.deleted !== true)
 }
@@ -109,20 +105,59 @@ function repostThread(
   }
 }
 
+interface Threads {
+  /** Live threads on the source file. */
+  source: DriveComment[]
+  /** Destination comments this tool re-posted earlier, by their text. */
+  reposts: Map<string, DriveComment[]>
+  /** Number of destination comments that Drive copied natively. */
+  native: number
+}
+
+/** Sorts the destination's comments into this tool's re-posts and the rest. */
+function sortDestination(
+  source: DriveComment[],
+  existing: DriveComment[]
+): Pick<Threads, 'reposts' | 'native'> {
+  // A destination comment is one of ours exactly when its text is what one of
+  // the source threads renders to. Anything else was copied by Drive.
+  const renders = new Set(source.map(renderComment))
+  const reposts = new Map<string, DriveComment[]>()
+  let native = 0
+  for (const comment of existing) {
+    const text = comment.content ?? ''
+    if (renders.has(text)) {
+      reposts.set(text, [...(reposts.get(text) ?? []), comment])
+    } else {
+      native += 1
+    }
+  }
+  return { reposts, native }
+}
+
 /** Reads both files' threads; `null` when the file type has no comments. */
 function readThreads(
   drive: DrivePort,
   sourceId: string,
   destId: string,
+  nativeExpected: boolean,
   outcome: CommentOutcome
-): { threads: DriveComment[]; existing: DriveComment[] } | null {
+): Threads | null {
   try {
-    const threads = live(drive.listComments(sourceId))
-    outcome.total = threads.length
-    return {
-      threads,
-      existing: threads.length === 0 ? [] : live(drive.listComments(destId)),
+    const source = live(drive.listComments(sourceId))
+    outcome.total = source.length
+    if (source.length === 0) {
+      return { source, reposts: new Map(), native: 0 }
     }
+    let sorted = sortDestination(source, live(drive.listComments(destId)))
+    const openThreads = source.some((thread) => thread.resolved !== true)
+    if (nativeExpected && openThreads && sorted.native === 0) {
+      // Drive was asked to copy the open threads and none is there. Look once
+      // more before concluding that it did not, in case they arrive late:
+      // re-posting threads that Drive also copies would duplicate them.
+      sorted = sortDestination(source, live(drive.listComments(destId)))
+    }
+    return { source, ...sorted }
   } catch (error) {
     if (!(error instanceof DriveError)) {
       throw error
@@ -133,10 +168,15 @@ function readThreads(
   }
 }
 
+/**
+ * @param nativeExpected whether Drive was asked to copy this file's open
+ *   comments itself (`copyComments` on a Docs, Sheets or Slides file).
+ */
 export function carryComments(
   drive: DrivePort,
   sourceId: string,
   destId: string,
+  nativeExpected: boolean,
   shouldStop: () => boolean
 ): CommentOutcome {
   const outcome: CommentOutcome = {
@@ -146,20 +186,16 @@ export function carryComments(
     errors: [],
     complete: true,
   }
-  const read = readThreads(drive, sourceId, destId, outcome)
-  if (read === null || read.threads.length === 0) {
+  const threads = readThreads(drive, sourceId, destId, nativeExpected, outcome)
+  if (threads === null || threads.source.length === 0) {
     return outcome
   }
-  const { threads, existing } = read
-  outcome.native = existing.filter((comment) => !isRepost(comment)).length
-  const postedByText = new Map(
-    existing.map((comment) => [comment.content ?? '', comment])
-  )
+  outcome.native = threads.native
   // When Drive copied the open threads itself, only resolved ones are left.
   const candidates =
-    outcome.native > 0
-      ? threads.filter((thread) => thread.resolved === true)
-      : threads
+    threads.native > 0
+      ? threads.source.filter((thread) => thread.resolved === true)
+      : threads.source
 
   for (const thread of candidates) {
     if (shouldStop()) {
@@ -167,8 +203,10 @@ export function carryComments(
       break
     }
     const text = renderComment(thread)
+    // Identical threads render identically; each claims one earlier re-post.
+    const posted = threads.reposts.get(text)?.shift()
     try {
-      repostThread(drive, destId, thread, text, postedByText.get(text))
+      repostThread(drive, destId, thread, text, posted)
       outcome.reposted += 1
     } catch (error) {
       if (!(error instanceof DriveError)) {
@@ -179,6 +217,13 @@ export function carryComments(
   }
   return outcome
 }
+
+/** File types whose open comments `files.copy` can carry natively. */
+export const NATIVE_COMMENT_MIMES: ReadonlySet<string> = new Set([
+  'application/vnd.google-apps.document',
+  'application/vnd.google-apps.spreadsheet',
+  'application/vnd.google-apps.presentation',
+])
 
 export function describeComments(outcome: CommentOutcome): string {
   if (outcome.total === 0 && outcome.errors.length === 0) {

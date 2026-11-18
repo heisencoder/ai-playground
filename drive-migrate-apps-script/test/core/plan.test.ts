@@ -120,14 +120,28 @@ describe('planItems', () => {
     expect(done.action).toBe('COPY')
   })
 
-  it('makes unfinished rows PENDING but leaves IN_PROGRESS ones be', () => {
-    const failed = item({ id: 'a', status: 'FAILED' })
+  it('makes unfinished rows PENDING, or IN_PROGRESS if they may be part-done', () => {
+    const blocked = item({ id: 'a', status: 'BLOCKED' })
     const running = item({ id: 'b', status: 'IN_PROGRESS' })
+    const failed = item({ id: 'c', status: 'FAILED' })
 
-    planItems([failed, running], config())
+    planItems([blocked, running, failed], config())
 
-    expect(failed.status).toBe('PENDING')
+    expect(blocked.status).toBe('PENDING')
     expect(running.status).toBe('IN_PROGRESS')
+    // A failure may have happened after Drive did the work: verify first.
+    expect(failed.status).toBe('IN_PROGRESS')
+  })
+
+  it('assumes an owner may move their own file when Drive does not say', () => {
+    const mine = toNewItem(
+      { id: 'x', mimeType: DOC_MIME, ownedByMe: true },
+      null
+    )
+    const theirFile = toNewItem({ id: 'y', mimeType: DOC_MIME }, null)
+
+    expect(mine.canMoveOut).toBe(true)
+    expect(theirFile.canMoveOut).toBe(false)
   })
 
   it('keeps every status when asked to (dry run)', () => {

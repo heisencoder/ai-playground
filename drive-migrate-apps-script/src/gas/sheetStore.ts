@@ -41,6 +41,8 @@ export const SHEET_NAMES = {
   items: 'Items',
   summary: 'Summary',
   log: 'Log',
+  /** Override values set aside while a new scan rebuilds the Items sheet. */
+  overrides: 'Overrides (kept)',
 } as const
 
 const PLAIN_TEXT = '@'
@@ -172,7 +174,11 @@ const PROGRESS_COLUMNS: readonly Column[] = [
     header: 'Scan state',
     read: (i) => i.scanState,
     write: (i, t) =>
-      (i.scanState = oneOf<Exclude<ScanState, ''>>(t, ['PENDING', 'DONE'])),
+      (i.scanState = oneOf<Exclude<ScanState, ''>>(t, [
+        'PENDING',
+        'DONE',
+        'ERROR',
+      ])),
   },
   {
     header: 'Destination ID',
@@ -334,25 +340,36 @@ function ensureSize(sheet: Sheet, rows: number, columns: number): void {
   }
 }
 
+/**
+ * Writes a block of text cells. `fresh` cells (rows being added) are first
+ * formatted as plain text and may need the grid to grow; cells that already
+ * hold this tool's data need neither, which saves several service calls.
+ */
 function writeBlock(
   sheet: Sheet,
   row: number,
   column: number,
-  values: string[][]
+  values: string[][],
+  fresh = true
 ): void {
   const width = values[0]?.length ?? 0
   if (values.length === 0 || width === 0) {
     return
   }
-  ensureSize(sheet, row + values.length - 1, column + width - 1)
-  sheet
-    .getRange(row, column, values.length, width)
-    .setNumberFormat(PLAIN_TEXT)
-    .setValues(values)
+  if (fresh) {
+    ensureSize(sheet, row + values.length - 1, column + width - 1)
+  }
+  const range = sheet.getRange(row, column, values.length, width)
+  if (fresh) {
+    range.setNumberFormat(PLAIN_TEXT)
+  }
+  range.setValues(values)
 }
 
 export class SheetStore implements Store {
   private readonly pendingLogs: string[][] = []
+  /** Overrides set aside by `clearItems`, by file ID; loaded on first use. */
+  private keptOverrides: Map<string, string> | null = null
 
   constructor(
     private readonly spreadsheet: Spreadsheet,
@@ -368,6 +385,20 @@ export class SheetStore implements Store {
     if (log.getLastRow() === 0) {
       writeBlock(log, HEADER_ROW, 1, [['Time', 'Level', 'Message']])
       log.setFrozenRows(HEADER_ROW)
+    }
+  }
+
+  /** Sets up only if something is missing; cheap enough to call on every run. */
+  ensureReady(): void {
+    const ready = [
+      SHEET_NAMES.config,
+      SHEET_NAMES.items,
+      SHEET_NAMES.log,
+    ].every(
+      (name) => (this.spreadsheet.getSheetByName(name)?.getLastRow() ?? 0) > 0
+    )
+    if (!ready) {
+      this.setUp()
     }
   }
 
@@ -404,9 +435,11 @@ export class SheetStore implements Store {
       return []
     }
     const sheet = this.sheet(SHEET_NAMES.items)
+    const kept = this.overridesKept()
     const firstRow = Math.max(sheet.getLastRow(), HEADER_ROW) + 1
     const items = newItems.map((item, index): Item => ({
       ...item,
+      override: oneOf<Action>(kept.get(item.id) ?? item.override, ACTIONS),
       row: firstRow + index,
     }))
     writeBlock(
@@ -418,9 +451,20 @@ export class SheetStore implements Store {
     return items
   }
 
-  /** Writes the progress columns only; the Override column is never touched. */
+  /**
+   * Writes the progress columns only; the Override column is never touched.
+   *
+   * Row numbers were read at the start of the run, and a person may have
+   * sorted, inserted or deleted rows since. So each row's ID is checked first,
+   * and rows that have moved are found again by ID. Writing progress onto the
+   * wrong file's row would be far worse than the extra read.
+   */
   writeItems(items: readonly Item[]): void {
+    if (items.length === 0) {
+      return
+    }
     const sheet = this.sheet(SHEET_NAMES.items)
+    this.relocate(sheet, items)
     const sorted = [...items].sort((a, b) => a.row - b.row)
     let run: Item[] = []
     const writeRun = (): void => {
@@ -430,7 +474,8 @@ export class SheetStore implements Store {
           sheet,
           first.row,
           PROGRESS_START,
-          run.map((item) => rowValues(item, PROGRESS_COLUMNS))
+          run.map((item) => rowValues(item, PROGRESS_COLUMNS)),
+          false
         )
       }
       run = []
@@ -445,7 +490,30 @@ export class SheetStore implements Store {
     writeRun()
   }
 
+  /**
+   * Remembers Override values by file ID, then empties the inventory. A new
+   * scan gives them back to the same files as it finds them (`appendItems`).
+   */
   clearItems(): void {
+    const kept = new Map(this.overridesKept())
+    // The Items sheet is the truth for every file on it, including a cell
+    // the person has since emptied; the stash only speaks for files that an
+    // interrupted scan had not got back to yet.
+    for (const item of this.readItems()) {
+      if (item.override === '') {
+        kept.delete(item.id)
+      } else {
+        kept.set(item.id, item.override)
+      }
+    }
+    const stash = this.sheet(SHEET_NAMES.overrides)
+    stash.clearContents()
+    writeBlock(stash, HEADER_ROW, 1, [
+      ['File ID', 'Override'],
+      ...[...kept.entries()].map(([id, override]) => [toCell(id), override]),
+    ])
+    this.keptOverrides = kept
+
     const sheet = this.sheet(SHEET_NAMES.items)
     const lastRow = sheet.getLastRow()
     if (lastRow >= FIRST_DATA_ROW) {
@@ -499,6 +567,71 @@ export class SheetStore implements Store {
       )
     }
     SpreadsheetApp.flush()
+  }
+
+  private overridesKept(): Map<string, string> {
+    if (this.keptOverrides === null) {
+      const stash = this.spreadsheet.getSheetByName(SHEET_NAMES.overrides)
+      this.keptOverrides = new Map(
+        (stash === null ? [] : this.dataRows(stash, 2)).map((row) => [
+          fromCell(row[0]),
+          fromCell(row[1]),
+        ])
+      )
+    }
+    return this.keptOverrides
+  }
+
+  /** Makes every item's `row` point at the row that holds its ID right now. */
+  private relocate(sheet: Sheet, items: readonly Item[]): void {
+    const rows = items.map((item) => item.row)
+    const first = Math.min(...rows)
+    const last = Math.max(...rows)
+    const inPlace =
+      first >= FIRST_DATA_ROW &&
+      last <= sheet.getMaxRows() &&
+      this.idsMatch(sheet, items, first, last)
+    if (inPlace) {
+      return
+    }
+    const rowById = new Map<string, number>()
+    this.readIds(sheet, FIRST_DATA_ROW, sheet.getLastRow()).forEach(
+      (id, index) => {
+        if (id !== '') {
+          rowById.set(id, FIRST_DATA_ROW + index)
+        }
+      }
+    )
+    for (const item of items) {
+      const row = rowById.get(item.id)
+      if (row === undefined) {
+        throw new Error(
+          `The Items row for "${item.path}" has gone. Rows must not be deleted while a job is running; run "Scan and plan" again.`
+        )
+      }
+      item.row = row
+    }
+  }
+
+  private idsMatch(
+    sheet: Sheet,
+    items: readonly Item[],
+    first: number,
+    last: number
+  ): boolean {
+    const ids = this.readIds(sheet, first, last)
+    return items.every((item) => ids[item.row - first] === item.id)
+  }
+
+  private readIds(sheet: Sheet, first: number, last: number): string[] {
+    if (last < first) {
+      return []
+    }
+    return (
+      sheet
+        .getRange(first, ID_COLUMN_INDEX + 1, last - first + 1, 1)
+        .getValues() as unknown[][]
+    ).map((row) => fromCell(row[0]))
   }
 
   private sheet(name: string): Sheet {

@@ -23,6 +23,7 @@ export class MemoryStore implements Store {
   summary: string[][] = []
   writeCalls = 0
   private items: Item[] = []
+  private readonly keptOverrides = new Map<string, Item['override']>()
   private readonly meta: Record<string, string> = {}
   private durable: Durable = { items: [], meta: {} }
 
@@ -37,6 +38,7 @@ export class MemoryStore implements Store {
   appendItems(newItems: NewItem[]): Item[] {
     const appended = newItems.map((item, index): Item => ({
       ...item,
+      override: this.keptOverrides.get(item.id) ?? item.override,
       row: this.items.length + 2 + index,
     }))
     this.items.push(...appended.map((item) => ({ ...item })))
@@ -57,6 +59,13 @@ export class MemoryStore implements Store {
   }
 
   clearItems(): void {
+    for (const item of this.items) {
+      if (item.override === '') {
+        this.keptOverrides.delete(item.id)
+      } else {
+        this.keptOverrides.set(item.id, item.override)
+      }
+    }
     this.items = []
   }
 

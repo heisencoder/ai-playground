@@ -12,7 +12,7 @@ import { apply, clearDryRun } from './apply'
 import { Budget } from './budget'
 import { parseConfig } from './config'
 import { ConfigError } from './errors'
-import type { Clock, Config, DrivePort, Item, Store } from './model'
+import type { Clock, Config, DrivePort, Store } from './model'
 import type { PlanCounts } from './plan'
 import { planItems } from './plan'
 import { preflight } from './preflight'
@@ -74,23 +74,26 @@ function describeCounts(counts: ApplyCounts): string {
   ].join(', ')
 }
 
-function scanJob(context: JobContext): JobOutcome {
-  const { deps, config, budget, fresh } = context
+/** Resolves source and destination and starts a new inventory. */
+function prepareScan(context: JobContext): void {
+  const { deps, config } = context
   const { store } = deps
-  const drive = deps.makeDrive(true)
-  if (fresh || store.getMeta('scan') === '') {
-    const resolved = preflight(drive, config)
-    store.setMeta('user', resolved.userEmail)
-    store.setMeta('sourceName', resolved.sourceName)
-    store.setMeta('destRootId', resolved.destRootId)
-    store.setMeta('destDriveId', resolved.destDriveId)
-    store.log(
-      'INFO',
-      `Scanning "${resolved.sourceName}" as ${resolved.userEmail}; destination "${resolved.destName}".`
-    )
-    startScan(store, resolved.source)
-  }
-  const result = continueScan(drive, store, budget)
+  const resolved = preflight(deps.makeDrive(true), config)
+  store.setMeta('user', resolved.userEmail)
+  store.setMeta('sourceName', resolved.sourceName)
+  store.setMeta('destRootId', resolved.destRootId)
+  store.setMeta('destDriveId', resolved.destDriveId)
+  store.log(
+    'INFO',
+    `Scanning "${resolved.sourceName}" as ${resolved.userEmail}; destination "${resolved.destName}".`
+  )
+  startScan(store, resolved.source)
+}
+
+function scanJob(context: JobContext): JobOutcome {
+  const { deps, config, budget } = context
+  const { store } = deps
+  const result = continueScan(deps.makeDrive(true), store, budget)
   if (!result.complete) {
     return {
       complete: false,
@@ -100,19 +103,45 @@ function scanJob(context: JobContext): JobOutcome {
   const items = store.readItems()
   const plan = planItems(items, config)
   store.writeItems(plan.changed)
+  // Counted from the sheet, so failures in earlier runs of this scan show too.
+  const unlisted = items.filter((item) => item.scanState === 'ERROR').length
   const problems =
-    result.errors === 0
+    unlisted === 0
       ? ''
-      : ` ${String(result.errors)} folder(s) could not be listed; see the Log sheet.`
+      : ` WARNING: ${String(unlisted)} folder(s) could not be listed, so their contents are missing from the plan; see the Log sheet, then scan again.`
   return {
     complete: true,
     text: `Scan complete: ${String(items.length)} item(s). Plan: ${describePlan(plan.counts)}.${problems}`,
   }
 }
 
-function prepareApply(context: JobContext, mode: Mode, items: Item[]): void {
+/**
+ * The plan records which files are "mine", so it only makes sense for the
+ * account that scanned. Anyone else must scan for themselves.
+ */
+function assertSameUser(context: JobContext): void {
+  const { deps } = context
+  const scannedBy = deps.store.getMeta('user')
+  const current = deps.makeDrive(true).about().emailAddress ?? ''
+  if (scannedBy !== '' && current !== scannedBy) {
+    throw new ConfigError(
+      `This sheet was scanned by ${scannedBy}, but you are ${current === '' ? 'someone else' : current}. Ownership decides what can be moved, so either ${scannedBy} runs it or you run "Scan and plan" yourself.`
+    )
+  }
+}
+
+function assertScanned(store: Store): void {
+  if (store.getMeta('scan') !== 'DONE') {
+    throw new ConfigError('Run "Scan and plan" first, and let it finish.')
+  }
+}
+
+/** Checks the settings against the scan and re-plans, before a fresh run. */
+function prepareApply(context: JobContext, mode: Mode): void {
   const { deps, config } = context
   const { store } = deps
+  assertScanned(store)
+  const items = store.readItems()
   // Preflight only reads, so a read-only client does for both modes.
   const resolved = preflight(deps.makeDrive(true), config)
   // The source folder is the one row without a parent, wherever sorting put it.
@@ -120,6 +149,14 @@ function prepareApply(context: JobContext, mode: Mode, items: Item[]): void {
   if (root?.id !== resolved.source.id) {
     throw new ConfigError(
       'The Source folder has changed since the last scan. Run "Scan and plan" again.'
+    )
+  }
+  const started = items.some(
+    (item) => item.destId !== '' && item.status !== 'SKIPPED'
+  )
+  if (started && resolved.destRootId !== store.getMeta('destRootId')) {
+    throw new ConfigError(
+      'The Destination has changed since this migration began, and part of it has already gone to the old one. Put the old Destination back to finish it, or run "Scan and plan" again to start over with what is left.'
     )
   }
   store.setMeta('destRootId', resolved.destRootId)
@@ -136,15 +173,9 @@ function prepareApply(context: JobContext, mode: Mode, items: Item[]): void {
 }
 
 function applyJob(context: JobContext, mode: Mode): JobOutcome {
-  const { deps, config, budget, fresh } = context
+  const { deps, config, budget } = context
   const { store } = deps
-  if (store.getMeta('scan') !== 'DONE') {
-    throw new ConfigError('Run "Scan and plan" first, and let it finish.')
-  }
-  const items = store.readItems()
-  if (fresh) {
-    prepareApply(context, mode, items)
-  }
+  assertScanned(store)
   const dry = mode === 'DRY_RUN'
   const result: ApplyResult = apply(
     {
@@ -157,7 +188,7 @@ function applyJob(context: JobContext, mode: Mode): JobOutcome {
       timestamp: () => isoTime(deps.clock),
     },
     mode,
-    items
+    store.readItems()
   )
   const label = dry ? 'Dry run' : 'Migration'
   const counts = describeCounts(result.counts)
@@ -175,39 +206,54 @@ function pausedSuffix(report: JobReport): string {
     return ''
   }
   if (report.stopped) {
-    return ' Stopped on request; choose "Continue" to carry on.'
+    return ' Stopped on request; choose "Continue a paused job" to carry on.'
   }
   return report.continueAutomatically
     ? ' It will continue by itself in about a minute.'
-    : ' Choose "Continue" to carry on.'
+    : ' Choose "Continue a paused job" to carry on.'
 }
 
 /**
- * Runs one execution's worth of a job. `fresh` is true when a person started
- * the job from the menu and false when it is being continued.
+ * How a run came about:
+ *   FRESH     a person chose Scan, Dry run or Migrate
+ *   CONTINUE  a person chose "Continue a paused job"
+ *   TRIGGER   the continuation trigger fired, with nobody at the keyboard
  */
-export function runJob(
-  kind: JobKind,
-  fresh: boolean,
-  deps: JobDeps
-): JobReport {
+export type Start = 'FRESH' | 'CONTINUE' | 'TRIGGER'
+
+/** Runs one execution's worth of a job. */
+export function runJob(kind: JobKind, start: Start, deps: JobDeps): JobReport {
   const { store, clock } = deps
   const config = parseConfig(store.readConfigValues())
-  store.setMeta('stop', '')
-  const budget = new Budget(
-    clock,
-    config.minutesPerRun,
-    () => store.getMeta('stop') !== ''
-  )
+  const stopRequested = (): boolean => store.getMeta('stop') !== ''
+  if (start !== 'TRIGGER') {
+    // Only a person can lift a Stop; a trigger that fires after one obeys it.
+    store.setMeta('stop', '')
+  }
+  const budget = new Budget(clock, config.minutesPerRun, stopRequested)
+  const fresh = start === 'FRESH'
   const context: JobContext = { deps, config, budget, fresh }
-  store.setMeta('job', kind)
+  const mode: Mode = kind === 'DRY_RUN' ? 'DRY_RUN' : 'EXECUTE'
 
-  const outcome =
-    kind === 'SCAN'
-      ? scanJob(context)
-      : applyJob(context, kind === 'DRY_RUN' ? 'DRY_RUN' : 'EXECUTE')
+  let outcome: JobOutcome
+  if (start === 'TRIGGER' && stopRequested()) {
+    outcome = { complete: false, text: `${kind} is stopped.` }
+  } else {
+    // Everything that can refuse the job happens before it is recorded as the
+    // job in progress, so "Continue" can never resume one that was refused.
+    if (fresh && kind === 'SCAN') {
+      prepareScan(context)
+    } else {
+      assertSameUser(context)
+      if (fresh) {
+        prepareApply(context, mode)
+      }
+    }
+    store.setMeta('job', kind)
+    outcome = kind === 'SCAN' ? scanJob(context) : applyJob(context, mode)
+  }
 
-  const stopped = !outcome.complete && budget.wasStopped()
+  const stopped = !outcome.complete && stopRequested()
   const report: JobReport = {
     kind,
     complete: outcome.complete,

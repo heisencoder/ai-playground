@@ -15,7 +15,11 @@
  */
 
 import type { Budget } from './budget'
-import { carryComments, describeComments } from './comments'
+import {
+  NATIVE_COMMENT_MIMES,
+  carryComments,
+  describeComments,
+} from './comments'
 import { normalizePath } from './config'
 import { DriveError, errorMessage } from './errors'
 import type {
@@ -29,6 +33,7 @@ import type {
 } from './model'
 import {
   FOLDER_MIME,
+  SHORTCUT_MIME,
   SOURCE_ID_PROPERTY,
   effectiveAction,
   isFolder,
@@ -42,7 +47,20 @@ export const DRY_ID_PREFIX = 'dryrun:'
 const EXECUTE_BATCH = 10
 const DRY_RUN_BATCH = 200
 const HTTP_FORBIDDEN = 403
+const HTTP_NOT_FOUND = 404
 const DATE_LENGTH = 10
+/**
+ * 403 reasons that say "not now" or "no room", not "you may not move this".
+ * Falling back to a copy for these would throw history away for nothing.
+ */
+const NOT_A_REFUSAL: ReadonlySet<string> = new Set([
+  'rateLimitExceeded',
+  'userRateLimitExceeded',
+  'sharingRateLimitExceeded',
+  'teamDrivesParentLimit',
+  'teamDriveFileLimitExceeded',
+  'storageQuotaExceeded',
+])
 
 type Kind =
   | 'folderCreated'
@@ -201,6 +219,9 @@ export class Applier {
   /** Every source ID and every destination ID this migration knows about. */
   private readonly ownIds = new Set<string>()
   private readonly childrenCache = new Map<string, DriveFile[]>()
+  /** Destination folders this run created or found in a fresh listing. */
+  private readonly trusted = new Set<string>()
+  private readonly folderProblems = new Map<string, string>()
   private readonly counts = emptyCounts()
   private readonly dry: boolean
 
@@ -230,8 +251,11 @@ export class Applier {
         break
       }
       const batch = todo.slice(start, start + batchSize)
+      // Rows an earlier attempt may have got part-way through.
       const recovering = new Set(
-        batch.filter((item) => item.status === 'IN_PROGRESS')
+        batch.filter(
+          (item) => item.status === 'IN_PROGRESS' || item.status === 'FAILED'
+        )
       )
       if (!this.dry) {
         this.markInProgress(batch)
@@ -312,6 +336,9 @@ export class Applier {
         this.ownIds.add(destId)
       }
     }
+    if (isFolder(item) && destId !== '') {
+      this.trusted.add(destId)
+    }
     if (outcome.kind === 'failed') {
       this.deps.store.log('ERROR', `${item.path}: ${outcome.message}`)
     }
@@ -335,12 +362,18 @@ export class Applier {
         message: item.override === 'SKIP' ? 'skipped by override' : item.reason,
       }
     }
-    const parent = this.destParentOf(item)
-    if ('kind' in parent) {
-      return parent
+    if (item.scanState === 'ERROR') {
+      return {
+        kind: 'failed',
+        message:
+          'its contents could not be listed during the scan; run "Scan and plan" again',
+      }
     }
     try {
-      return this.perform(action, item, parent, recovering)
+      const parent = this.destParentOf(item)
+      return 'kind' in parent
+        ? parent
+        : this.perform(action, item, parent, recovering)
     } catch (error) {
       if (!(error instanceof DriveError)) {
         throw error
@@ -365,7 +398,10 @@ export class Applier {
    */
   private destParentOf(item: Item): DestParent | Outcome {
     if (item.parentId === '') {
-      return { id: this.deps.destRootId, preExisting: true }
+      const problem = this.folderProblem(this.deps.destRootId)
+      return problem === ''
+        ? { id: this.deps.destRootId, preExisting: true }
+        : { kind: 'blocked', message: problem }
     }
     const blocked: Outcome = {
       kind: 'blocked',
@@ -385,9 +421,49 @@ export class Applier {
     if (status !== 'DONE' || id === '') {
       return blocked
     }
+    const problem = this.folderProblem(id)
+    if (problem !== '') {
+      return { kind: 'blocked', message: problem }
+    }
     return {
       id,
       preExisting: real ? parent.destPreExisting : parent.dryPreExisting,
+    }
+  }
+
+  /**
+   * Checks, once per run, that a destination folder recorded by an earlier run
+   * is still there. Someone may have trashed it since, and a file moved into a
+   * trashed folder would be deleted along with it.
+   */
+  private folderProblem(folderId: string): string {
+    if (this.isVirtual(folderId) || this.trusted.has(folderId)) {
+      return ''
+    }
+    let problem = this.folderProblems.get(folderId)
+    if (problem === undefined) {
+      problem = this.inspectFolder(folderId)
+      this.folderProblems.set(folderId, problem)
+    }
+    return problem
+  }
+
+  private inspectFolder(folderId: string): string {
+    const advice = '; run "Scan and plan" again'
+    try {
+      const folder = this.deps.drive.getFile(folderId)
+      if (folder.trashed === true) {
+        return `its destination folder is in the trash${advice}`
+      }
+      const drive = folder.driveId ?? ''
+      return drive === this.deps.destDriveId
+        ? ''
+        : `its destination folder is not in the destination shared drive${advice}`
+    } catch (error) {
+      if (error instanceof DriveError && error.status === HTTP_NOT_FOUND) {
+        return `its destination folder no longer exists${advice}`
+      }
+      throw error
     }
   }
 
@@ -406,16 +482,6 @@ export class Applier {
     }
     if (isFolder(item)) {
       return { kind: 'failed', message: `a folder cannot be ${action}` }
-    }
-    // A copy that was cut short while carrying comments resumes right there.
-    if (action === 'COPY' && recovering && item.destId !== '') {
-      return this.dry
-        ? {
-            kind: 'copied',
-            message: 'already copied; would finish carrying comments over',
-            destId: item.destId,
-          }
-        : this.finishCopy(item, item.destId)
     }
     const found = this.lookFor(item, parent, recovering)
     if (found !== null) {
@@ -481,13 +547,7 @@ export class Applier {
     }
     const mine = children.find((child) => sourceIdOf(child) === item.id)
     if (mine !== undefined) {
-      return effectiveAction(item) === 'COPY' && !this.dry
-        ? this.finishCopy(item, mine.id)
-        : {
-            kind: effectiveAction(item) === 'SHORTCUT' ? 'shortcut' : 'copied',
-            message: 'already in the destination',
-            destId: mine.id,
-          }
+      return this.foundOurs(item, mine)
     }
     if (this.deps.config.allowDuplicateNames) {
       return null
@@ -506,6 +566,25 @@ export class Applier {
           message:
             'a file with the same name is already in the destination folder',
         }
+  }
+
+  /**
+   * The destination already holds something this tool made from the item. What
+   * it is decides what is left to do, whatever the row's planned action says
+   * (a planned move may have fallen back to a copy).
+   */
+  private foundOurs(item: Item, ours: DriveFile): Outcome {
+    if (ours.mimeType === SHORTCUT_MIME) {
+      return {
+        kind: 'shortcut',
+        message: 'already in the destination',
+        destId: ours.id,
+      }
+    }
+    // A copy may have been cut short while its comments were carried over.
+    return this.dry
+      ? { kind: 'copied', message: 'already copied', destId: ours.id }
+      : this.finishCopy(item, ours.id)
   }
 
   // -- actions ---------------------------------------------------------------
@@ -569,10 +648,36 @@ export class Applier {
         destId: item.id,
       }
     }
+    // Look before moving: the file may have been moved, trashed, or (after an
+    // interrupted run) already delivered since the scan recorded where it was.
+    const current = this.deps.drive.getFile(item.id)
+    const parents = current.parents ?? []
+    if (parents.includes(parent.id)) {
+      return {
+        kind: 'moved',
+        message: 'already in the destination',
+        destId: item.id,
+      }
+    }
+    if (current.trashed === true) {
+      return { kind: 'skipped', message: 'in the trash since the scan' }
+    }
+    if (!parents.includes(item.parentId)) {
+      return {
+        kind: 'failed',
+        message:
+          'no longer in the folder it was scanned in; run "Scan and plan" again',
+      }
+    }
     try {
-      this.deps.drive.moveFile(item.id, parent.id, item.parentId)
+      // A shared drive item has exactly one parent, so every old one goes.
+      this.deps.drive.moveFile(item.id, parent.id, parents)
     } catch (error) {
-      if (!(error instanceof DriveError) || error.status !== HTTP_FORBIDDEN) {
+      const refused =
+        error instanceof DriveError &&
+        error.status === HTTP_FORBIDDEN &&
+        !NOT_A_REFUSAL.has(error.reason)
+      if (!refused) {
         throw error
       }
       return this.moveRefused(item, parent, error)
@@ -638,8 +743,12 @@ export class Applier {
     }
     let note: string
     try {
-      const comments = carryComments(this.deps.drive, item.id, copyId, () =>
-        this.deps.budget.expired()
+      const comments = carryComments(
+        this.deps.drive,
+        item.id,
+        copyId,
+        NATIVE_COMMENT_MIMES.has(item.mimeType),
+        () => this.deps.budget.expired()
       )
       if (!comments.complete) {
         return {
@@ -688,18 +797,29 @@ export class Applier {
     }
   }
 
-  /** A shortcut to a file that this migration copied should point at the copy. */
+  /**
+   * What a shortcut should point at. A shortcut to something this migration
+   * copied or recreated (a copied file, a folder) is pointed at the new item,
+   * not at the original left behind in the source.
+   */
   private shortcutTarget(item: Item): string {
     if (!isShortcut(item)) {
       return item.id
     }
     const target = this.byId.get(item.shortcutTargetId)
-    const copied =
-      target !== undefined &&
-      effectiveAction(target) === 'COPY' &&
-      target.status === 'DONE' &&
-      target.destId !== ''
-    return copied ? target.destId : item.shortcutTargetId
+    if (
+      this.dry ||
+      target?.status !== 'DONE' ||
+      target.destId === '' ||
+      target.destId === target.id
+    ) {
+      return item.shortcutTargetId
+    }
+    // Unless what took its place is itself only a shortcut to the original.
+    const replacement = this.deps.drive.getFile(target.destId)
+    return replacement.mimeType === SHORTCUT_MIME
+      ? item.shortcutTargetId
+      : target.destId
   }
 
   private say(done: string, would: string): string {

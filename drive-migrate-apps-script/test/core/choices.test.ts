@@ -350,3 +350,114 @@ describe('comments on copies', () => {
     expect(failed[0]?.status).toBe('DONE')
   })
 })
+
+describe('identical comment threads', () => {
+  function withTwins(): ReturnType<typeof buildScenario> & { pdf: string } {
+    const scenario = buildScenario()
+    const pdf = scenario.drive.addFile(
+      'Twins.pdf',
+      scenario.sourceId,
+      PDF_MIME,
+      {
+        owner: { emailAddress: 'carol@other.example', displayName: 'Carol' },
+      }
+    )
+    scenario.drive.addComment(pdf, 'Same words', {
+      replies: [{ content: 'one' }],
+    })
+    scenario.drive.addComment(pdf, 'Same words', {
+      replies: [{ content: 'two' }],
+    })
+    return { ...scenario, pdf }
+  }
+
+  it('are each carried over', () => {
+    const scenario = withTwins()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+
+    harness.run('EXECUTE')
+
+    const copy = scenario.drive.file(
+      harness.store.at('Team Files/Twins.pdf').destId
+    )
+    expect(copy.comments).toHaveLength(2)
+    expect(
+      copy.comments.map((comment) => comment.replies?.[0]?.content)
+    ).toEqual([
+      `${REPLY_BANNER} Bob Replier - 2024-03-02\none`,
+      `${REPLY_BANNER} Bob Replier - 2024-03-02\ntwo`,
+    ])
+  })
+
+  it('are not posted a third time when the file is finished again', () => {
+    const scenario = withTwins()
+    const harness = harnessFor(scenario, { minutesPerRun: '1' })
+    harness.run('SCAN')
+    harness.latencyMs = 5_000
+
+    harness.runToCompletion('EXECUTE')
+
+    const copy = scenario.drive.file(
+      harness.store.at('Team Files/Twins.pdf').destId
+    )
+    expect(copy.comments).toHaveLength(2)
+    expect(
+      copy.comments.every((comment) => comment.replies?.length === 1)
+    ).toBe(true)
+  })
+})
+
+describe('recreated shortcuts', () => {
+  it('point at the new folder when their target is a folder in the tree', () => {
+    const scenario = buildScenario()
+    scenario.drive.addShortcut(
+      'To the budget',
+      scenario.sourceId,
+      scenario.ids.budgetFolder
+    )
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+
+    harness.run('EXECUTE')
+
+    const shortcut = scenario.drive.file(
+      harness.store.at('Team Files/To the budget').destId
+    )
+    expect(shortcut.shortcutTargetId).toBe(
+      harness.store.at('Team Files/Budget').destId
+    )
+  })
+
+  it('keep the original target when it was itself only linked to', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, { othersFiles: 'SHORTCUT' })
+    harness.run('SCAN')
+
+    harness.run('EXECUTE')
+
+    const shortcut = scenario.drive.file(
+      harness.store.at('Team Files/Shortcut to Notes').destId
+    )
+    expect(shortcut.shortcutTargetId).toBe(scenario.ids.notes)
+  })
+
+  it('keep a target that lies outside the migrated tree', () => {
+    const scenario = buildScenario()
+    const outside = scenario.drive.addFile(
+      'Elsewhere',
+      'my-drive-root-0001',
+      DOC_MIME
+    )
+    scenario.drive.addShortcut('Out there', scenario.sourceId, outside)
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+
+    harness.run('EXECUTE')
+
+    const shortcut = scenario.drive.file(
+      harness.store.at('Team Files/Out there').destId
+    )
+    expect(shortcut.shortcutTargetId).toBe(outside)
+  })
+})

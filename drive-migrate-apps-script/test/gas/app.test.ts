@@ -3,9 +3,11 @@ import { readFileSync } from 'node:fs'
 import vm from 'node:vm'
 import { SHEET_NAMES } from '../../src/gas/sheetStore'
 import { CONFIG_FIELDS } from '../../src/core/config'
-import type { App, AppKind } from '../fakes/app'
+import type { AppKind } from '../fakes/app'
 import {
   BUNDLE_PATH,
+  EXPECTED_TREE,
+  ready,
   fireTriggersUntilQuiet,
   itemRow,
   itemRows,
@@ -15,36 +17,13 @@ import {
   typeItemCell,
 } from '../fakes/app'
 import { DOC_MIME, ExecutionKilled } from '../fakes/fakeDrive'
-import type { Scenario } from '../fakes/scenario'
 import { buildScenario } from '../fakes/scenario'
 
 const MENU = 'Drive migration'
-const EXPECTED_TREE = [
-  'Team Files/',
-  'Team Files/Archive/',
-  'Team Files/Archive/Empty/',
-  'Team Files/Archive/Old plan',
-  'Team Files/Budget/',
-  'Team Files/Budget/2024 Budget',
-  'Team Files/Budget/Notes',
-  'Team Files/Roadmap',
-  'Team Files/Shared spec',
-  'Team Files/Shortcut to Notes',
-]
 
 afterEach(() => {
   vi.unstubAllGlobals()
 })
-
-function ready(
-  kind: AppKind,
-  config: Parameters<typeof setUpWorkbook>[2] = {}
-): { app: App; scenario: Scenario } {
-  const scenario = buildScenario()
-  const app = startApp(kind, scenario.drive)
-  setUpWorkbook(app, scenario, config)
-  return { app, scenario }
-}
 
 describe.each<AppKind>(['sources', 'bundle'])(
   'the app, run from %s',
@@ -323,28 +302,6 @@ describe.each<AppKind>(['sources', 'bundle'])(
 
         expect(app.world.ui.lastAlert()).toBe(
           'There is no paused job to continue.'
-        )
-      })
-
-      it('reports an unexpected failure and can carry on afterwards', () => {
-        const { app, scenario } = ready(kind)
-        app.call('scanAndPlan')
-        scenario.drive.killAfterWrites = 5
-
-        app.call('migrate')
-
-        expect(app.world.ui.lastAlert()).toContain(
-          'Migration stopped on an unexpected error'
-        )
-        expect(app.world.lockHeld).toBe(false)
-        const log = app.world.spreadsheet.sheet(SHEET_NAMES.log).rows()
-        expect(log.some((row) => row[1] === 'ERROR')).toBe(true)
-
-        app.call('continueJob')
-
-        expect(app.world.ui.lastAlert()).toContain('Migration complete')
-        expect(scenario.drive.tree(scenario.sharedDriveId)).toEqual(
-          EXPECTED_TREE
         )
       })
     })

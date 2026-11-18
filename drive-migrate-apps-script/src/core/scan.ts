@@ -18,6 +18,7 @@ export interface ScanResult {
   /** Items recorded so far, across every execution of this scan. */
   total: number
   added: number
+  /** Folders that could not be listed during this execution. */
   errors: number
 }
 
@@ -83,7 +84,10 @@ function facts(
     createdTime: file.createdTime ?? '',
     modifiedTime: file.modifiedTime ?? '',
     canCopy: file.capabilities?.canCopy ?? true,
-    canMoveOut: file.capabilities?.canMoveItemOutOfDrive ?? false,
+    // If Drive does not say, assume an owner may move their own file; the
+    // executor copes with being refused.
+    canMoveOut:
+      file.capabilities?.canMoveItemOutOfDrive ?? file.ownedByMe ?? false,
     webViewLink: file.webViewLink ?? '',
   }
 }
@@ -170,7 +174,9 @@ export function continueScan(
     }
     const appended = store.appendItems(fresh)
     queue.push(...appended.filter((item) => isFolder(item)))
-    folder.scanState = 'DONE'
+    if (folder.scanState !== 'ERROR') {
+      folder.scanState = 'DONE'
+    }
     store.writeItems([folder])
     result.added += appended.length
     result.total += appended.length
@@ -202,6 +208,9 @@ function listOrNote(
       throw error
     }
     result.errors += 1
+    // Not DONE: its contents are unknown, and the executor must not treat the
+    // folder as migrated just because it could create an empty one.
+    folder.scanState = 'ERROR'
     folder.result = `could not list this folder: ${error.message}`
     store.log('ERROR', `${folder.path}: ${folder.result}`)
     return []

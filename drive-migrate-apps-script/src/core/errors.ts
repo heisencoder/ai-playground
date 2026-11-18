@@ -32,6 +32,10 @@ export class ConfigError extends Error {
   }
 }
 
+/** The message of anything that was thrown, whatever kind of value it is. */
 export function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error)
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    return String(error.message)
+  }
+  return String(error)
 }

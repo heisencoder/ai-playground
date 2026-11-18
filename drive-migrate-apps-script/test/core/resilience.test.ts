@@ -75,7 +75,7 @@ describe('pausing and resuming', () => {
     const first = harness.run('EXECUTE')
 
     expect(first.continueAutomatically).toBe(false)
-    expect(first.headline).toContain('Choose "Continue"')
+    expect(first.headline).toContain('Choose "Continue a paused job"')
   })
 
   it('stops promptly when asked, and can be continued later', () => {
@@ -216,7 +216,7 @@ describe('failures', () => {
     const scenario = buildScenario()
     const harness = harnessFor(scenario)
     harness.run('SCAN')
-    scenario.drive.failNext('POST', /\/copy$/, 500, 'backendError', 6)
+    scenario.drive.failNext('POST', /\/copy$/, 500, 'backendError')
 
     const report = harness.run('EXECUTE')
 
@@ -232,7 +232,7 @@ describe('failures', () => {
     const scenario = buildScenario()
     const harness = harnessFor(scenario)
     harness.run('SCAN')
-    scenario.drive.failNext('POST', /\/copy$/, 500, 'backendError', 6)
+    scenario.drive.failNext('POST', /\/copy$/, 500, 'backendError')
     harness.run('EXECUTE')
 
     const again = harness.run('EXECUTE')
@@ -457,4 +457,303 @@ describe('odd trees', () => {
     const destBig = harness.store.at('Team Files/Big').destId
     expect(scenario.drive.childrenOf(destBig)).toHaveLength(25)
   })
+})
+
+describe('things that change between scan and migrate', () => {
+  it('does not copy twice when Drive did the copy but reported an error', () => {
+    const reference = migratedReference()
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    scenario.drive.failNextAfterApplying('POST', /\/copy$/)
+
+    const first = harness.run('EXECUTE')
+    expect(first.headline).toContain('1 failed')
+    harness.run('EXECUTE')
+
+    expect(Object.values(harness.store.statuses())).not.toContain('FAILED')
+    expect(snapshot(scenario.drive, scenario.sharedDriveId)).toEqual(
+      reference.picture
+    )
+  })
+
+  it('does not create a folder twice when Drive created it but reported an error', () => {
+    const reference = migratedReference()
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    scenario.drive.failNextAfterApplying('POST', /^\/files$/)
+
+    harness.run('EXECUTE')
+    harness.run('EXECUTE')
+
+    expect(snapshot(scenario.drive, scenario.sharedDriveId)).toEqual(
+      reference.picture
+    )
+  })
+
+  it('refuses a changed Destination once part of the tree has gone to the old one', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, { pathFilter: 'Team Files/Budget' })
+    harness.run('SCAN')
+    harness.run('EXECUTE')
+    const elsewhere = scenario.drive.addSharedDrive('The real drive')
+    harness.configure({ destinationId: elsewhere, pathFilter: '' })
+    const writes = scenario.drive.writes().length
+
+    expect(() => harness.run('EXECUTE')).toThrow(/Destination has changed/)
+    expect(scenario.drive.writes()).toHaveLength(writes)
+    expect(scenario.drive.tree(elsewhere)).toEqual([])
+  })
+
+  it('accepts a changed Destination when nothing has been migrated yet', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    harness.run('DRY_RUN')
+    const elsewhere = scenario.drive.addSharedDrive('The real drive')
+    harness.configure({ destinationId: elsewhere })
+
+    harness.run('EXECUTE')
+
+    expect(scenario.drive.tree(elsewhere)).toContain('Team Files/Roadmap')
+    expect(scenario.drive.tree(scenario.sharedDriveId)).toEqual([])
+  })
+
+  it('will not put files into a destination folder that has been deleted', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, { pathFilter: 'Team Files/Archive' })
+    harness.run('SCAN')
+    harness.run('EXECUTE')
+    scenario.drive.files.delete(harness.store.at('Team Files').destId)
+    harness.configure({ pathFilter: '' })
+
+    harness.run('EXECUTE')
+
+    expect(harness.store.at('Team Files/Roadmap').result).toContain(
+      'destination folder no longer exists'
+    )
+  })
+
+  it('will not put files into a destination folder that has been trashed', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, { pathFilter: 'Team Files/Archive' })
+    harness.run('SCAN')
+    harness.run('EXECUTE')
+    scenario.drive.file(harness.store.at('Team Files').destId).trashed = true
+    harness.configure({ pathFilter: '' })
+
+    harness.run('EXECUTE')
+
+    const roadmap = harness.store.at('Team Files/Roadmap')
+    expect(roadmap.status).toBe('BLOCKED')
+    expect(roadmap.result).toContain('destination folder is in the trash')
+    expect(scenario.drive.file(scenario.ids.roadmap).driveId).toBe('')
+  })
+
+  it('leaves alone a file that was moved somewhere else after the scan', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    const elsewhere = scenario.drive.addFolder('Private', MY_DRIVE_ROOT)
+    scenario.drive.file(scenario.ids.roadmap).parents = [elsewhere]
+
+    harness.run('EXECUTE')
+
+    const row = harness.store.at('Team Files/Roadmap')
+    expect(row.status).toBe('FAILED')
+    expect(row.result).toContain('no longer in the folder it was scanned in')
+    expect(scenario.drive.file(scenario.ids.roadmap).parents).toEqual([
+      elsewhere,
+    ])
+  })
+
+  it('skips a file that was trashed after the scan', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    scenario.drive.file(scenario.ids.roadmap).trashed = true
+
+    harness.run('EXECUTE')
+
+    const row = harness.store.at('Team Files/Roadmap')
+    expect(row.status).toBe('SKIPPED')
+    expect(row.result).toBe('in the trash since the scan')
+    expect(scenario.drive.file(scenario.ids.roadmap).driveId).toBe('')
+  })
+
+  it('moves a file that sits in two folders, removing both old parents', () => {
+    const scenario = buildScenario()
+    scenario.drive
+      .file(scenario.ids.oldPlan)
+      .parents.push(scenario.ids.budgetFolder)
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+
+    harness.run('EXECUTE')
+
+    const file = scenario.drive.file(scenario.ids.oldPlan)
+    expect(file.parents).toHaveLength(1)
+    expect(file.driveId).toBe(scenario.sharedDriveId)
+  })
+
+  it('does not fall back to a copy when the move failed for lack of room', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, { moveRefused: 'COPY' })
+    harness.run('SCAN')
+    scenario.drive.refuseMove(
+      scenario.ids.roadmap,
+      'teamDriveFileLimitExceeded'
+    )
+
+    harness.run('EXECUTE')
+
+    const row = harness.store.at('Team Files/Roadmap')
+    expect(row.status).toBe('FAILED')
+    expect(row.result).toContain('teamDriveFileLimitExceeded')
+    expect(row.destId).toBe('')
+  })
+})
+
+describe('who and what a job belongs to', () => {
+  it('refuses to run a plan scanned by a different account', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    harness.store.setMeta('user', 'someone.else@example.com')
+
+    expect(() => harness.run('EXECUTE')).toThrow(
+      /scanned by someone.else@example.com, but you are me@example.com/
+    )
+    expect(() => harness.run('EXECUTE', false)).toThrow(ConfigError)
+    expect(scenario.drive.writes()).toEqual([])
+  })
+
+  it('does not leave a refused job behind for Continue to resume', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    const other = scenario.drive.addFolder('Other', MY_DRIVE_ROOT)
+    harness.configure({ sourceId: other })
+
+    expect(() => harness.run('EXECUTE')).toThrow(ConfigError)
+
+    expect(harness.store.getMeta('job')).toBe('')
+  })
+
+  it('obeys a Stop that arrived before the trigger fired', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, { minutesPerRun: '1' })
+    harness.run('SCAN')
+    harness.latencyMs = 9_000
+    harness.run('EXECUTE')
+    const writes = scenario.drive.writes().length
+    harness.store.setMeta('stop', '1')
+
+    const report = harness.runAs('EXECUTE', 'TRIGGER')
+
+    expect(report.stopped).toBe(true)
+    expect(report.continueAutomatically).toBe(false)
+    expect(scenario.drive.writes()).toHaveLength(writes)
+    // A person choosing Continue lifts the stop.
+    expect(harness.run('EXECUTE', false).complete).toBe(false)
+    expect(scenario.drive.writes().length).toBeGreaterThan(writes)
+  })
+
+  it('keeps Override values when the folder is scanned again', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    harness.run('SCAN')
+    harness.store.override('Team Files/Roadmap', 'SKIP')
+    harness.store.override('Team Files/Shared spec', 'SHORTCUT')
+    harness.run('SCAN')
+    expect(harness.store.at('Team Files/Roadmap').override).toBe('SKIP')
+
+    harness.store.override('Team Files/Shared spec', '')
+    harness.run('SCAN')
+    harness.run('EXECUTE')
+
+    expect(harness.store.at('Team Files/Roadmap').status).toBe('SKIPPED')
+    expect(harness.store.at('Team Files/Shared spec').override).toBe('')
+    expect(scenario.drive.file(scenario.ids.roadmap).driveId).toBe('')
+  })
+})
+
+describe('a folder the scan could not list', () => {
+  it('is reported even when the failure happened in an earlier run of the scan', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, { minutesPerRun: '1' })
+    harness.latencyMs = 25_000
+    // The source folder lists fine; the first sub-folder does not.
+    scenario.drive.failListing(2)
+    harness.runAs('SCAN', 'FRESH')
+
+    const reports = [harness.run('SCAN', false)]
+    while (reports.at(-1)?.complete !== true) {
+      reports.push(harness.run('SCAN', false))
+    }
+
+    expect(reports.length).toBeGreaterThan(1)
+    expect(reports[0]?.complete).toBe(false)
+    expect(reports.at(-1)?.headline).toContain(
+      'WARNING: 1 folder(s) could not be listed'
+    )
+    const unlisted = harness.store
+      .readItems()
+      .filter((item) => item.scanState === 'ERROR')
+    expect(unlisted).toHaveLength(1)
+  })
+
+  it('is not passed off as migrated', () => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario)
+    scenario.drive.failListing(2)
+    harness.run('SCAN')
+
+    harness.run('DRY_RUN')
+    harness.run('EXECUTE')
+
+    const unlisted = harness.store
+      .readItems()
+      .filter((item) => item.scanState === 'ERROR')
+    expect(unlisted.length).toBeGreaterThan(0)
+    for (const folder of unlisted) {
+      expect(folder.status).toBe('FAILED')
+      expect(folder.result).toContain('could not be listed during the scan')
+      expect(folder.dryRun).toContain('error: its contents could not be listed')
+    }
+  })
+})
+
+describe('recovering when a planned move had fallen back to a copy', () => {
+  const config = { tryMoveOthersFiles: 'Yes' } as const
+  const reference = ((): string[] => {
+    const scenario = buildScenario()
+    const harness = harnessFor(scenario, config)
+    harness.run('SCAN')
+    harness.run('EXECUTE')
+    return snapshot(scenario.drive, scenario.sharedDriveId)
+  })()
+
+  it.each(Array.from({ length: 13 }, (_, index) => index + 1))(
+    'still carries the comments over when killed after write %i',
+    (killAt) => {
+      const scenario = buildScenario()
+      const harness = harnessFor(scenario, config)
+      harness.run('SCAN')
+      scenario.drive.killAfterWrites = killAt
+
+      try {
+        harness.run('EXECUTE')
+      } catch (error) {
+        expect(error).toBeInstanceOf(ExecutionKilled)
+        harness.store.crash()
+      }
+      harness.run('EXECUTE', false)
+
+      expect(snapshot(scenario.drive, scenario.sharedDriveId)).toEqual(
+        reference
+      )
+    }
+  )
 })

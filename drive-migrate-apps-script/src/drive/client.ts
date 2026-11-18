@@ -9,7 +9,8 @@
  *     be sent at all. Nothing deletes, trashes or changes sharing.
  *   - a read-only mode, used by the scan and the dry run, in which any request
  *     that would change Drive is refused before it is sent.
- *   - retries with exponential backoff for rate limits and server errors.
+ *   - retries with exponential backoff, but never of a write whose outcome is
+ *     unknown (see {@link isRetryable}).
  *
  * Apps Script's V8 runtime has no `URL`, `URLSearchParams` or `fetch`; this
  * file sticks to string handling for that reason.
@@ -72,9 +73,10 @@ const HTTP_OK_MIN = 200
 const HTTP_OK_MAX = 299
 const HTTP_FORBIDDEN = 403
 const HTTP_NOT_FOUND = 404
-const RETRYABLE_STATUSES: ReadonlySet<number> = new Set([
-  429, 500, 502, 503, 504,
-])
+const HTTP_TOO_MANY_REQUESTS = 429
+const HTTP_SERVER_ERROR = 500
+/** Status a transport reports when the request got no HTTP response at all. */
+export const NO_RESPONSE = 0
 const RETRYABLE_403_REASONS: ReadonlySet<string> = new Set([
   'rateLimitExceeded',
   'userRateLimitExceeded',
@@ -185,6 +187,31 @@ function parseError(response: HttpResponse): DriveError {
   )
 }
 
+/**
+ * Whether sending the same request again is both worthwhile and safe.
+ *
+ * A rate limit means Drive turned the request away, so anything may be resent.
+ * A server error or a dropped connection says nothing about whether the
+ * request took effect, so only reads are resent: repeating a copy or a comment
+ * that did in fact succeed would duplicate it. Those surface as a failure, and
+ * the executor checks the destination before it tries again.
+ */
+function isRetryable(
+  method: HttpMethod,
+  status: number,
+  reason: string
+): boolean {
+  if (status === HTTP_TOO_MANY_REQUESTS) {
+    return true
+  }
+  if (status === HTTP_FORBIDDEN) {
+    return RETRYABLE_403_REASONS.has(reason)
+  }
+  return (
+    method === 'GET' && (status === NO_RESPONSE || status >= HTTP_SERVER_ERROR)
+  )
+}
+
 function escapeQueryValue(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 }
@@ -216,7 +243,12 @@ export class DriveClient implements DrivePort {
         fields: 'id,name,capabilities(canAddChildren)',
       })
     } catch (error) {
-      if (error instanceof DriveError && error.status === HTTP_NOT_FOUND) {
+      // Drive answers "not found" (or, for some IDs, "forbidden") when the ID
+      // belongs to something other than a shared drive, such as a folder.
+      if (
+        error instanceof DriveError &&
+        (error.status === HTTP_NOT_FOUND || error.status === HTTP_FORBIDDEN)
+      ) {
         return null
       }
       throw error
@@ -283,13 +315,17 @@ export class DriveClient implements DrivePort {
     )
   }
 
-  moveFile(fileId: string, addParent: string, removeParent: string): DriveFile {
+  moveFile(
+    fileId: string,
+    addParent: string,
+    removeParents: readonly string[]
+  ): DriveFile {
     return this.call<DriveFile>(
       'PATCH',
       `/files/${fileId}`,
       {
         addParents: addParent,
-        removeParents: removeParent,
+        removeParents: removeParents.join(','),
         fields: FILE_FIELDS,
         supportsAllDrives: true,
       },
@@ -382,11 +418,10 @@ export class DriveClient implements DrivePort {
         return (response.body === '' ? {} : JSON.parse(response.body)) as T
       }
       const error = parseError(response)
-      const retryable =
-        RETRYABLE_STATUSES.has(response.status) ||
-        (response.status === HTTP_FORBIDDEN &&
-          RETRYABLE_403_REASONS.has(error.reason))
-      if (!retryable || attempt >= MAX_ATTEMPTS) {
+      if (
+        !isRetryable(method, response.status, error.reason) ||
+        attempt >= MAX_ATTEMPTS
+      ) {
         throw error
       }
       const backoff = BASE_DELAY_MS * 2 ** (attempt - 1)

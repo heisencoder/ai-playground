@@ -114,7 +114,7 @@ describe('allow-list', () => {
       readOnly: true,
     })
 
-    expect(() => client.moveFile('f1', 'p2', 'p1')).toThrow(
+    expect(() => client.moveFile('f1', 'p2', ['p1'])).toThrow(
       DisallowedOperationError
     )
     expect(() =>
@@ -143,11 +143,11 @@ describe('requests', () => {
   it('builds a move as a parent change that keeps the file', () => {
     const { client, sent } = scripted([])
 
-    client.moveFile('file123', 'newParent', 'oldParent')
+    client.moveFile('file123', 'newParent', ['oldParent', 'another'])
 
     expect(sent[0]?.method).toBe('PATCH')
     expect(sent[0]?.url).toContain(
-      '/files/file123?addParents=newParent&removeParents=oldParent'
+      '/files/file123?addParents=newParent&removeParents=oldParent%2Canother'
     )
     expect(sent[0]?.url).toContain('supportsAllDrives=true')
     expect(sent[0]?.body).toBe('{}')
@@ -284,7 +284,7 @@ describe('errors and retries', () => {
 
     let caught: unknown
     try {
-      client.moveFile('f1', 'a', 'b')
+      client.moveFile('f1', 'a', ['b'])
     } catch (error) {
       caught = error
     }
@@ -296,6 +296,48 @@ describe('errors and retries', () => {
     expect((caught as DriveError).message).toBe(
       'Not allowed [fileOwnerNotMemberOfTeamDrive]'
     )
+  })
+
+  it('never resends a write whose outcome is unknown', () => {
+    const copy = {
+      name: 'n',
+      parentId: 'p',
+      description: '',
+      properties: {},
+      copyComments: true,
+    }
+    for (const status of [500, 503, 0]) {
+      const { client, sent, sleeps } = scripted([{ status, body: '' }])
+
+      expect(() => client.copyFile('f1', copy)).toThrow(DriveError)
+      expect(() => client.moveFile('f1', 'a', ['b'])).not.toThrow()
+      expect(sent).toHaveLength(2)
+      expect(sleeps).toEqual([])
+    }
+  })
+
+  it('does resend a write that Drive turned away for rate limiting', () => {
+    const { client, sent } = scripted([{ status: 429, body: '' }, rateLimited])
+
+    client.createComment('f1', 'hello')
+
+    expect(sent).toHaveLength(3)
+  })
+
+  it('retries a read that got no response at all', () => {
+    const { client, sent } = scripted([
+      { status: 0, body: '{"error":{"message":"No response: timeout"}}' },
+      { status: 200, body: '{"id":"f1"}' },
+    ])
+
+    expect(client.getFile('f1').id).toBe('f1')
+    expect(sent).toHaveLength(2)
+  })
+
+  it('treats "forbidden" from the shared-drive lookup as "not a shared drive"', () => {
+    const { client } = scripted([{ status: 403, body: '{}' }])
+
+    expect(client.getSharedDrive('folder-id')).toBeNull()
   })
 
   it('copes with an error body that is not JSON', () => {

@@ -18,8 +18,9 @@ drives the whole thing.
 
 > **Status: not yet run against real Google Drive.** Everything here is tested
 > against an in-memory emulation of the Drive API and of the Apps Script services
-> (see [Testing](#testing)). Run it on a small throwaway folder first, and use
-> **Only this path** to migrate one subtree before the whole tree.
+> (see [Testing](#testing)). Do the [first live run](#first-live-run) on a small
+> throwaway folder, and use **Only this path** to migrate one subtree before the
+> whole tree.
 
 ## What can and cannot be preserved
 
@@ -91,7 +92,9 @@ is disabled_, open the script editor, click **+** next to **Services**, add
 **Drive API**, and try again.
 
 To hand the tool to someone else, share the spreadsheet with **File → Make a
-copy**; the script travels with it.
+copy**; the script travels with it. Each person works in their own copy: a plan
+records which files are _yours_, so the tool refuses to run a plan that a
+different account scanned.
 
 <details>
 <summary>Alternative: push with clasp</summary>
@@ -128,6 +131,20 @@ To try a small part first, put a value from the **Path** column in **Only this
 path**, run steps 4 and 5, look at the result in Drive, then clear the setting
 and choose **Migrate** again for the rest.
 
+Things to know while working with the sheet:
+
+- **Scanning again** (after an ownership transfer, say) rebuilds the _Items_
+  sheet from what is in Drive now. Your Override values are kept, matched by
+  file. Progress is rediscovered rather than remembered: moved files are no
+  longer in the source, and copies, folders and shortcuts already made are
+  recognised and not made again.
+- **Leave the _Items_ rows alone while a job is running.** Sorting or filtering
+  is tolerated (rows are found again by ID before anything is written), but a
+  deleted row stops the run with a message.
+- **The Destination cannot change part-way.** Once anything has been migrated,
+  a different Destination is refused until you put the old one back or scan
+  again. To rehearse into a test shared drive, use a separate copy of the sheet.
+
 ### Settings
 
 | Setting                          | Default | Meaning                                                                                                                    |
@@ -152,19 +169,34 @@ until it is done; you can close the spreadsheet meanwhile. A personal Gmail
 account gets 90 minutes of such triggered run time per day (Workspace accounts
 get six hours). If that runs out, choose **Continue a paused job** the next day.
 
+If Apps Script kills a run outright (one very slow Drive call can do it), a
+safety-net trigger set at the start of that run picks the job up about seven
+minutes later. After three kills in a row the job stops continuing by itself
+and says so on the _Log_ sheet. A run that hits an unexpected error stops, tells
+you, and waits for **Continue a paused job**. Progress and outcomes are on the
+_Log_ and _Summary_ sheets, since nobody sees a pop-up from a triggered run.
+
 - **Stop** halts a job after the file it is working on.
 - **Continue a paused job** picks up a job that was stopped, hit an error, or is
   waiting because automatic continuation is off.
 - Choosing **Migrate** again is always safe: finished rows are left alone, and
   `FAILED`, `BLOCKED` and `SKIPPED` rows are tried again with the current
-  settings and overrides.
+  settings and overrides. A `FAILED` row is checked against the destination
+  first, in case Drive did the work and only the reply was lost.
 
 How it avoids doing things twice: rows are marked `IN_PROGRESS` in the sheet
 before their batch touches Drive. If a run dies, the next one asks Drive what
 happened to those rows first. A moved file is already in the destination; a copy,
 a new folder or a shortcut carries the source's ID in a custom file property
 (`dmSourceId`). The same property means that even scanning again from an empty
-sheet will not duplicate copies or folders.
+sheet will not duplicate copies or folders. A copy, folder or comment request
+that fails with a server error or gets no reply is never blindly sent again, for
+the same reason.
+
+Before each move the tool looks at the file as it is now. A file that has been
+trashed, or moved out of the folder it was scanned in, is left where it is and
+reported. Files are never moved into a destination folder that has since been
+trashed or deleted.
 
 ### Status values
 
@@ -176,6 +208,26 @@ sheet will not duplicate copies or folders.
 | `SKIPPED`     | Deliberately left out; **Result** says why.                        |
 | `FAILED`      | Drive refused or errored; **Result** has Drive's reason.           |
 | `BLOCKED`     | The folder it belongs in could not be created.                     |
+
+## First live run
+
+The emulation the tests use encodes assumptions about Google's services that
+only a real run can confirm. On a throwaway folder holding a few files you own,
+one owned by someone else, a Doc with an open and a resolved comment, and a file
+or folder with an awkward name such as `007` or `=A1`, check that:
+
+1. **Scan and plan** shows your own files as `MOVE`. If they all show `COPY`,
+   Drive is not reporting that you may move them; stop and investigate.
+2. Names on the _Items_ sheet read exactly as in Drive (no `7` for `007`, no
+   formula errors).
+3. **Migrate** moves a file you own and its version history is still there
+   (File → Version history).
+4. The copy of the other person's Doc has each open comment exactly **once**.
+   If open comments appear twice (once as Drive's own copy and once as
+   "[migrated comment]" text), Drive is copying them later than this tool
+   expects; set **Carry comments onto copies** to `No` and report it.
+5. A job long enough to pause (set **Minutes per run** to `1`) continues by
+   itself with the spreadsheet closed, and the _Log_ sheet shows each run.
 
 ## Limits
 

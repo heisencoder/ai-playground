@@ -1,6 +1,6 @@
 import { CONFIG_FIELDS } from '../../src/core/config'
 import type { ConfigKey } from '../../src/core/config'
-import type { JobKind, JobReport } from '../../src/core/jobs'
+import type { JobKind, JobReport, Start } from '../../src/core/jobs'
 import { runJob } from '../../src/core/jobs'
 import { DriveClient } from '../../src/drive/client'
 import { FakeClock } from './fakeGas'
@@ -172,7 +172,11 @@ export class CoreHarness {
   }
 
   run(kind: JobKind, fresh = true): JobReport {
-    return runJob(kind, fresh, {
+    return this.runAs(kind, fresh ? 'FRESH' : 'CONTINUE')
+  }
+
+  runAs(kind: JobKind, start: Start): JobReport {
+    return runJob(kind, start, {
       store: this.store,
       clock: this.clock,
       makeDrive: (readOnly) => this.client(readOnly),

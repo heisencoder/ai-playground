@@ -439,9 +439,29 @@ export class GasWorld {
   lockHeldElsewhere = false
   lockHeld = false
 
+  /**
+   * True once the execution has been killed. Apps Script runs no more of the
+   * script's code after that, so from then on every service call throws and
+   * nothing the script does (catch blocks included) has any effect.
+   */
+  dead = false
+  /** This many `UrlFetchApp.fetch` calls throw, as a dropped connection would. */
+  fetchFailures = 0
+  /** The nth `SpreadsheetApp.flush()` from now fails, as a Sheets hiccup would. */
+  flushFailsIn = 0
+
   constructor(readonly drive: FakeDrive) {
     drive.onRequest = () => {
       this.clock.advance(this.latencyMs)
+    }
+    drive.onKill = () => {
+      this.dead = true
+    }
+  }
+
+  private alive(): void {
+    if (this.dead) {
+      throw new Error('Exceeded maximum execution time')
     }
   }
 
@@ -450,7 +470,10 @@ export class GasWorld {
     return {
       Date: fakeDateClass(this.clock),
       SpreadsheetApp: {
-        getActiveSpreadsheet: () => this.spreadsheet,
+        getActiveSpreadsheet: () => {
+          this.alive()
+          return this.spreadsheet
+        },
         getUi: () => {
           if (!this.interactive) {
             throw new Error(
@@ -460,6 +483,13 @@ export class GasWorld {
           return this.ui
         },
         flush: () => {
+          this.alive()
+          this.flushFailsIn -= 1
+          if (this.flushFailsIn === 0) {
+            throw new Error(
+              'Service Spreadsheets failed while accessing document'
+            )
+          }
           this.commit()
         },
         newDataValidation: () => new FakeValidationBuilder(),
@@ -467,8 +497,12 @@ export class GasWorld {
       UrlFetchApp: { fetch: this.fetch },
       ScriptApp: {
         getOAuthToken: () => FAKE_TOKEN,
-        getProjectTriggers: () => [...this.triggers],
+        getProjectTriggers: () => {
+          this.alive()
+          return [...this.triggers]
+        },
         deleteTrigger: (trigger: FakeTrigger) => {
+          this.alive()
           const index = this.triggers.indexOf(trigger)
           if (index !== -1) {
             this.triggers.splice(index, 1)
@@ -478,6 +512,7 @@ export class GasWorld {
           timeBased: () => ({
             after: (afterMs: number) => ({
               create: () => {
+                this.alive()
                 const trigger: FakeTrigger = {
                   handler,
                   afterMs,
@@ -492,8 +527,12 @@ export class GasWorld {
       },
       PropertiesService: {
         getDocumentProperties: () => ({
-          getProperty: (key: string) => this.properties.get(key) ?? null,
+          getProperty: (key: string) => {
+            this.alive()
+            return this.properties.get(key) ?? null
+          },
           setProperty: (key: string, value: string) => {
+            this.alive()
             this.properties.set(key, value)
           },
         }),
@@ -508,6 +547,7 @@ export class GasWorld {
             return true
           },
           releaseLock: () => {
+            this.alive()
             this.lockHeld = false
           },
         }),
@@ -533,6 +573,7 @@ export class GasWorld {
     for (const sheet of this.spreadsheet.sheets.values()) {
       sheet.rollback()
     }
+    this.dead = false
     this.lockHeld = false
   }
 
@@ -540,6 +581,11 @@ export class GasWorld {
     url: string,
     params: FetchParams = {}
   ): { getResponseCode: () => number; getContentText: () => string } => {
+    this.alive()
+    if (this.fetchFailures > 0) {
+      this.fetchFailures -= 1
+      throw new Error(`DNS error: ${url}`)
+    }
     const method = (params.method ?? 'get').toUpperCase() as HttpMethod
     const authorised = params.headers?.Authorization === `Bearer ${FAKE_TOKEN}`
     const response = authorised

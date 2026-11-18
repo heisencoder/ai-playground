@@ -46,7 +46,8 @@ export const STATUSES = [
 ] as const
 export type Status = (typeof STATUSES)[number]
 
-export type ScanState = '' | 'PENDING' | 'DONE'
+/** Folders only. ERROR: Drive would not list it, so its contents are unknown. */
+export type ScanState = '' | 'PENDING' | 'DONE' | 'ERROR'
 
 /** One row of the Items sheet: a file or folder found under the source folder. */
 export interface Item {
@@ -185,7 +186,12 @@ export interface DrivePort {
     targetId: string,
     sourceId: string
   ): DriveFile
-  moveFile(fileId: string, addParent: string, removeParent: string): DriveFile
+  /** `removeParents` must name every current parent: shared drive items have one. */
+  moveFile(
+    fileId: string,
+    addParent: string,
+    removeParents: readonly string[]
+  ): DriveFile
   copyFile(fileId: string, request: CopyRequest): DriveFile
   listComments(fileId: string): DriveComment[]
   createComment(fileId: string, content: string): DriveComment
@@ -201,7 +207,14 @@ export type LogLevel = 'INFO' | 'WARN' | 'ERROR'
 
 /** Small persistent key/value entries (job state, resolved IDs). */
 export type MetaKey =
-  'job' | 'stop' | 'scan' | 'sourceName' | 'destRootId' | 'destDriveId' | 'user'
+  | 'job'
+  | 'stop'
+  | 'scan'
+  | 'sourceName'
+  | 'destRootId'
+  | 'destDriveId'
+  | 'user'
+  | 'strikes'
 
 /** Persistent state. Implemented over a Google Sheet by `SheetStore`. */
 export interface Store {
@@ -210,6 +223,10 @@ export interface Store {
   appendItems(items: NewItem[]): Item[]
   /** Persist every mutable column of the given rows. */
   writeItems(items: readonly Item[]): void
+  /**
+   * Empties the inventory for a new scan. Override values are remembered by
+   * file ID and given back to matching rows as `appendItems` adds them.
+   */
   clearItems(): void
   getMeta(key: MetaKey): string
   setMeta(key: MetaKey, value: string): void

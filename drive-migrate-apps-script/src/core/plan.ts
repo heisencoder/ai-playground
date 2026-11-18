@@ -10,7 +10,7 @@
  *   not mine                            -> COPY / SHORTCUT / SKIP per config
  */
 
-import type { Action, Config, Item, OthersFilesPolicy } from './model'
+import type { Action, Config, Item, OthersFilesPolicy, Status } from './model'
 import {
   FILE_OVERRIDES,
   UNCOPYABLE_MIMES,
@@ -136,6 +136,17 @@ export function overrideProblem(item: Item): string {
   return ''
 }
 
+/**
+ * The status a row gets when a new run reconsiders it. A row that failed may
+ * have failed after Drive did the work (a timeout, a server error), so it goes
+ * back as IN_PROGRESS: the executor checks the destination before retrying.
+ */
+function replanned(status: Status | ''): Status {
+  return status === 'IN_PROGRESS' || status === 'FAILED'
+    ? 'IN_PROGRESS'
+    : 'PENDING'
+}
+
 export interface PlanCounts {
   total: number
   byAction: Record<Action, number>
@@ -150,7 +161,8 @@ function emptyCounts(): PlanCounts {
 
 /**
  * Fills in `action` and `reason` on every item that is not finished, and makes
- * it PENDING (a dry run passes `keepStatus` so that it changes no real status).
+ * it PENDING, or IN_PROGRESS if an earlier attempt may have got part-way (a dry
+ * run passes `keepStatus` so that it changes no real status).
  * DONE rows are left exactly as they are, so re-planning never undoes
  * completed work. Returns the items that changed.
  */
@@ -164,9 +176,9 @@ export function planItems(
   for (const item of items) {
     if (item.status !== 'DONE') {
       const decision = classify(item, config)
-      const keep =
-        item.status === 'IN_PROGRESS' || (keepStatus && item.status !== '')
-      const status = keep ? item.status : 'PENDING'
+      const status = keepStatus
+        ? item.status || 'PENDING'
+        : replanned(item.status)
       if (
         item.action !== decision.action ||
         item.reason !== decision.reason ||

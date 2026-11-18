@@ -23,6 +23,7 @@ import { ITEM_COLUMNS, SHEET_NAMES } from '../../src/gas/sheetStore'
 import type { FakeDrive } from './fakeDrive'
 import { GasWorld } from './fakeGas'
 import type { Scenario } from './scenario'
+import { buildScenario } from './scenario'
 
 export const BUNDLE_PATH = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -180,4 +181,39 @@ export function fireTriggersUntilQuiet(app: App, maxRuns = 50): number {
     runs += 1
   }
   return runs
+}
+
+/** What the destination holds after the sample tree has been fully migrated. */
+export const EXPECTED_TREE = [
+  'Team Files/',
+  'Team Files/Archive/',
+  'Team Files/Archive/Empty/',
+  'Team Files/Archive/Old plan',
+  'Team Files/Budget/',
+  'Team Files/Budget/2024 Budget',
+  'Team Files/Budget/Notes',
+  'Team Files/Roadmap',
+  'Team Files/Shared spec',
+  'Team Files/Shortcut to Notes',
+]
+
+/** The sample tree, with the sheets set up and the Config sheet filled in. */
+export function ready(
+  kind: AppKind,
+  config: Partial<Record<ConfigKey, string>> = {}
+): { app: App; scenario: Scenario } {
+  const scenario = buildScenario()
+  const app = startApp(kind, scenario.drive)
+  setUpWorkbook(app, scenario, config)
+  return { app, scenario }
+}
+
+/** A trigger fires with nobody at the keyboard. */
+export function fireTrigger(app: App): void {
+  app.world.interactive = false
+  try {
+    app.call('continueFromTrigger')
+  } finally {
+    app.world.interactive = true
+  }
 }

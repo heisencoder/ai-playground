@@ -81,6 +81,8 @@ interface InjectedFailure {
   status: number
   reason: string
   remaining: number
+  /** Drive does the work and then reports failure, as a timeout might. */
+  afterApplying: boolean
 }
 
 /** Thrown to simulate Apps Script killing the execution mid-flight. */
@@ -127,6 +129,8 @@ export class FakeDrive {
   onRequest: (request: HttpRequest) => void = () => undefined
   /** After this many more successful writes, the "execution" is killed. */
   killAfterWrites: number | null = null
+  /** Called at the moment of a kill, before the exception is thrown. */
+  onKill: () => void = () => undefined
 
   private nextId = 1
   private readonly failures: InjectedFailure[] = []
@@ -208,7 +212,41 @@ export class FakeDrive {
     reason: string,
     times = 1
   ): void {
-    this.failures.push({ method, path, status, reason, remaining: times })
+    this.failures.push({
+      method,
+      path,
+      status,
+      reason,
+      remaining: times,
+      afterApplying: false,
+    })
+  }
+
+  /** The next matching request takes effect, but the caller is told it failed. */
+  failNextAfterApplying(method: string, path: RegExp, status = 500): void {
+    this.failures.push({
+      method,
+      path,
+      status,
+      reason: 'backendError',
+      remaining: 1,
+      afterApplying: true,
+    })
+  }
+
+  /** The nth folder listing from now (1 = the next one) fails with a 404. */
+  failListing(nth: number): void {
+    const previous = this.onRequest
+    let seen = 0
+    this.onRequest = (request) => {
+      previous(request)
+      if (request.method === 'GET' && request.url.includes('/files?')) {
+        seen += 1
+        if (seen === nth) {
+          this.failNext('GET', /^\/files$/, NOT_FOUND, 'notFound')
+        }
+      }
+    }
   }
 
   /** Drive will refuse to move this file (as it may for external accounts). */
@@ -270,7 +308,7 @@ export class FakeDrive {
         candidate.method === request.method &&
         candidate.path.test(path)
     )
-    if (injected !== undefined) {
+    if (injected !== undefined && !injected.afterApplying) {
       injected.remaining -= 1
       return failure(
         injected.status,
@@ -283,6 +321,14 @@ export class FakeDrive {
         ? {}
         : (JSON.parse(request.body) as Record<string, unknown>)
     const response = this.route(request.method, path, url.searchParams, body)
+    if (injected !== undefined) {
+      injected.remaining -= 1
+      return failure(
+        injected.status,
+        injected.reason,
+        'injected, after applying'
+      )
+    }
     if (
       request.method !== 'GET' &&
       response.status === OK &&
@@ -291,6 +337,7 @@ export class FakeDrive {
       this.killAfterWrites -= 1
       if (this.killAfterWrites <= 0) {
         this.killAfterWrites = null
+        this.onKill()
         throw new ExecutionKilled()
       }
     }
@@ -317,8 +364,9 @@ export class FakeDrive {
     if (id === undefined) {
       return method === 'GET' ? this.list(query) : this.create(body)
     }
+    // As in real Drive, a trashed file can still be fetched (and even moved).
     const file = this.files.get(id)
-    if (file === undefined || file.trashed) {
+    if (file === undefined) {
       return failure(NOT_FOUND, 'notFound', `File not found: ${id}.`)
     }
     if (sub === undefined) {
@@ -453,7 +501,16 @@ export class FakeDrive {
     if (refusal !== null) {
       return refusal
     }
-    file.parents = [target.id]
+    const removed = (query.get('removeParents') ?? '').split(',')
+    const kept = file.parents.filter((parent) => !removed.includes(parent))
+    if (target.driveId !== '' && kept.length > 0) {
+      return failure(
+        FORBIDDEN,
+        'teamDrivesParentLimit',
+        'A shared drive item must have exactly one parent.'
+      )
+    }
+    file.parents = [...kept, target.id]
     file.driveId = target.driveId
     if (target.driveId !== '') {
       file.ownerEmail = ''

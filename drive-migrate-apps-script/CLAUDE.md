@@ -28,6 +28,13 @@ change under `src/` or to `appsscript.json`.
   kill-after-every-write tests in `test/core/resilience.test.ts` must still pass.
   New kinds of destination item must carry the `dmSourceId` property so a
   restart can find them.
+- **Writes are never blindly retried.** `DriveClient` resends a POST or PATCH
+  only after a rate limit; after a 5xx or no response the row goes FAILED and the
+  executor checks the destination (`lookFor`) before trying again.
+- **Rows are located by ID, not by remembered row number**, before every write
+  (`SheetStore.relocate`): the user may sort the sheet mid-run.
+- **Anything that can refuse a job runs before the job is recorded** as in
+  progress (`runJob`), so "Continue" cannot resume a refused job.
 - **The Override column belongs to the user.** `SheetStore.writeItems` writes
   the progress columns only.
 - **All Items cells are plain text**, written through `toCell`. Sheets otherwise
